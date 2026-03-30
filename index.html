@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Quiz Rush - The Neon Expedition</title>
+  <title>Quiz Rush - Jungle Escape</title>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800&family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
@@ -14,12 +14,11 @@
   --oasis:#006571;--oasis-glow:#26e6ff;
   --jungle:#2c6900;--jungle-glow:#75fd00;
   --bg:#0d1117;--bg-card:#161b22;--bg-card-hi:#1e252e;--bg-card-lo:#0a0e14;
-  --surface:#1a2030;--surface-hi:#222c3a;--surface-lo:#111822;
-  --text:#e8ecf0;--text-dim:#7a8a9a;--text-dark:#223138;
+  --surface:#1a2030;--surface-hi:#222c3a;
+  --text:#e8ecf0;--text-dim:#7a8a9a;
   --danger:#ff2d55;--danger-bg:rgba(255,45,85,0.15);
   --success:#00e676;--success-bg:rgba(0,230,118,0.15);
   --outline:rgba(159,175,185,0.15);
-  --shadow-color:#021017;
   --radius-sm:0.5rem;--radius-md:1rem;--radius-lg:2rem;--radius-full:9999px;
 }
 html,body{width:100%;height:100%;overflow:hidden;font-family:'Be Vietnam Pro',sans-serif;background:var(--bg);color:var(--text)}
@@ -29,194 +28,141 @@ html,body{width:100%;height:100%;overflow:hidden;font-family:'Be Vietnam Pro',sa
 /* ===== SHARED ===== */
 .app-header{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;z-index:10}
 .app-logo{display:flex;align-items:center;gap:10px}
-.app-logo .logo-icon{width:36px;height:36px;background:linear-gradient(135deg,var(--relic-glow),var(--relic));border-radius:var(--radius-md);display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:0 4px 20px rgba(253,144,0,0.3)}
-.app-logo .logo-text{font-family:'Plus Jakarta Sans',sans-serif;font-size:22px;font-weight:800;letter-spacing:1px;background:linear-gradient(135deg,var(--relic-glow),#ffcc00);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.logo-icon{width:36px;height:36px;background:linear-gradient(135deg,var(--relic-glow),var(--relic));border-radius:var(--radius-md);display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:0 4px 20px rgba(253,144,0,0.3)}
+.logo-text{font-family:'Plus Jakarta Sans',sans-serif;font-size:22px;font-weight:800;letter-spacing:1px;background:linear-gradient(135deg,var(--relic-glow),#ffcc00);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
 .hearts-badge{display:flex;align-items:center;gap:6px;padding:6px 14px;background:rgba(255,45,85,0.1);border-radius:var(--radius-full);font-weight:700;font-size:14px;color:var(--danger)}
-.hearts-badge::before{content:'';width:10px;height:10px;background:var(--danger);border-radius:50%;box-shadow:0 0 8px var(--danger)}
-
-.bottom-nav{display:flex;justify-content:space-around;padding:12px 16px 20px;background:rgba(13,17,23,0.85);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-top:1px solid var(--outline);z-index:20}
-.nav-item{display:flex;flex-direction:column;align-items:center;gap:4px;font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-dim);cursor:pointer;transition:all .2s}
-.nav-item.active{color:var(--oasis-glow)}
-.nav-item .nav-icon{font-size:20px;transition:all .2s}
-.nav-item.active .nav-icon{filter:drop-shadow(0 0 8px var(--oasis-glow))}
-
-/* Pill badge */
 .pill-badge{display:inline-block;padding:4px 12px;border-radius:var(--radius-full);font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase}
 .pill-badge.orange{background:rgba(253,144,0,0.15);color:var(--relic-glow)}
 .pill-badge.cyan{background:rgba(38,230,255,0.15);color:var(--oasis-glow)}
 .pill-badge.green{background:rgba(117,253,0,0.15);color:var(--jungle-glow)}
-.pill-badge.red{background:var(--danger-bg);color:var(--danger)}
+
+.bottom-nav{display:flex;justify-content:space-around;padding:12px 16px 20px;background:rgba(13,17,23,0.85);backdrop-filter:blur(20px);z-index:20}
+.nav-item{display:flex;flex-direction:column;align-items:center;gap:4px;font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-dim);cursor:pointer;transition:all .2s}
+.nav-item.active{color:var(--oasis-glow)}
+.nav-item .nav-icon{font-size:20px}
 
 /* ===== UPLOAD SCREEN ===== */
 #upload-screen{background:var(--bg)}
-.upload-scroll{flex:1;overflow-y:auto;padding:0 20px 20px;-webkit-overflow-scrolling:touch}
+.upload-scroll{flex:1;overflow-y:auto;padding:0 20px 20px}
 .upload-hero{text-align:center;margin:20px 0 28px}
-.upload-hero h1{font-family:'Plus Jakarta Sans',sans-serif;font-size:2.4rem;font-weight:800;line-height:1.1;color:var(--text)}
+.upload-hero h1{font-family:'Plus Jakarta Sans',sans-serif;font-size:2.4rem;font-weight:800;line-height:1.1}
 .upload-hero h1 span{background:linear-gradient(135deg,var(--relic-glow),#ff6600);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
 .upload-hero p{color:var(--text-dim);font-size:14px;margin-top:8px;line-height:1.5}
+.upload-hero .feed-me{font-size:48px;margin-bottom:12px;animation:feedBounce 2s infinite}
+@keyframes feedBounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
 
-.upload-card{background:var(--bg-card);border-radius:var(--radius-lg);padding:24px;margin-bottom:16px;position:relative;overflow:hidden;transition:transform .2s}
-.upload-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;border-radius:var(--radius-lg) var(--radius-lg) 0 0}
+.upload-card{background:var(--bg-card);border-radius:var(--radius-lg);padding:24px;margin-bottom:16px;position:relative;overflow:hidden}
+.upload-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;border-radius:2rem 2rem 0 0}
 .upload-card.relic::before{background:linear-gradient(90deg,var(--relic),var(--relic-glow))}
 .upload-card.oasis::before{background:linear-gradient(90deg,var(--oasis),var(--oasis-glow))}
 .upload-card.jungle::before{background:linear-gradient(90deg,var(--jungle),var(--jungle-glow))}
-
 .upload-card .card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
 .upload-card .card-icon{width:40px;height:40px;border-radius:var(--radius-md);display:flex;align-items:center;justify-content:center;font-size:20px}
-.card-icon.relic{background:rgba(253,144,0,0.15)}
-.card-icon.oasis{background:rgba(38,230,255,0.15)}
-.card-icon.jungle{background:rgba(117,253,0,0.15)}
-
-.upload-card h3{font-family:'Plus Jakarta Sans',sans-serif;font-size:18px;font-weight:800;letter-spacing:0.5px;margin-bottom:4px}
+.card-icon.relic{background:rgba(253,144,0,0.15)}.card-icon.oasis{background:rgba(38,230,255,0.15)}.card-icon.jungle{background:rgba(117,253,0,0.15)}
+.upload-card h3{font-family:'Plus Jakarta Sans',sans-serif;font-size:18px;font-weight:800;letter-spacing:.5px;margin-bottom:4px}
 .upload-card .card-desc{font-size:13px;color:var(--text-dim);margin-bottom:16px}
 
 .drop-zone{border:2px dashed rgba(253,144,0,0.25);border-radius:var(--radius-lg);padding:32px;text-align:center;cursor:pointer;transition:all .3s;background:rgba(0,0,0,0.2)}
 .drop-zone:hover,.drop-zone.dragover{border-color:var(--relic-glow);background:rgba(253,144,0,0.05)}
-.drop-zone .dz-icon{font-size:36px;margin-bottom:8px;opacity:0.6}
+.drop-zone .dz-icon{font-size:36px;margin-bottom:8px;opacity:.6}
 .drop-zone p{font-size:13px;color:var(--text-dim);font-weight:600}
 .file-selected{margin-top:10px;padding:10px 16px;background:var(--success-bg);border-radius:var(--radius-full);color:var(--success);font-size:13px;font-weight:600;display:none}
 .file-selected.show{display:block}
-
 .text-field{width:100%;padding:14px;background:var(--bg-card-lo);border:none;border-radius:var(--radius-md);color:var(--text);font-family:'Be Vietnam Pro',sans-serif;font-size:14px;resize:none;outline:none;transition:box-shadow .2s}
 .text-field:focus{box-shadow:0 0 0 2px rgba(38,230,255,0.3)}
 .text-field::placeholder{color:var(--text-dim)}
 
-.api-config{background:var(--bg-card);border-radius:var(--radius-lg);padding:20px;margin-bottom:16px}
-.api-config label{font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-dim);display:block;margin-bottom:8px}
-.api-config input{width:100%;padding:12px 14px;background:var(--bg-card-lo);border:none;border-radius:var(--radius-md);color:var(--text);font-family:monospace;font-size:13px;outline:none}
-.api-config input:focus{box-shadow:0 0 0 2px rgba(253,144,0,0.3)}
-.api-config .api-hint{font-size:11px;color:var(--text-dim);margin-top:6px}
-
-.big-btn{width:100%;padding:20px;border:none;border-radius:var(--radius-full);font-family:'Plus Jakarta Sans',sans-serif;font-size:20px;font-weight:800;letter-spacing:2px;cursor:pointer;transition:all .15s;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;gap:12px}
+.big-btn{width:100%;padding:20px;border:none;border-radius:var(--radius-full);font-family:'Plus Jakarta Sans',sans-serif;font-size:20px;font-weight:800;letter-spacing:2px;cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:12px}
 .big-btn:active{transform:translateY(2px)}
 .big-btn.primary{background:linear-gradient(180deg,var(--relic-glow) 0%,#e07800 100%);color:var(--relic-text);box-shadow:0 8px 30px rgba(253,144,0,0.35),inset 0 2px 0 rgba(255,255,255,0.2)}
-.big-btn.primary:hover{box-shadow:0 10px 40px rgba(253,144,0,0.5),inset 0 2px 0 rgba(255,255,255,0.2)}
 .big-btn.secondary{background:var(--bg-card);color:var(--text);box-shadow:inset 0 2px 0 rgba(255,255,255,0.05)}
-.big-btn:disabled{opacity:0.5;cursor:not-allowed;transform:none}
-
-.btn-row{display:flex;gap:12px;margin-top:12px}
-.btn-row .big-btn{font-size:16px;padding:16px}
-
+.big-btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
 .demo-divider{text-align:center;margin:20px 0;color:var(--text-dim);font-size:13px;font-weight:600;letter-spacing:1px;position:relative}
 .demo-divider::before,.demo-divider::after{content:'';position:absolute;top:50%;width:35%;height:1px;background:var(--outline)}
-.demo-divider::before{left:0}
-.demo-divider::after{right:0}
-
-.level-indicator{text-align:center;margin:16px 0;font-size:12px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--text-dim)}
-.level-indicator span{color:var(--relic-glow)}
+.demo-divider::before{left:0}.demo-divider::after{right:0}
 
 /* ===== GAME SCREEN ===== */
-#game-screen{background:var(--bg)}
+#game-screen{background:#000;flex-direction:column}
 #game-canvas-container{position:absolute;top:0;left:0;width:100%;height:100%;z-index:0}
 #game-canvas-container canvas{width:100%!important;height:100%!important}
 
-.game-hud{position:absolute;top:0;left:0;right:0;z-index:10;padding:12px 16px}
-.hud-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
-.hud-title{font-family:'Plus Jakarta Sans',sans-serif;font-size:16px;font-weight:800;letter-spacing:1px;color:var(--text)}
+/* Compact HUD - top of screen, transparent */
+.game-hud{position:absolute;top:0;left:0;right:0;z-index:10;padding:10px 16px;display:flex;justify-content:space-between;align-items:center;background:linear-gradient(to bottom,rgba(0,0,0,0.5),transparent);pointer-events:none}
+.hud-stat{padding:6px 14px;border-radius:var(--radius-full);backdrop-filter:blur(10px);display:flex;align-items:center;gap:8px;font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:16px}
+.hud-stat.time{background:rgba(0,101,113,0.5);color:var(--oasis-glow);text-shadow:0 0 10px rgba(38,230,255,0.5)}
+.hud-stat.score{background:rgba(44,105,0,0.5);color:var(--jungle-glow);text-shadow:0 0 10px rgba(117,253,0,0.5)}
+.hud-stat.life{background:rgba(255,45,85,0.2);color:var(--danger)}
+.hud-stat .stat-icon{font-size:16px}
 
-.hud-stats{display:flex;gap:10px}
-.hud-stat{padding:8px 16px;border-radius:var(--radius-md);display:flex;flex-direction:column;align-items:center;min-width:100px;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
-.hud-stat.time{background:rgba(0,101,113,0.6);box-shadow:0 0 20px rgba(38,230,255,0.15)}
-.hud-stat.score{background:rgba(44,105,0,0.6);box-shadow:0 0 20px rgba(117,253,0,0.15)}
-.hud-stat .stat-label{font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;opacity:0.7}
-.hud-stat.time .stat-label{color:var(--oasis-glow)}
-.hud-stat.score .stat-label{color:var(--jungle-glow)}
-.hud-stat .stat-val{font-family:'Plus Jakarta Sans',sans-serif;font-size:24px;font-weight:800}
-.hud-stat.time .stat-val{color:var(--oasis-glow);text-shadow:0 0 20px rgba(38,230,255,0.5)}
-.hud-stat.score .stat-val{color:var(--jungle-glow);text-shadow:0 0 20px rgba(117,253,0,0.5)}
+/* Question strip - bottom 20%, glassmorphism */
+.q-strip{position:absolute;bottom:0;left:0;right:0;z-index:20;padding:10px 12px 16px;background:linear-gradient(to top,rgba(5,8,12,0.92) 60%,rgba(5,8,12,0.6) 85%,transparent);backdrop-filter:blur(8px);max-height:35vh;transition:transform .3s}
+.q-strip.hidden{transform:translateY(100%);pointer-events:none}
+.q-strip .q-progress{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.q-strip .q-dots{display:flex;gap:4px;flex:1}
+.q-strip .q-dot{width:100%;height:5px;border-radius:3px;background:rgba(255,255,255,0.1);transition:background .3s}
+.q-strip .q-dot.done{background:var(--success)}.q-strip .q-dot.fail{background:var(--danger)}.q-strip .q-dot.current{background:var(--relic-glow);box-shadow:0 0 8px var(--relic-glow)}
+.q-strip .q-count{font-size:12px;font-weight:700;color:var(--relic-glow);white-space:nowrap}
+.q-strip .q-text{font-family:'Plus Jakarta Sans',sans-serif;font-size:15px;font-weight:700;line-height:1.3;margin-bottom:10px;color:var(--text)}
+.q-strip .q-opts{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.q-opt{display:flex;align-items:center;gap:10px;padding:10px 12px;background:rgba(255,255,255,0.06);border:2px solid rgba(255,255,255,0.1);border-radius:var(--radius-md);cursor:pointer;transition:all .15s;font-size:13px;font-weight:600;color:var(--text)}
+.q-opt:hover{background:rgba(253,144,0,0.1);border-color:var(--relic-glow)}
+.q-opt:active{transform:scale(.97)}
+.q-opt .ol{width:28px;height:28px;border-radius:6px;background:rgba(255,255,255,0.08);display:flex;align-items:center;justify-content:center;font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:13px;color:var(--text-dim);flex-shrink:0}
+.q-opt .ot{flex:1;line-height:1.3}
+.q-opt.correct{background:rgba(0,230,118,0.15);border-color:var(--success)}.q-opt.correct .ol{background:var(--success);color:#000}
+.q-opt.wrong{background:rgba(255,45,85,0.15);border-color:var(--danger)}.q-opt.wrong .ol{background:var(--danger);color:#fff}
+.q-opt.disabled{pointer-events:none;opacity:.4}
 
-.question-area{position:absolute;bottom:0;left:0;right:0;z-index:20;padding:0 12px 12px}
-.question-area.hidden{display:none}
+/* Feedback flash - centered on 3D scene */
+.fb-flash{position:absolute;top:35%;left:50%;transform:translate(-50%,-50%);z-index:25;pointer-events:none;opacity:0;transition:opacity .2s}
+.fb-flash.show{opacity:1}
+.fb-inner{padding:14px 36px;border-radius:var(--radius-full);font-family:'Plus Jakarta Sans',sans-serif;font-size:32px;font-weight:800;letter-spacing:3px;animation:fbPop .4s cubic-bezier(.34,1.56,.64,1)}
+.fb-inner.correct{background:linear-gradient(135deg,rgba(0,230,118,.9),rgba(0,180,90,.9));color:#000;box-shadow:0 0 60px rgba(0,230,118,.4)}
+.fb-inner.wrong{background:linear-gradient(135deg,rgba(255,45,85,.9),rgba(200,30,60,.9));color:#fff;box-shadow:0 0 60px rgba(255,45,85,.4)}
+@keyframes fbPop{0%{transform:scale(.3);opacity:0}60%{transform:scale(1.1)}100%{transform:scale(1);opacity:1}}
 
-.question-box{background:rgba(13,17,23,0.92);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-radius:var(--radius-lg);padding:20px;box-shadow:0 -10px 40px rgba(0,0,0,0.4)}
-.q-text{font-family:'Plus Jakarta Sans',sans-serif;font-size:18px;font-weight:700;line-height:1.4;margin-bottom:16px;color:var(--text)}
-
-.q-options{display:flex;flex-direction:column;gap:8px}
-.q-opt{display:flex;align-items:center;gap:14px;padding:14px 16px;background:var(--surface);border-radius:var(--radius-md);cursor:pointer;transition:all .15s;position:relative;overflow:hidden}
-.q-opt:hover{background:var(--surface-hi)}
-.q-opt:active{transform:translateY(2px)}
-.q-opt .opt-letter{width:36px;height:36px;border-radius:var(--radius-sm);background:var(--surface-hi);display:flex;align-items:center;justify-content:center;font-family:'Plus Jakarta Sans',sans-serif;font-size:15px;font-weight:800;color:var(--text-dim);flex-shrink:0;transition:all .2s}
-.q-opt .opt-text{font-size:14px;font-weight:500;flex:1;line-height:1.4}
-.q-opt .opt-icon{width:24px;height:24px;border-radius:50%;display:none;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
-
-.q-opt.correct{background:rgba(0,230,118,0.12)}
-.q-opt.correct .opt-letter{background:var(--success);color:#000}
-.q-opt.correct .opt-icon{display:flex;background:var(--success);color:#000}
-.q-opt.correct .opt-text{color:var(--success)}
-
-.q-opt.wrong{background:rgba(255,45,85,0.12)}
-.q-opt.wrong .opt-letter{background:var(--danger);color:#fff}
-.q-opt.wrong .opt-icon{display:flex;background:var(--danger);color:#fff}
-.q-opt.wrong .opt-text{color:var(--danger)}
-
-.q-opt.disabled{pointer-events:none;opacity:0.4}
-
-.progress-bar-area{display:flex;align-items:center;gap:10px;margin-top:14px}
-.progress-label{font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--jungle-glow)}
-.progress-track{flex:1;height:10px;background:var(--surface);border-radius:var(--radius-full);overflow:hidden}
-.progress-fill{height:100%;background:linear-gradient(90deg,var(--jungle-glow),var(--relic-glow));border-radius:var(--radius-full);transition:width .5s ease}
-.progress-count{font-size:13px;font-weight:700;color:var(--relic-glow)}
-
-.feedback-popup{position:absolute;top:40%;left:50%;transform:translate(-50%,-50%);z-index:30;pointer-events:none}
-.feedback-popup.hidden{display:none}
-.fb-inner{padding:16px 40px;border-radius:var(--radius-full);font-family:'Plus Jakarta Sans',sans-serif;font-size:28px;font-weight:800;letter-spacing:3px;text-align:center;animation:fbPop .4s cubic-bezier(0.34,1.56,0.64,1)}
-.fb-inner.correct{background:linear-gradient(135deg,rgba(0,230,118,0.9),rgba(0,180,90,0.9));color:#000;box-shadow:0 0 40px rgba(0,230,118,0.4)}
-.fb-inner.wrong{background:linear-gradient(135deg,rgba(255,45,85,0.9),rgba(200,30,60,0.9));color:#fff;box-shadow:0 0 40px rgba(255,45,85,0.4)}
-@keyframes fbPop{0%{transform:scale(.5);opacity:0}60%{transform:scale(1.05)}100%{transform:scale(1);opacity:1}}
-
-/* Countdown */
-.countdown-overlay{position:absolute;top:0;left:0;width:100%;height:100%;z-index:35;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.7);pointer-events:none}
-.countdown-overlay.hidden{display:none}
-.countdown-num{font-family:'Plus Jakarta Sans',sans-serif;font-size:100px;font-weight:800;color:var(--oasis-glow);text-shadow:0 0 60px rgba(38,230,255,0.5);animation:cPulse .8s ease-out}
+.countdown-ov{position:absolute;top:0;left:0;width:100%;height:100%;z-index:35;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.6);pointer-events:none}
+.countdown-ov.hidden{display:none}
+.countdown-ov .cn{font-family:'Plus Jakarta Sans',sans-serif;font-size:100px;font-weight:800;color:var(--oasis-glow);text-shadow:0 0 60px rgba(38,230,255,.5);animation:cPulse .8s ease-out}
 @keyframes cPulse{0%{transform:scale(2);opacity:0}50%{opacity:1}100%{transform:scale(1);opacity:.9}}
 
-/* ===== RESULTS SCREEN ===== */
+/* ===== RESULTS ===== */
 #results-screen{background:var(--bg)}
-.results-scroll{flex:1;overflow-y:auto;padding:0 20px 20px;-webkit-overflow-scrolling:touch}
-
-.result-hero{text-align:center;margin:16px 0 24px;padding:32px 20px;background:linear-gradient(135deg,#667eea,#764ba2);border-radius:var(--radius-lg);position:relative;overflow:hidden}
-.result-hero::after{content:'';position:absolute;top:0;left:0;right:0;bottom:0;background:url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")}
-.result-badge{display:inline-block;padding:6px 20px;background:rgba(255,255,255,0.2);border-radius:var(--radius-full);font-size:12px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-bottom:12px}
+.results-scroll{flex:1;overflow-y:auto;padding:0 20px 20px}
+.result-hero{text-align:center;margin:16px 0 24px;padding:32px 20px;border-radius:var(--radius-lg);position:relative;overflow:hidden}
+.result-hero.win{background:linear-gradient(135deg,#667eea,#764ba2)}
+.result-hero.lose{background:linear-gradient(135deg,#e53935,#8e0000)}
+.result-badge{display:inline-block;padding:6px 20px;background:rgba(255,255,255,.2);border-radius:var(--radius-full);font-size:12px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-bottom:12px}
 .result-hero h1{font-family:'Plus Jakarta Sans',sans-serif;font-size:2.8rem;font-weight:800;line-height:1;margin-bottom:8px}
-.result-hero p{font-size:14px;opacity:0.85;line-height:1.5}
-
-.xp-card{background:#fff;border-radius:var(--radius-lg);padding:24px;text-align:center;margin:-20px auto 24px;width:70%;position:relative;z-index:2;box-shadow:0 20px 60px rgba(2,16,23,0.5)}
-.xp-label{font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--text-dim)}
+.result-hero p{font-size:14px;opacity:.85}
+.xp-card{background:#fff;border-radius:var(--radius-lg);padding:24px;text-align:center;margin:-20px auto 24px;width:70%;position:relative;z-index:2;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+.xp-label{font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#888}
 .xp-value{font-family:'Plus Jakarta Sans',sans-serif;font-size:3rem;font-weight:800;color:var(--relic-glow);line-height:1}
 .xp-bar{width:100%;height:8px;background:#eee;border-radius:var(--radius-full);margin:10px 0 6px;overflow:hidden}
 .xp-bar-fill{height:100%;background:linear-gradient(90deg,var(--relic-glow),var(--danger));border-radius:var(--radius-full)}
-.xp-rank{font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text-dim)}
-
+.xp-rank{font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#888}
 .stat-cards{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:24px}
 .stat-card{padding:20px;border-radius:var(--radius-lg);text-align:center}
 .stat-card.teal{background:linear-gradient(135deg,#43e97b,#38f9d7);color:#0a3d2a}
 .stat-card.blue{background:linear-gradient(135deg,#4facfe,#00f2fe);color:#0a2d4a}
-.stat-card.yellow{background:linear-gradient(135deg,#f9d423,#ff4e50);color:#4a3000}
-.stat-card .sc-icon{font-size:28px;margin-bottom:6px}
 .stat-card .sc-value{font-family:'Plus Jakarta Sans',sans-serif;font-size:2rem;font-weight:800;line-height:1}
-.stat-card .sc-label{font-size:12px;font-weight:600;opacity:0.8;margin-top:4px}
-
-.journal-section h2{font-family:'Plus Jakarta Sans',sans-serif;font-size:20px;font-weight:800;letter-spacing:1px;margin-bottom:16px;display:flex;align-items:center;gap:8px}
-.journal-item{padding:16px;background:var(--bg-card);border-radius:var(--radius-lg);margin-bottom:10px;position:relative}
+.stat-card .sc-label{font-size:12px;font-weight:600;opacity:.8;margin-top:4px}
+.journal-section h2{font-family:'Plus Jakarta Sans',sans-serif;font-size:20px;font-weight:800;letter-spacing:1px;margin-bottom:16px}
+.journal-item{padding:16px;background:var(--bg-card);border-radius:var(--radius-lg);margin-bottom:10px}
 .journal-item .ji-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px}
 .journal-item .ji-q{font-weight:700;font-size:14px;line-height:1.4;flex:1;padding-right:12px}
 .journal-item .ji-badge{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
 .journal-item .ji-badge.correct{background:var(--success-bg);color:var(--success)}
 .journal-item .ji-badge.wrong{background:var(--danger-bg);color:var(--danger)}
 .journal-item .ji-tag{display:inline-block;padding:3px 10px;border-radius:var(--radius-full);font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:8px}
-.journal-item .ji-tag.legendary{background:var(--success-bg);color:var(--success)}
-.journal-item .ji-tag.study{background:var(--danger-bg);color:var(--danger)}
+.journal-item .ji-tag.ok{background:var(--success-bg);color:var(--success)}
+.journal-item .ji-tag.bad{background:var(--danger-bg);color:var(--danger)}
 .journal-item .ji-detail{font-size:13px;color:var(--text-dim);line-height:1.5;padding:10px 14px;background:var(--bg-card-lo);border-radius:var(--radius-md);margin-top:6px}
-
 .results-actions{margin-top:8px;margin-bottom:20px}
+.results-actions .big-btn+.big-btn{margin-top:12px}
 
-::-webkit-scrollbar{width:4px}
-::-webkit-scrollbar-track{background:transparent}
-::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.1);border-radius:2px}
-@media(min-width:600px){
-  .upload-scroll,.results-scroll{max-width:480px;margin:0 auto}
-  .question-box{max-width:600px;margin:0 auto}
-}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:2px}
+@media(min-width:600px){.upload-scroll,.results-scroll{max-width:480px;margin:0 auto}}
   </style>
 </head>
 <body>
@@ -224,76 +170,40 @@ html,body{width:100%;height:100%;overflow:hidden;font-family:'Be Vietnam Pro',sa
 <!-- ========== UPLOAD SCREEN ========== -->
 <div id="upload-screen" class="screen active">
   <div class="app-header">
-    <div class="app-logo">
-      <div class="logo-icon">🚀</div>
-      <div class="logo-text">QUIZ RUSH</div>
-    </div>
-    <div class="hearts-badge" id="hearts-display">3</div>
+    <div class="app-logo"><div class="logo-icon">🌴</div><div class="logo-text">QUIZ RUSH</div></div>
+    <div class="hearts-badge">❤️ 3</div>
   </div>
-
   <div class="upload-scroll">
     <div class="upload-hero">
-      <h1>START YOUR<br><span>QUEST!</span></h1>
-      <p>Upload your loot to generate the ultimate challenge.</p>
+      <div class="feed-me">🗿</div>
+      <h1>FEED ME YOUR<br><span>KNOWLEDGE!</span></h1>
+      <p>Drop a PDF, paste text, or enter notes.<br>I'll turn them into a jungle escape quiz!</p>
     </div>
 
-    <!-- API Key -->
-    <div class="api-config">
-      <label>Anthropic API Key</label>
-      <input type="password" id="api-key" placeholder="sk-ant-api03-...">
-      <p class="api-hint">Stored locally. Powers MCQ generation via Claude.</p>
-    </div>
-
-    <!-- Upload Files Card -->
     <div class="upload-card relic">
-      <div class="card-header">
-        <div class="card-icon relic">📤</div>
-        <span class="pill-badge orange">Archive Drop</span>
-      </div>
+      <div class="card-header"><div class="card-icon relic">📤</div><span class="pill-badge orange">Archive Drop</span></div>
       <h3>UPLOAD FILES</h3>
-      <p class="card-desc">Toss in your PDF or DOCX scrolls for processing.</p>
-      <div class="drop-zone" id="drop-zone">
-        <div class="dz-icon">📁</div>
-        <p>DROP 'EM HERE!</p>
-      </div>
+      <p class="card-desc">Toss in your PDF or TXT scrolls for processing.</p>
+      <div class="drop-zone" id="drop-zone"><div class="dz-icon">📁</div><p>DROP 'EM HERE!</p></div>
       <input type="file" id="file-input" accept=".pdf,.txt,.md" hidden>
       <div class="file-selected" id="file-selected"></div>
     </div>
 
-    <!-- Paste Link Card -->
-    <div class="upload-card oasis">
-      <div class="card-header">
-        <div class="card-icon oasis">🔗</div>
-        <span class="pill-badge cyan">Web Raid</span>
-      </div>
-      <h3>PASTE LINK</h3>
-      <input type="text" id="url-input" class="text-field" placeholder="https://..." style="resize:none">
-    </div>
-
-    <!-- Direct Input Card -->
     <div class="upload-card jungle">
-      <div class="card-header">
-        <div class="card-icon jungle">📝</div>
-        <span class="pill-badge green">Quick Scribe</span>
-      </div>
-      <h3>DIRECT INPUT</h3>
-      <textarea id="text-input" class="text-field" rows="4" placeholder="Paste raw intel here..."></textarea>
+      <div class="card-header"><div class="card-icon jungle">📝</div><span class="pill-badge green">Quick Scribe</span></div>
+      <h3>PASTE YOUR NOTES</h3>
+      <textarea id="text-input" class="text-field" rows="5" placeholder="Paste your study material, lecture notes, article text here... The more detail, the better the quiz!"></textarea>
     </div>
 
-    <!-- Action buttons -->
-    <button class="big-btn primary" id="start-btn">
-      <span>⚡</span>
-      <span class="btn-label">ANALYZE & START</span>
-      <span>▶</span>
-    </button>
-    <div id="loading-msg" style="display:none;text-align:center;padding:12px;color:var(--relic-glow);font-weight:600;font-size:14px">⏳ Claude is generating your questions...</div>
+    <button class="big-btn primary" id="start-btn"><span>⚡</span><span class="btn-label">ANALYZE & START</span><span>▶</span></button>
+    <div id="loading-msg" style="display:none;text-align:center;padding:16px;font-weight:700;font-size:15px">
+      <div style="font-size:40px;margin-bottom:8px;animation:feedBounce 1s infinite">🧠</div>
+      <span style="color:var(--relic-glow)">Generating quiz from your content...</span>
+    </div>
 
-    <div class="demo-divider">OR TRY DEMO</div>
-    <button class="big-btn secondary" id="demo-btn">🎮 PLAY DEMO</button>
-
-    <div class="level-indicator">🏆 Level: <span>Elite Scout</span></div>
+    <div class="demo-divider">NO CONTENT? TRY DEMO</div>
+    <button class="big-btn secondary" id="demo-btn">🎮 PLAY JUNGLE DEMO</button>
   </div>
-
   <div class="bottom-nav">
     <div class="nav-item active"><span class="nav-icon">🧭</span>QUEST</div>
     <div class="nav-item"><span class="nav-icon">🏆</span>LOOT</div>
@@ -302,106 +212,58 @@ html,body{width:100%;height:100%;overflow:hidden;font-family:'Be Vietnam Pro',sa
   </div>
 </div>
 
-<!-- ========== GAME SCREEN ========== -->
+<!-- ========== GAME SCREEN (80%+ 3D, 20% questions) ========== -->
 <div id="game-screen" class="screen">
   <div id="game-canvas-container"></div>
 
   <div class="game-hud">
-    <div class="hud-top">
-      <div class="app-logo">
-        <div class="logo-text" style="font-size:16px">QUIZ ADVENTURER</div>
-      </div>
-      <div class="hearts-badge" id="game-hearts">3</div>
-    </div>
-    <div class="hud-stats">
-      <div class="hud-stat time">
-        <span class="stat-label">⏱ Time</span>
-        <span class="stat-val" id="hud-time">00:60</span>
-      </div>
-      <div class="hud-stat score">
-        <span class="stat-label">⭐ Score</span>
-        <span class="stat-val" id="hud-score">0</span>
-      </div>
-    </div>
+    <div class="hud-stat time"><span class="stat-icon">⏱</span><span id="hud-time">01:00</span></div>
+    <div class="hud-stat life"><span id="hud-hearts">❤️❤️❤️</span></div>
+    <div class="hud-stat score"><span class="stat-icon">⭐</span><span id="hud-score">0</span></div>
   </div>
 
-  <div class="countdown-overlay hidden" id="countdown-overlay">
-    <div class="countdown-num" id="countdown-num">3</div>
-  </div>
+  <div class="countdown-ov hidden" id="countdown-ov"><div class="cn" id="cn">3</div></div>
 
-  <div class="question-area hidden" id="question-area">
-    <div class="question-box">
-      <div class="q-text" id="q-text"></div>
-      <div class="q-options" id="q-options"></div>
-      <div class="progress-bar-area">
-        <span class="progress-label">Progress</span>
-        <div class="progress-track"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
-        <span class="progress-count" id="progress-count">0/10</span>
-      </div>
-    </div>
-  </div>
+  <div class="fb-flash" id="fb-flash"><div class="fb-inner" id="fb-inner"></div></div>
 
-  <div class="feedback-popup hidden" id="feedback-popup">
-    <div class="fb-inner" id="fb-inner"></div>
-  </div>
-
-  <div class="bottom-nav" style="position:absolute;bottom:0;left:0;right:0">
-    <div class="nav-item active"><span class="nav-icon">📖</span>EXPEDITION</div>
-    <div class="nav-item"><span class="nav-icon">💎</span>ARTIFACTS</div>
-    <div class="nav-item"><span class="nav-icon">🏅</span>RANKINGS</div>
-    <div class="nav-item"><span class="nav-icon">📓</span>JOURNAL</div>
+  <div class="q-strip hidden" id="q-strip">
+    <div class="q-progress"><div class="q-dots" id="q-dots"></div><span class="q-count" id="q-count">0/10</span></div>
+    <div class="q-text" id="q-text"></div>
+    <div class="q-opts" id="q-opts"></div>
   </div>
 </div>
 
 <!-- ========== RESULTS SCREEN ========== -->
 <div id="results-screen" class="screen">
   <div class="app-header">
-    <div class="app-logo">
-      <div class="logo-icon">🚀</div>
-      <div class="logo-text">QUIZ QUEST</div>
-    </div>
-    <div class="hearts-badge" id="result-hearts">3</div>
+    <div class="app-logo"><div class="logo-icon">🌴</div><div class="logo-text">QUIZ RUSH</div></div>
+    <div class="hearts-badge">🏅</div>
   </div>
-
   <div class="results-scroll">
     <div class="result-hero" id="result-hero">
-      <div class="result-badge" id="result-badge">Mission Complete!</div>
+      <div class="result-badge" id="result-badge">MISSION COMPLETE!</div>
       <h1 id="result-title">LEVEL UP!</h1>
-      <p id="result-desc">Amazing work, Explorer!</p>
+      <p id="result-desc">You escaped the jungle!</p>
     </div>
-
     <div class="xp-card">
       <div class="xp-label">XP Gained</div>
       <div class="xp-value" id="xp-value">+0</div>
       <div class="xp-bar"><div class="xp-bar-fill" id="xp-bar-fill" style="width:0%"></div></div>
       <div class="xp-rank" id="xp-rank">Rank: Scout</div>
     </div>
-
     <div class="stat-cards">
-      <div class="stat-card teal">
-        <div class="sc-icon">🎯</div>
-        <div class="sc-value" id="sc-accuracy">0%</div>
-        <div class="sc-label">Accuracy Rate</div>
-      </div>
-      <div class="stat-card blue">
-        <div class="sc-icon">⏱</div>
-        <div class="sc-value" id="sc-time">00:00</div>
-        <div class="sc-label">Time Taken</div>
-      </div>
+      <div class="stat-card teal"><div class="sc-value" id="sc-accuracy">0%</div><div class="sc-label">🎯 Accuracy</div></div>
+      <div class="stat-card blue"><div class="sc-value" id="sc-time">00:00</div><div class="sc-label">⏱ Time</div></div>
     </div>
-
     <div class="journal-section">
       <h2>📜 QUEST JOURNAL</h2>
       <div id="journal-list"></div>
     </div>
-
     <div class="results-actions">
       <button class="big-btn primary" id="retry-btn">🔄 RUN AGAIN</button>
-      <div style="height:12px"></div>
       <button class="big-btn secondary" id="new-btn">📄 NEW MATERIAL</button>
     </div>
   </div>
-
   <div class="bottom-nav">
     <div class="nav-item"><span class="nav-icon">🗺</span>MAP</div>
     <div class="nav-item"><span class="nav-icon">🏆</span>LOOT</div>
@@ -411,57 +273,101 @@ html,body{width:100%;height:100%;overflow:hidden;font-family:'Be Vietnam Pro',sa
 </div>
 
 <script>
-// ===================== PDF.JS =====================
+// ========================================================
+// PDF EXTRACTION
+// ========================================================
 pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-async function extractPDFText(file){
-  const ab=await file.arrayBuffer();
-  const pdf=await pdfjsLib.getDocument({data:ab}).promise;
-  let t='';
-  for(let i=1;i<=pdf.numPages;i++){const pg=await pdf.getPage(i);const c=await pg.getTextContent();t+=c.items.map(x=>x.str).join(' ')+'\n';}
+async function extractPDF(file){
+  const pdf=await pdfjsLib.getDocument({data:await file.arrayBuffer()}).promise;
+  let t='';for(let i=1;i<=pdf.numPages;i++){const p=await pdf.getPage(i);const c=await p.getTextContent();t+=c.items.map(x=>x.str).join(' ')+'\n';}
   return t;
 }
 
-// ===================== MCQ GENERATION =====================
-async function generateMCQs(text,apiKey){
-  const r=await fetch('https://api.anthropic.com/v1/messages',{
-    method:'POST',
-    headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
-    body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:4000,messages:[{role:'user',content:`You are a quiz generator. From the following text, generate exactly 12 high-yield MCQs. Focus on the MOST important concepts.
-Return ONLY valid JSON array (no markdown, no backticks):
-[{"question":"Q?","options":["A) o1","B) o2","C) o3","D) o4"],"correct":0,"explanation":"Why"}]
-"correct" = zero-based index. TEXT:\n${text.substring(0,10000)}`}]})
-  });
-  if(!r.ok){const e=await r.json().catch(()=>({}));throw new Error(e.error?.message||'API error '+r.status)}
-  const d=await r.json();const c=d.content[0].text.trim();const m=c.match(/\[[\s\S]*\]/);
-  if(!m)throw new Error('Failed to parse AI response');return JSON.parse(m[0]);
+// ========================================================
+// FREE MCQ GENERATOR (NO API KEY NEEDED)
+// ========================================================
+function generateMCQs(text){
+  const sents=text.replace(/\n+/g,' ').replace(/\s+/g,' ')
+    .split(/(?<=[.!?])\s+/).map(s=>s.trim())
+    .filter(s=>s.length>25&&s.length<350&&/[a-zA-Z]{3}/.test(s));
+  if(sents.length<5)throw new Error('Not enough content — add more text!');
+
+  function keyTerms(s){
+    const t=[];
+    (s.match(/(?<=\s)[A-Z][a-zA-Zéèêëàâäùûüôöîïç-]{2,}/g)||[]).forEach(x=>t.push(x));
+    (s.match(/\d[\d,.]*\s*(%|percent|million|billion|km|miles|years?|BC|AD|CE|BCE|century)?/g)||[]).forEach(x=>t.push(x.trim()));
+    (s.match(/[""\u201c]([^""\u201d]+)[""\u201d]/g)||[]).forEach(x=>t.push(x.replace(/[""\u201c\u201d]/g,'')));
+    return[...new Set(t)].filter(x=>x.length>1);
+  }
+
+  const scored=sents.map((s,i)=>{
+    let sc=0;const terms=keyTerms(s);sc+=terms.length*3;
+    if(/\d/.test(s))sc+=2;if(/(?:is|are|was|were|called|known as|defined|refers to)/i.test(s))sc+=4;
+    if(/(?:because|therefore|caused|result|due to)/i.test(s))sc+=3;
+    if(/(?:first|largest|most|least|important|discovered|invented|founded|built)/i.test(s))sc+=3;
+    if(s.length>50&&s.length<200)sc+=1;return{s,sc,terms,i};
+  }).sort((a,b)=>b.sc-a.sc);
+
+  const allTerms=[...new Set(scored.flatMap(x=>x.terms))];
+
+  const templates=[
+    {p:/(.+?)\s+(?:is|are)\s+(?:a|an|the)?\s*(.+)/i,q:m=>`What is ${m[1]}?`,a:m=>m[2].replace(/[.!?]$/,'')},
+    {p:/(.+?)\s+(?:was|were)\s+(?:a|an|the)?\s*(.+)/i,q:m=>`What was ${m[1]}?`,a:m=>m[2].replace(/[.!?]$/,'')},
+    {p:/(.+?)\s+(?:is called|is known as)\s+(.+)/i,q:m=>`What is ${m[1]} called?`,a:m=>m[2].replace(/[.!?]$/,'')},
+    {p:/(.+?)\s+(?:discovered|invented|created|founded|built)\s+(.+)/i,q:m=>`What did ${m[1]} discover/create?`,a:m=>m[2].replace(/[.!?]$/,'')},
+    {p:/In\s+(\d{3,4}),?\s+(.+)/i,q:m=>`What happened in ${m[1]}?`,a:m=>m[2].replace(/[.!?]$/,'')},
+  ];
+
+  function makeQ(x){
+    for(const t of templates){const m=x.s.match(t.p);if(m){const q=t.q(m),a=t.a(m);if(q.length>15&&a.length>2&&a.length<120)return{q,a,src:x.s}}}
+    const terms=keyTerms(x.s);if(terms.length>0){const tgt=terms[Math.floor(Math.random()*terms.length)];
+      const blank=x.s.replace(new RegExp(tgt.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'g'),'______').replace(/[.!?]$/,'');
+      if(blank!==x.s)return{q:'Fill in the blank: '+blank+'?',a:tgt,src:x.s}}
+    return{q:`Which statement about "${(x.terms[0]||'this topic')}" is correct?`,a:x.s.replace(/[.!?]$/,'').substring(0,100),src:x.s};
+  }
+
+  function distractors(correct,skip){
+    const d=[];const cl=correct.toLowerCase();
+    const shuffled=[...allTerms].sort(()=>Math.random()-.5);
+    for(const t of shuffled){if(d.length>=3)break;if(t.toLowerCase()===cl||correct.includes(t))continue;d.push(t)}
+    while(d.length<3){const s=sents[Math.floor(Math.random()*sents.length)];if(s===correct)continue;
+      const w=s.split(/\s+/);const f=w.slice(0,Math.min(5,Math.max(2,correct.split(/\s+/).length))).join(' ');
+      if(f.toLowerCase()!==cl&&!d.includes(f))d.push(f)}
+    return d.slice(0,3);
+  }
+
+  const qs=[];const used=new Set();
+  for(const x of scored){
+    if(qs.length>=12)break;if(used.has(x.i))continue;
+    const r=makeQ(x);const ds=distractors(r.a,x.i);if(ds.length<3)continue;
+    const ci=Math.floor(Math.random()*4);const opts=[];const L=['A','B','C','D'];let di=0;
+    for(let i=0;i<4;i++)opts.push(i===ci?`${L[i]}) ${r.a.substring(0,90)}`:`${L[i]}) ${ds[di++].substring(0,90)}`);
+    qs.push({question:r.q,options:opts,correct:ci,explanation:r.src.substring(0,160)});used.add(x.i);
+  }
+  if(qs.length<5)throw new Error('Could not make enough questions — try longer/more detailed text.');
+  return qs;
 }
 
 const DEMO_QUESTIONS=[
-  {question:"Which ancient civilization built the 'Great City' of Teotihuacan before the Aztecs arrived?",options:["A) The Maya Empire","B) The Teotihuacanos","C) The Olmec Culture","D) The Toltec Warriors"],correct:1,explanation:"The Teotihuacanos built this massive city which peaked around 450 AD"},
-  {question:"What is the capital of ancient Egypt during the New Kingdom period?",options:["A) Memphis","B) Thebes","C) Alexandria","D) Cairo"],correct:1,explanation:"Thebes (modern Luxor) was capital during the New Kingdom (1550-1070 BC)"},
-  {question:"Which pharaoh built the Great Pyramid of Giza?",options:["A) Tutankhamun","B) Ramesses II","C) Khufu","D) Cleopatra"],correct:2,explanation:"The Great Pyramid was built for Pharaoh Khufu around 2560 BC"},
+  {question:"Which ancient civilization built the 'Great City' of Teotihuacan?",options:["A) The Maya Empire","B) The Teotihuacanos","C) The Olmec Culture","D) The Toltec Warriors"],correct:1,explanation:"The Teotihuacanos built this massive city which peaked around 450 AD"},
+  {question:"What is the capital of ancient Egypt during the New Kingdom?",options:["A) Memphis","B) Thebes","C) Alexandria","D) Cairo"],correct:1,explanation:"Thebes (modern Luxor) was capital during the New Kingdom (1550-1070 BC)"},
+  {question:"Which pharaoh built the Great Pyramid of Giza?",options:["A) Tutankhamun","B) Ramesses II","C) Khufu","D) Cleopatra"],correct:2,explanation:"Built for Pharaoh Khufu (Cheops) around 2560 BC"},
   {question:"The Rosetta Stone helped decode which writing system?",options:["A) Cuneiform","B) Hieroglyphics","C) Linear A","D) Sanskrit"],correct:1,explanation:"Found in 1799, key to deciphering Egyptian hieroglyphics"},
-  {question:"What was the purpose of canopic jars in ancient Egypt?",options:["A) Storing grain","B) Holding organs of the deceased","C) Carrying water","D) Storing gold"],correct:1,explanation:"Canopic jars held preserved organs during mummification"},
-  {question:"Which river was essential to ancient Egyptian civilization?",options:["A) Tigris","B) Euphrates","C) Nile","D) Jordan"],correct:2,explanation:"The Nile's annual flooding provided fertile soil for agriculture"},
-  {question:"What does the ankh symbol represent in ancient Egypt?",options:["A) Death","B) War","C) Life","D) Wisdom"],correct:2,explanation:"The ankh is the ancient Egyptian hieroglyphic for 'life'"},
-  {question:"Who discovered Tutankhamun's tomb in 1922?",options:["A) Champollion","B) Howard Carter","C) Flinders Petrie","D) Belzoni"],correct:1,explanation:"Howard Carter found King Tut's nearly intact tomb in the Valley of the Kings"},
-  {question:"What writing material was made from Nile Delta plants?",options:["A) Parchment","B) Vellum","C) Papyrus","D) Rice paper"],correct:2,explanation:"Papyrus was made from the pith of the papyrus plant"},
-  {question:"The Great Sphinx has the body of what animal?",options:["A) Eagle","B) Bull","C) Lion","D) Ram"],correct:2,explanation:"The Sphinx has a lion body and human head, likely representing Khafre"},
-  {question:"What was the ancient Egyptian afterlife realm called?",options:["A) Valhalla","B) Elysium","C) Duat","D) Nirvana"],correct:2,explanation:"The Duat was the underworld where souls traveled after death"},
-  {question:"Which god ruled the Egyptian underworld?",options:["A) Ra","B) Anubis","C) Osiris","D) Horus"],correct:2,explanation:"Osiris was god of the afterlife, the dead, and resurrection"}
+  {question:"What was the purpose of canopic jars?",options:["A) Storing grain","B) Holding organs of the deceased","C) Carrying water","D) Storing gold"],correct:1,explanation:"Held preserved organs during mummification"},
+  {question:"Which river was essential to Egyptian civilization?",options:["A) Tigris","B) Euphrates","C) Nile","D) Jordan"],correct:2,explanation:"The Nile's annual flooding provided fertile soil"},
+  {question:"What does the ankh symbol represent?",options:["A) Death","B) War","C) Life","D) Wisdom"],correct:2,explanation:"The ankh is the Egyptian hieroglyphic for 'life'"},
+  {question:"Who discovered Tutankhamun's tomb in 1922?",options:["A) Champollion","B) Howard Carter","C) Flinders Petrie","D) Belzoni"],correct:1,explanation:"Howard Carter found the nearly intact tomb"},
+  {question:"The Great Sphinx has the body of what animal?",options:["A) Eagle","B) Bull","C) Lion","D) Ram"],correct:2,explanation:"Lion body with human head, likely representing Khafre"},
+  {question:"What was the Egyptian afterlife realm called?",options:["A) Valhalla","B) Elysium","C) Duat","D) Nirvana"],correct:2,explanation:"The Duat was the underworld for souls after death"},
+  {question:"Which god ruled the Egyptian underworld?",options:["A) Ra","B) Anubis","C) Osiris","D) Horus"],correct:2,explanation:"Osiris — god of the afterlife and resurrection"},
+  {question:"What writing material came from Nile Delta plants?",options:["A) Parchment","B) Vellum","C) Papyrus","D) Rice paper"],correct:2,explanation:"Papyrus was made from the pith of the papyrus plant"},
 ];
 
-// ===================== UPLOAD LOGIC =====================
-const dropZone=document.getElementById('drop-zone');
-const fileInput=document.getElementById('file-input');
-const fileSelected=document.getElementById('file-selected');
-const startBtn=document.getElementById('start-btn');
-const loadingMsg=document.getElementById('loading-msg');
+// ========================================================
+// UPLOAD LOGIC
+// ========================================================
+const dropZone=document.getElementById('drop-zone'),fileInput=document.getElementById('file-input'),fileSelected=document.getElementById('file-selected'),startBtn=document.getElementById('start-btn'),loadingMsg=document.getElementById('loading-msg');
 let selectedFile=null;
-
-const savedKey=localStorage.getItem('qr-api-key');
-if(savedKey)document.getElementById('api-key').value=savedKey;
-
 dropZone.addEventListener('click',()=>fileInput.click());
 dropZone.addEventListener('dragover',e=>{e.preventDefault();dropZone.classList.add('dragover')});
 dropZone.addEventListener('dragleave',()=>dropZone.classList.remove('dragover'));
@@ -469,214 +375,442 @@ dropZone.addEventListener('drop',e=>{e.preventDefault();dropZone.classList.remov
 fileInput.addEventListener('change',()=>{if(fileInput.files.length){selectedFile=fileInput.files[0];fileSelected.textContent='✅ '+selectedFile.name;fileSelected.classList.add('show')}});
 
 startBtn.addEventListener('click',async()=>{
-  const apiKey=document.getElementById('api-key').value.trim();
-  if(!apiKey)return alert('Enter your Anthropic API key first!');
-  localStorage.setItem('qr-api-key',apiKey);
-
   let text='';
-  if(selectedFile){
-    const ext=selectedFile.name.split('.').pop().toLowerCase();
-    text=ext==='pdf'?await extractPDFText(selectedFile):await selectedFile.text();
-  }
-  if(!text){text=document.getElementById('text-input').value.trim();}
-  if(!text){const url=document.getElementById('url-input').value.trim();if(url)text=url;}
-  if(text.length<50)return alert('Provide at least 50 characters of content.');
-
+  if(selectedFile){const ext=selectedFile.name.split('.').pop().toLowerCase();text=ext==='pdf'?await extractPDF(selectedFile):await selectedFile.text()}
+  if(!text)text=document.getElementById('text-input').value.trim();
+  if(text.length<50)return alert('Please provide at least 50 characters of content!');
   startBtn.disabled=true;loadingMsg.style.display='block';
-  try{
-    const q=await generateMCQs(text,apiKey);
-    if(!q||q.length<5)throw new Error('Not enough questions');
-    launchGame(q);
-  }catch(e){alert('Error: '+e.message)}
+  try{const q=generateMCQs(text);if(!q||q.length<5)throw new Error('Not enough questions');launchGame(q)}
+  catch(e){alert('Error: '+e.message)}
   finally{startBtn.disabled=false;loadingMsg.style.display='none'}
 });
 document.getElementById('demo-btn').addEventListener('click',()=>launchGame(DEMO_QUESTIONS));
 
-// ===================== 3D ENGINE =====================
-class GameEngine{
-  constructor(){this.scene=null;this.camera=null;this.renderer=null;this.clock=new THREE.Clock();this.running=false;this.boulderDistance=45;this.minBoulderDistance=5;this.playerBob=0;this.boulderRotation=0;this.shakeAmount=0;this.torches=[];this.leftLeg=null;this.rightLeg=null;this.leftArm=null;this.rightArm=null;this.dustRing=null;this.particleSystem=null;this.playerLight=null;this.boulderLight=null;this.player=null;this.boulder=null}
+// ========================================================
+// 3D JUNGLE ENGINE
+// ========================================================
+class JungleEngine{
+  constructor(){
+    this.scene=null;this.camera=null;this.renderer=null;this.clock=new THREE.Clock();
+    this.running=false;this.boulderDist=45;this.minBoulder=5;this.bob=0;this.bRot=0;this.shake=0;
+    this.player=null;this.boulder=null;this.torches=[];this.animals=[];this.vines=[];
+    this.leftLeg=null;this.rightLeg=null;this.leftArm=null;this.rightArm=null;
+    this.playerLight=null;this.boulderLight=null;this.dustRing=null;
+    this.stumbling=false;this.stumbleTimer=0;this.speedBoost=false;this.speedTimer=0;
+  }
   init(){
     const c=document.getElementById('game-canvas-container');
-    this.scene=new THREE.Scene();this.scene.background=new THREE.Color(0x060810);this.scene.fog=new THREE.FogExp2(0x060810,0.015);
-    this.camera=new THREE.PerspectiveCamera(65,window.innerWidth/window.innerHeight,0.1,200);this.camera.position.set(0,3.5,8);this.camera.lookAt(0,1,-10);
-    this.renderer=new THREE.WebGLRenderer({antialias:true});this.renderer.setSize(window.innerWidth,window.innerHeight);this.renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));this.renderer.shadowMap.enabled=true;this.renderer.toneMapping=THREE.ACESFilmicToneMapping;this.renderer.toneMappingExposure=0.7;
+    this.scene=new THREE.Scene();
+    this.scene.background=new THREE.Color(0x0a1a08);
+    this.scene.fog=new THREE.FogExp2(0x0a1a08,0.012);
+    this.camera=new THREE.PerspectiveCamera(70,window.innerWidth/window.innerHeight,.1,200);
+    this.camera.position.set(0,4,10);this.camera.lookAt(0,1.5,-8);
+    this.renderer=new THREE.WebGLRenderer({antialias:true});
+    this.renderer.setSize(window.innerWidth,window.innerHeight);
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
+    this.renderer.shadowMap.enabled=true;this.renderer.toneMapping=THREE.ACESFilmicToneMapping;this.renderer.toneMappingExposure=0.9;
     c.innerHTML='';c.appendChild(this.renderer.domElement);
-    this._lights();this._tunnel();this._player();this._boulder();this._particles();
+    this._lights();this._jungle();this._player();this._boulder();this._animals();this._particles();
     window.addEventListener('resize',()=>this._resize());this.running=true;this._animate();
   }
   _lights(){
-    this.scene.add(new THREE.AmbientLight(0x0a1520,0.4));
-    this.playerLight=new THREE.PointLight(0xff8c33,2.5,20);this.playerLight.position.set(0,3,4);this.playerLight.castShadow=true;this.scene.add(this.playerLight);
-    this.boulderLight=new THREE.PointLight(0xff3311,1.5,25);this.scene.add(this.boulderLight);
-    const s=new THREE.SpotLight(0xffa040,1,60,Math.PI/4);s.position.set(0,8,-20);this.scene.add(s);
+    // Ambient jungle light
+    this.scene.add(new THREE.AmbientLight(0x1a3a1a,0.5));
+    // Sunbeams from above
+    const sun=new THREE.DirectionalLight(0xfff4cc,0.8);sun.position.set(5,20,-10);sun.castShadow=true;this.scene.add(sun);
+    // Player torch
+    this.playerLight=new THREE.PointLight(0xff9933,2.5,25);this.playerLight.position.set(0,3,4);this.playerLight.castShadow=true;this.scene.add(this.playerLight);
+    // Boulder glow
+    this.boulderLight=new THREE.PointLight(0xff2200,2,30);this.scene.add(this.boulderLight);
+    // Scattered green ambient
+    for(let i=0;i<4;i++){const l=new THREE.PointLight(0x33ff33,0.3,15);l.position.set((Math.random()-.5)*6,2+Math.random()*3,-i*20);this.scene.add(l)}
   }
-  _tunnel(){
-    const g=new THREE.Mesh(new THREE.PlaneGeometry(8,200),new THREE.MeshStandardMaterial({color:0x2a2218,roughness:.9}));g.rotation.x=-Math.PI/2;g.position.z=-80;g.receiveShadow=true;this.scene.add(g);
-    const wm=new THREE.MeshStandardMaterial({color:0x1a1510,roughness:.95});
-    for(let s=-1;s<=1;s+=2){const w=new THREE.Mesh(new THREE.BoxGeometry(.5,5,200),wm);w.position.set(s*4,2.5,-80);w.castShadow=true;this.scene.add(w)}
-    this.scene.add(new THREE.Mesh(new THREE.BoxGeometry(8.5,.5,200),wm)).position.set(0,5,-80);
-    const bm=new THREE.MeshStandardMaterial({color:0x251a10,roughness:1});
-    for(let i=0;i<80;i++){const b=new THREE.Mesh(new THREE.BoxGeometry(.1+Math.random()*.1,.2+Math.random()*.4,.3+Math.random()*.6),bm);b.position.set((Math.random()>.5?3.7:-3.7)+(Math.random()-.5)*.2,Math.random()*4.5,Math.random()*-160);this.scene.add(b)}
-    for(let z=-5;z>-160;z-=15)for(let s=-1;s<=1;s+=2){const h=new THREE.Mesh(new THREE.CylinderGeometry(.05,.08,.5,6),new THREE.MeshStandardMaterial({color:0x4a3520}));h.position.set(s*3.5,3,z);this.scene.add(h);const l=new THREE.PointLight(0xff6620,.8,8);l.position.set(s*3.3,3.4,z);this.scene.add(l);const f=new THREE.Mesh(new THREE.SphereGeometry(.12,6,6),new THREE.MeshBasicMaterial({color:0xff8833}));f.position.copy(l.position);this.scene.add(f);this.torches.push({mesh:f,light:l,baseY:3.4})}
-    const rm=new THREE.MeshStandardMaterial({color:0x1e1810,roughness:1});
-    for(let i=0;i<60;i++){const sz=.05+Math.random()*.15;const r=new THREE.Mesh(new THREE.DodecahedronGeometry(sz,0),rm);r.position.set((Math.random()-.5)*7,sz*.5,Math.random()*-160);r.rotation.set(Math.random()*Math.PI,Math.random()*Math.PI,0);this.scene.add(r)}
+  _jungle(){
+    // GROUND - jungle floor with moss
+    const gMat=new THREE.MeshStandardMaterial({color:0x2a4a1a,roughness:.95});
+    const g=new THREE.Mesh(new THREE.PlaneGeometry(12,250),gMat);
+    g.rotation.x=-Math.PI/2;g.position.z=-100;g.receiveShadow=true;this.scene.add(g);
+    // Path (lighter center)
+    const path=new THREE.Mesh(new THREE.PlaneGeometry(4,250),new THREE.MeshStandardMaterial({color:0x3a3020,roughness:.9}));
+    path.rotation.x=-Math.PI/2;path.position.set(0,.01,-100);path.receiveShadow=true;this.scene.add(path);
+
+    // TREES on both sides
+    const treeMat=new THREE.MeshStandardMaterial({color:0x3a2a1a,roughness:.9});
+    const leafMat=new THREE.MeshStandardMaterial({color:0x1a6a1a,roughness:.7});
+    const leafMat2=new THREE.MeshStandardMaterial({color:0x2a8a2a,roughness:.7});
+    for(let z=5;z>-180;z-=6){
+      for(let side=-1;side<=1;side+=2){
+        const x=side*(3+Math.random()*2);
+        // Trunk
+        const h=4+Math.random()*4;
+        const trunk=new THREE.Mesh(new THREE.CylinderGeometry(.15,.25,h,6),treeMat);
+        trunk.position.set(x,h/2,z+Math.random()*3);trunk.castShadow=true;this.scene.add(trunk);
+        // Canopy (multiple spheres)
+        for(let j=0;j<3;j++){
+          const r=1+Math.random()*1.5;
+          const leaf=new THREE.Mesh(new THREE.SphereGeometry(r,6,5),Math.random()>.5?leafMat:leafMat2);
+          leaf.position.set(x+(Math.random()-.5)*1.5,h+Math.random()*1.5-.5,z+Math.random()*3);
+          leaf.scale.y=0.6;leaf.castShadow=true;this.scene.add(leaf);
+        }
+      }
+    }
+    // VINES hanging from canopy
+    const vineMat=new THREE.MeshStandardMaterial({color:0x2a5a2a,roughness:.8});
+    for(let i=0;i<40;i++){
+      const pts=[];const x=(Math.random()-.5)*8;const z=Math.random()*-160;const top=5+Math.random()*3;
+      for(let j=0;j<=8;j++){pts.push(new THREE.Vector3(x+Math.sin(j*.5)*.3,top-j*(top/8),z))}
+      const curve=new THREE.CatmullRomCurve3(pts);
+      const vine=new THREE.Mesh(new THREE.TubeGeometry(curve,8,.02,4,false),vineMat);
+      this.scene.add(vine);this.vines.push({mesh:vine,x,baseZ:z,top});
+    }
+    // FERNS & undergrowth
+    const fernMat=new THREE.MeshStandardMaterial({color:0x3a7a3a,roughness:.8,side:THREE.DoubleSide});
+    for(let i=0;i<80;i++){
+      const fern=new THREE.Mesh(new THREE.PlaneGeometry(.5+Math.random()*.5,1+Math.random()),fernMat);
+      fern.position.set((Math.random()-.5)*10,.4,Math.random()*-160);
+      fern.rotation.y=Math.random()*Math.PI;fern.rotation.x=-.2;this.scene.add(fern);
+    }
+    // ROCKS
+    const rockMat=new THREE.MeshStandardMaterial({color:0x4a4a3a,roughness:.9});
+    for(let i=0;i<30;i++){
+      const r=new THREE.Mesh(new THREE.DodecahedronGeometry(.1+Math.random()*.3,0),rockMat);
+      r.position.set((Math.random()-.5)*8,.1,Math.random()*-160);
+      r.rotation.set(Math.random()*Math.PI,Math.random()*Math.PI,0);this.scene.add(r);
+    }
+    // MUSHROOMS (glowing)
+    const mushMat=new THREE.MeshStandardMaterial({color:0x44ff44,emissive:0x22aa22,emissiveIntensity:.5,roughness:.5});
+    for(let i=0;i<15;i++){
+      const m=new THREE.Mesh(new THREE.SphereGeometry(.08,6,4),mushMat);
+      m.position.set((Math.random()>.5?1:-1)*(2+Math.random()*3),.08,Math.random()*-100);
+      m.scale.y=.6;this.scene.add(m);
+    }
+    // TORCH lights along path
+    const tMat=new THREE.MeshStandardMaterial({color:0x5a4530});
+    for(let z=0;z>-160;z-=20){
+      for(let s=-1;s<=1;s+=2){
+        const holder=new THREE.Mesh(new THREE.CylinderGeometry(.04,.07,.6,5),tMat);
+        holder.position.set(s*2.2,1.5,z);this.scene.add(holder);
+        const fl=new THREE.PointLight(0xff6620,.8,10);fl.position.set(s*2.1,2,z);this.scene.add(fl);
+        const fm=new THREE.Mesh(new THREE.SphereGeometry(.1,5,5),new THREE.MeshBasicMaterial({color:0xff8833}));
+        fm.position.copy(fl.position);this.scene.add(fm);
+        this.torches.push({mesh:fm,light:fl,baseY:2});
+      }
+    }
   }
   _player(){
-    const g=new THREE.Group();const bm=new THREE.MeshStandardMaterial({color:0x8B6914,roughness:.7});
+    const g=new THREE.Group();
+    // Body
+    const bm=new THREE.MeshStandardMaterial({color:0x8B6914,roughness:.7});
     const body=new THREE.Mesh(new THREE.BoxGeometry(.6,.8,.35),bm);body.position.y=1.2;body.castShadow=true;g.add(body);
-    g.add(new THREE.Mesh(new THREE.SphereGeometry(.22,8,8),new THREE.MeshStandardMaterial({color:0xd4a574,roughness:.6}))).position.y=1.85;
+    // Head
+    g.add(Object.assign(new THREE.Mesh(new THREE.SphereGeometry(.22,8,8),new THREE.MeshStandardMaterial({color:0xd4a574,roughness:.6})),{position:new THREE.Vector3(0,1.85,0)}));
+    // Fedora
     const hm=new THREE.MeshStandardMaterial({color:0x3e2723,roughness:.8});
-    g.add(new THREE.Mesh(new THREE.CylinderGeometry(.35,.38,.05,12),hm)).position.y=2;
-    g.add(new THREE.Mesh(new THREE.CylinderGeometry(.18,.22,.2,12),hm)).position.y=2.12;
+    g.add(Object.assign(new THREE.Mesh(new THREE.CylinderGeometry(.35,.38,.05,12),hm),{position:new THREE.Vector3(0,2,0)}));
+    g.add(Object.assign(new THREE.Mesh(new THREE.CylinderGeometry(.18,.22,.2,12),hm),{position:new THREE.Vector3(0,2.12,0)}));
+    // Legs
     const lm=new THREE.MeshStandardMaterial({color:0x5c4033,roughness:.8});
     for(let s=-1;s<=1;s+=2){const l=new THREE.Mesh(new THREE.BoxGeometry(.2,.6,.25),lm);l.position.set(s*.15,.5,0);l.castShadow=true;g.add(l);s===-1?this.leftLeg=l:this.rightLeg=l}
+    // Arms
     for(let s=-1;s<=1;s+=2){const a=new THREE.Mesh(new THREE.BoxGeometry(.15,.55,.2),bm);a.position.set(s*.42,1.15,0);a.castShadow=true;g.add(a);s===-1?this.leftArm=a:this.rightArm=a}
+    // Whip
     const wc=new THREE.CatmullRomCurve3([new THREE.Vector3(.5,1.2,0),new THREE.Vector3(.8,1,.5),new THREE.Vector3(1,.8,1.2),new THREE.Vector3(.8,.6,2)]);
     g.add(new THREE.Mesh(new THREE.TubeGeometry(wc,12,.015,4,false),new THREE.MeshStandardMaterial({color:0x2a1506})));
-    g.position.set(0,0,2);this.player=g;this.scene.add(g);
+    g.position.set(0,0,3);this.player=g;this.scene.add(g);
   }
   _boulder(){
-    const g=new THREE.Group();const geo=new THREE.IcosahedronGeometry(2.2,2);const p=geo.attributes.position;
-    for(let i=0;i<p.count;i++){const x=p.getX(i),y=p.getY(i),z=p.getZ(i);const n=1+(Math.sin(x*3)*Math.cos(y*2)*Math.sin(z*4))*.15;p.setXYZ(i,x*n,y*n,z*n)}
+    const g=new THREE.Group();
+    const geo=new THREE.IcosahedronGeometry(2.5,2);
+    const p=geo.attributes.position;
+    for(let i=0;i<p.count;i++){const x=p.getX(i),y=p.getY(i),z=p.getZ(i);const n=1+(Math.sin(x*3)*Math.cos(y*2)*Math.sin(z*4))*.18;p.setXYZ(i,x*n,y*n,z*n)}
     geo.computeVertexNormals();
-    g.add(new THREE.Mesh(geo,new THREE.MeshStandardMaterial({color:0x3a3a3a,roughness:.85,metalness:.15}))).castShadow=true;
-    const ring=new THREE.Mesh(new THREE.RingGeometry(2,3.5,16),new THREE.MeshBasicMaterial({color:0x8a7560,transparent:true,opacity:.3,side:THREE.DoubleSide}));
-    ring.rotation.x=-Math.PI/2;ring.position.y=-1.8;g.add(ring);this.dustRing=ring;
-    g.position.set(0,2.2,2-this.boulderDistance);this.boulder=g;this.scene.add(g);
+    const b=new THREE.Mesh(geo,new THREE.MeshStandardMaterial({color:0x5a5a5a,roughness:.8,metalness:.2}));
+    b.castShadow=true;g.add(b);
+    // Moss patches on boulder
+    for(let i=0;i<8;i++){const m=new THREE.Mesh(new THREE.SphereGeometry(.3+Math.random()*.3,5,4),new THREE.MeshStandardMaterial({color:0x3a6a3a,roughness:1}));
+      const a=Math.random()*Math.PI*2,e=Math.random()*Math.PI;
+      m.position.set(Math.sin(e)*Math.cos(a)*2.3,Math.sin(e)*Math.sin(a)*2.3,Math.cos(e)*2.3);g.add(m)}
+    // Dust ring
+    const ring=new THREE.Mesh(new THREE.RingGeometry(2.5,4,16),new THREE.MeshBasicMaterial({color:0x8a7560,transparent:true,opacity:.25,side:THREE.DoubleSide}));
+    ring.rotation.x=-Math.PI/2;ring.position.y=-2;g.add(ring);this.dustRing=ring;
+    g.position.set(0,2.5,3-this.boulderDist);this.boulder=g;this.scene.add(g);
+  }
+  _animals(){
+    // PARROTS (colorful birds flying)
+    const colors=[0xff3333,0x33ff33,0x3333ff,0xffff33,0xff33ff];
+    for(let i=0;i<6;i++){
+      const g=new THREE.Group();
+      const c=colors[i%colors.length];
+      // Body
+      g.add(Object.assign(new THREE.Mesh(new THREE.SphereGeometry(.15,6,5),new THREE.MeshStandardMaterial({color:c,roughness:.5})),{scale:new THREE.Vector3(1,1,1.5)}));
+      // Wing L
+      const wl=new THREE.Mesh(new THREE.PlaneGeometry(.3,.15),new THREE.MeshStandardMaterial({color:c,side:THREE.DoubleSide,roughness:.5}));
+      wl.position.set(-.2,.05,0);g.add(wl);
+      // Wing R
+      const wr=new THREE.Mesh(new THREE.PlaneGeometry(.3,.15),new THREE.MeshStandardMaterial({color:c,side:THREE.DoubleSide,roughness:.5}));
+      wr.position.set(.2,.05,0);g.add(wr);
+      // Beak
+      g.add(Object.assign(new THREE.Mesh(new THREE.ConeGeometry(.04,.1,4),new THREE.MeshStandardMaterial({color:0xffaa00})),{position:new THREE.Vector3(0,0,-.2),rotation:new THREE.Euler(Math.PI/2,0,0)}));
+      g.position.set((Math.random()-.5)*8,4+Math.random()*3,Math.random()*-80);
+      this.scene.add(g);
+      this.animals.push({mesh:g,type:'bird',wingL:wl,wingR:wr,baseY:g.position.y,baseX:g.position.x,speed:.5+Math.random()*.5,phase:Math.random()*Math.PI*2});
+    }
+    // TOUCANS (bigger beak, black body)
+    for(let i=0;i<3;i++){
+      const g=new THREE.Group();
+      g.add(Object.assign(new THREE.Mesh(new THREE.SphereGeometry(.18,6,5),new THREE.MeshStandardMaterial({color:0x1a1a1a,roughness:.5})),{scale:new THREE.Vector3(1,1,1.5)}));
+      // Big colorful beak
+      const beak=new THREE.Mesh(new THREE.ConeGeometry(.08,.25,5),new THREE.MeshStandardMaterial({color:0xff6600}));
+      beak.position.set(0,0,-.3);beak.rotation.x=Math.PI/2;g.add(beak);
+      // Wings
+      const wl=new THREE.Mesh(new THREE.PlaneGeometry(.35,.18),new THREE.MeshStandardMaterial({color:0x222222,side:THREE.DoubleSide}));wl.position.set(-.25,.05,0);g.add(wl);
+      const wr=new THREE.Mesh(new THREE.PlaneGeometry(.35,.18),new THREE.MeshStandardMaterial({color:0x222222,side:THREE.DoubleSide}));wr.position.set(.25,.05,0);g.add(wr);
+      // Breast (yellow)
+      g.add(Object.assign(new THREE.Mesh(new THREE.SphereGeometry(.1,5,4),new THREE.MeshStandardMaterial({color:0xffff00})),{position:new THREE.Vector3(0,-.05,-.1)}));
+      g.position.set((Math.random()-.5)*6,5+Math.random()*2,-10+Math.random()*-60);
+      this.scene.add(g);
+      this.animals.push({mesh:g,type:'bird',wingL:wl,wingR:wr,baseY:g.position.y,baseX:g.position.x,speed:.3+Math.random()*.3,phase:Math.random()*Math.PI*2});
+    }
+    // MONKEYS swinging on vines
+    for(let i=0;i<4;i++){
+      const g=new THREE.Group();
+      const mMat=new THREE.MeshStandardMaterial({color:0x6a4a2a,roughness:.7});
+      // Body
+      g.add(Object.assign(new THREE.Mesh(new THREE.SphereGeometry(.2,6,5),mMat),{scale:new THREE.Vector3(1,1.2,1)}));
+      // Head
+      g.add(Object.assign(new THREE.Mesh(new THREE.SphereGeometry(.14,6,5),mMat),{position:new THREE.Vector3(0,.3,0)}));
+      // Face
+      g.add(Object.assign(new THREE.Mesh(new THREE.SphereGeometry(.08,5,4),new THREE.MeshStandardMaterial({color:0xd4a574})),{position:new THREE.Vector3(0,.3,-.12)}));
+      // Arms (long!)
+      for(let s=-1;s<=1;s+=2){const arm=new THREE.Mesh(new THREE.BoxGeometry(.06,.5,.06),mMat);arm.position.set(s*.22,.15,0);g.add(arm)}
+      // Tail
+      const tc=new THREE.CatmullRomCurve3([new THREE.Vector3(0,-.15,.1),new THREE.Vector3(0,-.3,.3),new THREE.Vector3(.1,-.2,.5)]);
+      g.add(new THREE.Mesh(new THREE.TubeGeometry(tc,6,.02,4,false),mMat));
+      const x=(Math.random()>.5?1:-1)*(2+Math.random()*2);
+      g.position.set(x,3+Math.random()*3,-5+Math.random()*-80);
+      this.scene.add(g);
+      this.animals.push({mesh:g,type:'monkey',baseY:g.position.y,baseX:x,speed:.8+Math.random()*.5,phase:Math.random()*Math.PI*2});
+    }
+    // BUTTERFLIES
+    for(let i=0;i<10;i++){
+      const g=new THREE.Group();
+      const bc=new THREE.MeshBasicMaterial({color:[0xff66aa,0xffaa33,0x66ffaa,0xaa66ff,0x66aaff][i%5],transparent:true,opacity:.8,side:THREE.DoubleSide});
+      const wl=new THREE.Mesh(new THREE.CircleGeometry(.06,5),bc);wl.position.x=-.05;g.add(wl);
+      const wr=new THREE.Mesh(new THREE.CircleGeometry(.06,5),bc);wr.position.x=.05;g.add(wr);
+      g.position.set((Math.random()-.5)*8,1+Math.random()*4,Math.random()*-60);
+      this.scene.add(g);
+      this.animals.push({mesh:g,type:'butterfly',wingL:wl,wingR:wr,baseY:g.position.y,baseX:g.position.x,speed:1+Math.random(),phase:Math.random()*Math.PI*2});
+    }
   }
   _particles(){
-    const n=200;const geo=new THREE.BufferGeometry();const pos=new Float32Array(n*3);
-    for(let i=0;i<n;i++){pos[i*3]=(Math.random()-.5)*6;pos[i*3+1]=Math.random()*4;pos[i*3+2]=Math.random()*-40}
+    const n=300;const geo=new THREE.BufferGeometry();const pos=new Float32Array(n*3);
+    for(let i=0;i<n;i++){pos[i*3]=(Math.random()-.5)*10;pos[i*3+1]=Math.random()*6;pos[i*3+2]=Math.random()*-60}
     geo.setAttribute('position',new THREE.BufferAttribute(pos,3));
-    this.particleSystem=new THREE.Points(geo,new THREE.PointsMaterial({color:0xb8a080,size:.08,transparent:true,opacity:.4,sizeAttenuation:true}));
-    this.scene.add(this.particleSystem);
+    this.particles=new THREE.Points(geo,new THREE.PointsMaterial({color:0xccddaa,size:.04,transparent:true,opacity:.5,sizeAttenuation:true}));
+    this.scene.add(this.particles);
   }
-  setBoulderDistance(d){this.boulderDistance=Math.max(this.minBoulderDistance,Math.min(50,d))}
-  moveBoulderCloser(a){this.boulderDistance=Math.max(this.minBoulderDistance,this.boulderDistance-a)}
-  pushBoulderBack(a){this.boulderDistance=Math.min(50,this.boulderDistance+a)}
-  triggerShake(a){this.shakeAmount=a}
+
+  // === GAME ACTIONS ===
+  stumble(){this.stumbling=true;this.stumbleTimer=1.5}
+  boost(){this.speedBoost=true;this.speedTimer=1.5}
+  moveBoulderCloser(a){this.boulderDist=Math.max(this.minBoulder,this.boulderDist-a)}
+  pushBoulderBack(a){this.boulderDist=Math.min(50,this.boulderDist+a)}
+  setBoulderDist(d){this.boulderDist=Math.max(this.minBoulder,Math.min(50,d))}
+
   _animate(){
     if(!this.running)return;requestAnimationFrame(()=>this._animate());
     const dt=this.clock.getDelta(),t=this.clock.getElapsedTime();
-    this.playerBob+=dt*12;
-    if(this.player){this.player.position.y=Math.abs(Math.sin(this.playerBob))*.15;if(this.leftLeg){this.leftLeg.rotation.x=Math.sin(this.playerBob)*.6;this.rightLeg.rotation.x=-Math.sin(this.playerBob)*.6}if(this.leftArm){this.leftArm.rotation.x=-Math.sin(this.playerBob)*.4;this.rightArm.rotation.x=Math.sin(this.playerBob)*.4}}
-    if(this.boulder){this.boulderRotation+=dt*.15*8;this.boulder.rotation.x=this.boulderRotation;this.boulder.rotation.z=Math.sin(t*2)*.05;this.boulder.position.z=2-this.boulderDistance;this.boulderLight.position.copy(this.boulder.position);this.boulderLight.position.y+=3;const df=1-(this.boulderDistance-this.minBoulderDistance)/45;this.boulderLight.intensity=.5+df*3;if(this.dustRing)this.dustRing.material.opacity=.2+Math.sin(t*4)*.1}
-    this.torches.forEach(x=>{if(x.light){x.light.intensity=.6+Math.random()*.4;x.mesh.position.y=x.baseY+Math.sin(t*8+x.baseY)*.04;x.mesh.scale.setScalar(.8+Math.random()*.4)}});
-    if(this.playerLight){this.playerLight.intensity=2.2+Math.sin(t*6)*.3+Math.random()*.2;this.playerLight.position.set(Math.sin(t*3)*.1,3+Math.sin(t*5)*.1,4)}
-    if(this.shakeAmount>0){this.camera.position.x=(Math.random()-.5)*this.shakeAmount;this.camera.position.y=3.5+(Math.random()-.5)*this.shakeAmount*.5;this.shakeAmount*=.92;if(this.shakeAmount<.01)this.shakeAmount=0}else{this.camera.position.x=0;this.camera.position.y=3.5}
-    if(this.particleSystem){const p=this.particleSystem.geometry.attributes.position.array;for(let i=0;i<p.length;i+=3){p[i+1]+=Math.sin(t+i)*.005;p[i]+=Math.cos(t*.5+i)*.003;if(p[i+1]>5)p[i+1]=0}this.particleSystem.geometry.attributes.position.needsUpdate=true;this.particleSystem.material.opacity=.2+(1-this.boulderDistance/50)*.4}
-    this.scene.fog.density=.012+(1-this.boulderDistance/50)*.008;
+
+    // Stumble timer
+    if(this.stumbling){this.stumbleTimer-=dt;if(this.stumbleTimer<=0)this.stumbling=false}
+    if(this.speedBoost){this.speedTimer-=dt;if(this.speedTimer<=0)this.speedBoost=false}
+
+    // Player running
+    const runSpeed=this.stumbling?4:this.speedBoost?18:12;
+    this.bob+=dt*runSpeed;
+    if(this.player){
+      if(this.stumbling){
+        // Stumble animation - wobble and slow
+        this.player.position.y=Math.abs(Math.sin(this.bob))*.05;
+        this.player.rotation.x=Math.sin(t*15)*.15;
+        this.player.rotation.z=Math.sin(t*12)*.2;
+      }else{
+        this.player.position.y=Math.abs(Math.sin(this.bob))*.2;
+        this.player.rotation.x=0;this.player.rotation.z=0;
+      }
+      if(this.leftLeg){this.leftLeg.rotation.x=Math.sin(this.bob)*(this.stumbling?.3:.7);this.rightLeg.rotation.x=-Math.sin(this.bob)*(this.stumbling?.3:.7)}
+      if(this.leftArm){this.leftArm.rotation.x=-Math.sin(this.bob)*(this.stumbling?.2:.5);this.rightArm.rotation.x=Math.sin(this.bob)*(this.stumbling?.2:.5)}
+    }
+
+    // Boulder
+    if(this.boulder){
+      this.bRot+=dt*(this.stumbling?3:this.speedBoost?1:2);
+      this.boulder.rotation.x=this.bRot;this.boulder.rotation.z=Math.sin(t*2)*.06;
+      this.boulder.position.z=3-this.boulderDist;
+      this.boulderLight.position.set(this.boulder.position.x,this.boulder.position.y+3,this.boulder.position.z);
+      const df=1-(this.boulderDist-this.minBoulder)/45;
+      this.boulderLight.intensity=1+df*4;
+      if(this.dustRing)this.dustRing.material.opacity=.15+Math.sin(t*4)*.1;
+    }
+
+    // Animals
+    for(const a of this.animals){
+      if(a.type==='bird'){
+        a.mesh.position.x=a.baseX+Math.sin(t*a.speed+a.phase)*3;
+        a.mesh.position.y=a.baseY+Math.sin(t*a.speed*.7+a.phase)*1;
+        a.mesh.position.z+=(this.speedBoost?.03:.015);if(a.mesh.position.z>10)a.mesh.position.z=-80;
+        if(a.wingL){a.wingL.rotation.z=Math.sin(t*8+a.phase)*.6;a.wingR.rotation.z=-Math.sin(t*8+a.phase)*.6}
+      }else if(a.type==='monkey'){
+        a.mesh.position.x=a.baseX+Math.sin(t*a.speed+a.phase)*1.5;
+        a.mesh.position.y=a.baseY+Math.sin(t*a.speed*1.5+a.phase)*.8;
+        a.mesh.rotation.z=Math.sin(t*a.speed+a.phase)*.3;
+      }else if(a.type==='butterfly'){
+        a.mesh.position.x=a.baseX+Math.sin(t*a.speed+a.phase)*2;
+        a.mesh.position.y=a.baseY+Math.sin(t*a.speed*1.3+a.phase)*.5;
+        a.mesh.position.z+=.005;if(a.mesh.position.z>5)a.mesh.position.z=-60;
+        if(a.wingL){a.wingL.rotation.y=Math.sin(t*12+a.phase)*.8;a.wingR.rotation.y=-Math.sin(t*12+a.phase)*.8}
+      }
+    }
+
+    // Torches
+    for(const tc of this.torches){tc.light.intensity=.6+Math.random()*.5;tc.mesh.position.y=tc.baseY+Math.sin(t*8+tc.baseY)*.04;tc.mesh.scale.setScalar(.7+Math.random()*.5)}
+
+    // Player light
+    if(this.playerLight){this.playerLight.intensity=2+Math.sin(t*6)*.3+Math.random()*.2;this.playerLight.position.set(Math.sin(t*3)*.1,3+Math.sin(t*5)*.1,5)}
+
+    // Camera shake
+    if(this.shake>0){
+      this.camera.position.x=(Math.random()-.5)*this.shake;this.camera.position.y=4+(Math.random()-.5)*this.shake*.5;
+      this.shake*=.9;if(this.shake<.01)this.shake=0;
+    }else{this.camera.position.x=0;this.camera.position.y=4}
+
+    // Particles drift
+    if(this.particles){
+      const p=this.particles.geometry.attributes.position.array;
+      for(let i=0;i<p.length;i+=3){p[i+1]+=Math.sin(t+i)*.003;p[i]+=Math.cos(t*.3+i)*.002;if(p[i+1]>7)p[i+1]=0}
+      this.particles.geometry.attributes.position.needsUpdate=true;
+      this.particles.material.opacity=.3+(1-this.boulderDist/50)*.4;
+    }
+
+    // Fog based on danger
+    this.scene.fog.density=.01+(1-this.boulderDist/50)*.008;
     this.renderer.render(this.scene,this.camera);
   }
-  _resize(){if(!this.camera||!this.renderer)return;this.camera.aspect=window.innerWidth/window.innerHeight;this.camera.updateProjectionMatrix();this.renderer.setSize(window.innerWidth,window.innerHeight)}
+  _resize(){if(!this.camera)return;this.camera.aspect=window.innerWidth/window.innerHeight;this.camera.updateProjectionMatrix();this.renderer.setSize(window.innerWidth,window.innerHeight)}
   destroy(){this.running=false;if(this.renderer){this.renderer.dispose();this.renderer.domElement.remove()}}
 }
 
-// ===================== QUIZ GAME =====================
+// ========================================================
+// QUIZ GAME
+// ========================================================
 class QuizGame{
-  constructor(questions){
-    this.questions=questions.slice(0,12);this.current=0;this.score=0;this.streak=0;this.bestStreak=0;
-    this.correctCount=0;this.totalTime=60;this.timeLeft=60;this.hearts=3;
+  constructor(qs){
+    this.qs=qs.slice(0,12);this.cur=0;this.score=0;this.streak=0;this.best=0;
+    this.correct=0;this.total=60;this.left=60;this.hearts=3;
     this.timer=null;this.engine=null;this.answering=false;this.results=[];this.target=10;
   }
   start(){
     document.getElementById('upload-screen').classList.remove('active');
     document.getElementById('results-screen').classList.remove('active');
     document.getElementById('game-screen').classList.add('active');
-    this.engine=new GameEngine();this.engine.init();this.engine.setBoulderDistance(45);
-    this._updateHUD();this._countdown(()=>{this._startTimer();this._showQ()});
+    this.engine=new JungleEngine();this.engine.init();this.engine.setBoulderDist(45);
+    // Build progress dots
+    const dots=document.getElementById('q-dots');dots.innerHTML='';
+    for(let i=0;i<Math.min(this.target,this.qs.length);i++){const d=document.createElement('div');d.className='q-dot';dots.appendChild(d)}
+    this._hud();this._countdown(()=>{this._startTimer();this._showQ()});
   }
   _countdown(cb){
-    const ov=document.getElementById('countdown-overlay'),num=document.getElementById('countdown-num');
-    ov.classList.remove('hidden');let c=3;num.textContent=c;num.style.animation='none';void num.offsetWidth;num.style.animation='cPulse .8s ease-out';
-    const iv=setInterval(()=>{c--;if(c>0){num.textContent=c;num.style.animation='none';void num.offsetWidth;num.style.animation='cPulse .8s ease-out'}else{num.textContent='RUN!';num.style.color='var(--danger)';num.style.animation='none';void num.offsetWidth;num.style.animation='cPulse .8s ease-out';setTimeout(()=>{ov.classList.add('hidden');num.style.color='';cb()},800);clearInterval(iv)}},1000);
+    const ov=document.getElementById('countdown-ov'),n=document.getElementById('cn');
+    ov.classList.remove('hidden');let c=3;n.textContent=c;n.style.animation='none';void n.offsetWidth;n.style.animation='cPulse .8s ease-out';
+    const iv=setInterval(()=>{c--;if(c>0){n.textContent=c;n.style.animation='none';void n.offsetWidth;n.style.animation='cPulse .8s ease-out'}
+    else{n.textContent='RUN!';n.style.color='var(--jungle-glow)';n.style.animation='none';void n.offsetWidth;n.style.animation='cPulse .8s ease-out';
+      setTimeout(()=>{ov.classList.add('hidden');n.style.color='';cb()},700);clearInterval(iv)}},900);
   }
   _startTimer(){
     this.timer=setInterval(()=>{
-      this.timeLeft--;this._updateHUD();
-      if(this.engine){this.engine.moveBoulderCloser(.3);if(this.engine.boulderDistance<15)this.engine.triggerShake(.05+(15-this.engine.boulderDistance)*.01)}
-      if(this.timeLeft<=0)this._end(false);
+      this.left--;this._hud();
+      if(this.engine){this.engine.moveBoulderCloser(.25);if(this.engine.boulderDist<15)this.engine.shake=.03+(15-this.engine.boulderDist)*.008}
+      if(this.left<=0)this._end(false);
     },1000);
   }
-  _updateHUD(){
-    const m=Math.floor(Math.max(0,this.timeLeft)/60),s=Math.max(0,this.timeLeft)%60;
+  _hud(){
+    const m=Math.floor(Math.max(0,this.left)/60),s=Math.max(0,this.left)%60;
     document.getElementById('hud-time').textContent=String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
     document.getElementById('hud-score').textContent=this.score.toLocaleString();
-    document.getElementById('game-hearts').textContent=this.hearts;
-    if(this.timeLeft<=15)document.getElementById('hud-time').parentElement.style.boxShadow='0 0 20px rgba(255,45,85,0.3)';
-    const pct=Math.min(100,(this.current/this.target)*100);
-    document.getElementById('progress-fill').style.width=pct+'%';
-    document.getElementById('progress-count').textContent=`${Math.min(this.current,this.target)}/${this.target}`;
+    document.getElementById('hud-hearts').textContent='❤️'.repeat(Math.max(0,this.hearts))+'🖤'.repeat(Math.max(0,3-this.hearts));
+    document.getElementById('q-count').textContent=`${Math.min(this.cur+1,this.target)}/${Math.min(this.target,this.qs.length)}`;
+    // Update dots
+    const dots=document.querySelectorAll('.q-dot');
+    dots.forEach((d,i)=>{d.className='q-dot';if(i<this.results.length)d.classList.add(this.results[i].isCorrect?'done':'fail');else if(i===this.cur)d.classList.add('current')});
   }
   _showQ(){
-    if(this.current>=this.questions.length||this.current>=this.target){this._end(true);return}
-    const q=this.questions[this.current];
+    if(this.cur>=this.qs.length||this.cur>=this.target){this._end(true);return}
+    const q=this.qs[this.cur];
     document.getElementById('q-text').textContent=q.question;
-    const opts=document.getElementById('q-options');opts.innerHTML='';
-    const letters=['A','B','C','D'];
+    const opts=document.getElementById('q-opts');opts.innerHTML='';
+    const L=['A','B','C','D'];
     q.options.forEach((o,i)=>{
       const div=document.createElement('div');div.className='q-opt';
-      div.innerHTML=`<div class="opt-letter">${letters[i]}</div><div class="opt-text">${o.replace(/^[A-D]\)\s*/,'')}</div><div class="opt-icon"></div>`;
+      div.innerHTML=`<div class="ol">${L[i]}</div><div class="ot">${o.replace(/^[A-D]\)\s*/,'')}</div>`;
       div.addEventListener('click',()=>this._answer(i));opts.appendChild(div);
     });
-    document.getElementById('question-area').classList.remove('hidden');
-    this.answering=true;this._updateHUD();
+    document.getElementById('q-strip').classList.remove('hidden');
+    this.answering=true;this._hud();
   }
   _answer(idx){
     if(!this.answering)return;this.answering=false;
-    const q=this.questions[this.current];const ok=idx===q.correct;
-    document.querySelectorAll('.q-opt').forEach((el,i)=>{
-      el.classList.add('disabled');
-      if(i===q.correct){el.classList.add('correct');el.querySelector('.opt-icon').textContent='✓'}
-      if(i===idx&&!ok){el.classList.add('wrong');el.querySelector('.opt-icon').textContent='✗'}
-    });
+    const q=this.qs[this.cur];const ok=idx===q.correct;
+    document.querySelectorAll('.q-opt').forEach((el,i)=>{el.classList.add('disabled');if(i===q.correct)el.classList.add('correct');if(i===idx&&!ok)el.classList.add('wrong')});
     this.results.push({question:q.question,selected:q.options[idx],correct:q.options[q.correct],isCorrect:ok,explanation:q.explanation});
+
     if(ok){
-      this.correctCount++;this.streak++;if(this.streak>this.bestStreak)this.bestStreak=this.streak;
-      const bonus=Math.min(this.streak*50,250),tb=Math.floor(this.timeLeft/this.totalTime*100);
+      this.correct++;this.streak++;if(this.streak>this.best)this.best=this.streak;
+      const bonus=Math.min(this.streak*50,250),tb=Math.floor(this.left/this.total*100);
       this.score+=100+bonus+tb;
-      if(this.engine){this.engine.pushBoulderBack(8)}
-      this._feedback(true,'+'+(100+bonus+tb));
+      if(this.engine){this.engine.pushBoulderBack(8);this.engine.boost()}
+      this._fb(true,'CORRECT! +'+(100+bonus+tb));
     }else{
       this.streak=0;this.hearts--;
-      if(this.engine){this.engine.moveBoulderCloser(8);this.engine.triggerShake(.4)}
-      this.timeLeft=Math.max(0,this.timeLeft-5);
-      this._feedback(false,'WRONG! -5s');
-      if(this.hearts<=0){setTimeout(()=>this._end(false),1200);return}
+      if(this.engine){this.engine.moveBoulderCloser(8);this.engine.shake=.5;this.engine.stumble()}
+      this.left=Math.max(0,this.left-5);
+      this._fb(false,'WRONG! -5s');
+      if(this.hearts<=0){setTimeout(()=>this._end(false),1500);return}
     }
-    this._updateHUD();
+    this._hud();
     setTimeout(()=>{
-      document.getElementById('question-area').classList.add('hidden');
-      if(this.engine&&this.engine.boulderDistance<=this.engine.minBoulderDistance){this._end(false);return}
-      this.current++;setTimeout(()=>this._showQ(),500);
+      document.getElementById('q-strip').classList.add('hidden');
+      if(this.engine&&this.engine.boulderDist<=this.engine.minBoulder){this._end(false);return}
+      this.cur++;setTimeout(()=>this._showQ(),500);
     },1200);
   }
-  _feedback(ok,text){
-    const el=document.getElementById('feedback-popup'),inner=document.getElementById('fb-inner');
+  _fb(ok,text){
+    const el=document.getElementById('fb-flash'),inner=document.getElementById('fb-inner');
     inner.textContent=text;inner.className='fb-inner '+(ok?'correct':'wrong');
-    el.classList.remove('hidden');setTimeout(()=>el.classList.add('hidden'),1000);
+    el.classList.add('show');setTimeout(()=>el.classList.remove('show'),1200);
   }
   _end(won){
     clearInterval(this.timer);if(this.engine)this.engine.running=false;
-    document.getElementById('question-area').classList.add('hidden');
+    document.getElementById('q-strip').classList.add('hidden');
     setTimeout(()=>{
       document.getElementById('game-screen').classList.remove('active');
       document.getElementById('results-screen').classList.add('active');
       const hero=document.getElementById('result-hero');
-      if(won){hero.style.background='linear-gradient(135deg,#667eea,#764ba2)';document.getElementById('result-badge').textContent='MISSION COMPLETE!';document.getElementById('result-title').textContent='LEVEL UP!';document.getElementById('result-desc').textContent="Amazing work, Explorer! You've conquered the run."}
-      else{hero.style.background='linear-gradient(135deg,#e53935,#8e0000)';document.getElementById('result-badge').textContent='EXPEDITION FAILED';document.getElementById('result-title').textContent='GAME OVER';document.getElementById('result-desc').textContent='The boulder caught you. Study and try again!'}
+      hero.className='result-hero '+(won?'win':'lose');
+      document.getElementById('result-badge').textContent=won?'MISSION COMPLETE!':'EXPEDITION FAILED';
+      document.getElementById('result-title').textContent=won?'LEVEL UP!':'GAME OVER';
+      document.getElementById('result-desc').textContent=won?"You escaped the jungle!":"The boulder caught you...";
       document.getElementById('xp-value').textContent='+'+this.score.toLocaleString();
       document.getElementById('xp-bar-fill').style.width=Math.min(100,this.score/20)+'%';
       const rank=this.score>1500?'Master Explorer':this.score>800?'Relic Hunter':this.score>400?'Scout':'Novice';
       document.getElementById('xp-rank').textContent='Rank: '+rank;
-      const acc=this.current>0?Math.round(this.correctCount/this.current*100):0;
+      const acc=this.cur>0?Math.round(this.correct/this.cur*100):0;
       document.getElementById('sc-accuracy').textContent=acc+'%';
-      const elapsed=this.totalTime-this.timeLeft;
+      const elapsed=this.total-this.left;
       document.getElementById('sc-time').textContent=String(Math.floor(elapsed/60)).padStart(2,'0')+':'+String(elapsed%60).padStart(2,'0');
       const jl=document.getElementById('journal-list');jl.innerHTML='';
-      this.results.forEach((r,i)=>{
+      this.results.forEach(r=>{
         const d=document.createElement('div');d.className='journal-item';
-        d.innerHTML=`<div class="ji-header"><div class="ji-q">${r.question}</div><div class="ji-badge ${r.isCorrect?'correct':'wrong'}">${r.isCorrect?'✓':'✗'}</div></div><span class="ji-tag ${r.isCorrect?'legendary':'study'}">${r.isCorrect?'Legendary Knowledge':'Study Required'}</span>${r.explanation?`<div class="ji-detail">${r.isCorrect?'':'Correction Insight: '}${r.explanation}</div>`:''}`;
+        d.innerHTML=`<div class="ji-header"><div class="ji-q">${r.question}</div><div class="ji-badge ${r.isCorrect?'correct':'wrong'}">${r.isCorrect?'✓':'✗'}</div></div><span class="ji-tag ${r.isCorrect?'ok':'bad'}">${r.isCorrect?'Mastered':'Study Required'}</span>${r.explanation?`<div class="ji-detail">${r.isCorrect?'':'Correct: '+r.correct+'<br>'}${r.explanation}</div>`:''}`;
         jl.appendChild(d);
       });
     },800);
@@ -684,11 +818,13 @@ class QuizGame{
   cleanup(){clearInterval(this.timer);if(this.engine)this.engine.destroy()}
 }
 
-// ===================== GLOBAL =====================
-let currentGame=null,currentQuestions=null;
-function launchGame(q){currentQuestions=q;if(currentGame)currentGame.cleanup();currentGame=new QuizGame(q);currentGame.start()}
-document.getElementById('retry-btn').addEventListener('click',()=>{if(currentQuestions){document.getElementById('results-screen').classList.remove('active');if(currentGame)currentGame.cleanup();currentGame=new QuizGame(currentQuestions);currentGame.start()}});
-document.getElementById('new-btn').addEventListener('click',()=>{if(currentGame)currentGame.cleanup();document.getElementById('results-screen').classList.remove('active');document.getElementById('game-screen').classList.remove('active');document.getElementById('upload-screen').classList.add('active')});
+// ========================================================
+// GLOBAL
+// ========================================================
+let curGame=null,curQs=null;
+function launchGame(q){curQs=q;if(curGame)curGame.cleanup();curGame=new QuizGame(q);curGame.start()}
+document.getElementById('retry-btn').addEventListener('click',()=>{if(curQs){document.getElementById('results-screen').classList.remove('active');if(curGame)curGame.cleanup();curGame=new QuizGame(curQs);curGame.start()}});
+document.getElementById('new-btn').addEventListener('click',()=>{if(curGame)curGame.cleanup();document.getElementById('results-screen').classList.remove('active');document.getElementById('game-screen').classList.remove('active');document.getElementById('upload-screen').classList.add('active')});
 </script>
 </body>
 </html>

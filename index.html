@@ -193,6 +193,56 @@ html,body{width:100%;height:100%;overflow:hidden;font-family:'Be Vietnam Pro',sa
 .progress-bar-fill{height:100%;background:linear-gradient(90deg,var(--relic-glow),var(--jungle-glow));border-radius:var(--radius-full);transition:width .3s}
 .progress-text{font-size:11px;color:var(--text-dim);font-weight:600}
 
+/* ===== RANKS SCREEN ===== */
+#ranks-screen{background:var(--bg)}
+.ranks-scroll{flex:1;overflow-y:auto;padding:0 20px 20px}
+.ranks-hero{text-align:center;margin:16px 0 24px}
+.ranks-hero h1{font-family:'Plus Jakarta Sans',sans-serif;font-size:2rem;font-weight:800}
+.ranks-hero h1 span{background:linear-gradient(135deg,var(--oasis-glow),#0088ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.ranks-hero p{color:var(--text-dim);font-size:14px;margin-top:8px}
+.rank-card{background:var(--bg-card);border-radius:var(--radius-lg);padding:20px;margin-bottom:12px;display:flex;align-items:center;gap:16px;position:relative;overflow:hidden;transition:all .3s}
+.rank-card.current{box-shadow:0 0 20px rgba(38,230,255,0.15)}
+.rank-card.current::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--oasis),var(--oasis-glow))}
+.rank-card.locked{opacity:.5}
+.rank-icon{width:50px;height:50px;border-radius:var(--radius-md);display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0}
+.rank-info{flex:1}
+.rank-name{font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:16px;letter-spacing:.5px}
+.rank-req{font-size:12px;color:var(--text-dim);margin-top:2px}
+.rank-check{font-size:22px;flex-shrink:0}
+.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:24px}
+.mini-stat{background:var(--bg-card);border-radius:var(--radius-lg);padding:18px;text-align:center}
+.mini-stat .ms-val{font-family:'Plus Jakarta Sans',sans-serif;font-size:1.8rem;font-weight:800;line-height:1}
+.mini-stat .ms-label{font-size:11px;color:var(--text-dim);font-weight:600;letter-spacing:1px;text-transform:uppercase;margin-top:6px}
+.mini-stat.orange .ms-val{color:var(--relic-glow)}
+.mini-stat.cyan .ms-val{color:var(--oasis-glow)}
+.mini-stat.green .ms-val{color:var(--jungle-glow)}
+.mini-stat.red .ms-val{color:var(--danger)}
+
+/* ===== HERO SCREEN ===== */
+#hero-screen{background:var(--bg)}
+.hero-scroll{flex:1;overflow-y:auto;padding:0 20px 20px}
+.hero-header{text-align:center;margin:16px 0 8px}
+.hero-header h1{font-family:'Plus Jakarta Sans',sans-serif;font-size:2rem;font-weight:800}
+.hero-header h1 span{background:linear-gradient(135deg,var(--relic-glow),#ffcc00);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.hero-3d-preview{width:100%;height:280px;background:rgba(0,0,0,0.3);border-radius:var(--radius-lg);margin:16px 0;display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative}
+.hero-3d-preview canvas{max-width:100%;max-height:100%}
+.hero-name-tag{text-align:center;margin-bottom:20px}
+.hero-name-tag h2{font-family:'Plus Jakarta Sans',sans-serif;font-size:24px;font-weight:800;letter-spacing:1px}
+.hero-name-tag p{font-size:13px;color:var(--text-dim);margin-top:4px}
+.hero-costumes-label{font-family:'Plus Jakarta Sans',sans-serif;font-size:16px;font-weight:800;letter-spacing:1px;margin-bottom:12px}
+.hero-costume-row{display:flex;gap:12px;overflow-x:auto;padding-bottom:12px}
+.hero-costume-item{flex-shrink:0;width:100px;text-align:center;cursor:pointer;transition:transform .2s}
+.hero-costume-item:active{transform:scale(.95)}
+.hero-costume-thumb{width:100px;height:100px;background:var(--bg-card);border-radius:var(--radius-md);display:flex;align-items:center;justify-content:center;overflow:hidden;border:3px solid transparent;transition:border-color .2s}
+.hero-costume-thumb canvas{max-width:100%;max-height:100%}
+.hero-costume-item.active .hero-costume-thumb{border-color:var(--oasis-glow)}
+.hero-costume-item.locked .hero-costume-thumb{opacity:.35}
+.hero-costume-label{font-size:11px;font-weight:700;margin-top:6px;letter-spacing:.5px}
+.hero-costume-item.active .hero-costume-label{color:var(--oasis-glow)}
+.hero-costume-item.locked .hero-costume-label{color:var(--text-dim)}
+.hero-stats-section{margin-top:20px}
+.hero-stats-section h3{font-family:'Plus Jakarta Sans',sans-serif;font-size:16px;font-weight:800;letter-spacing:1px;margin-bottom:12px}
+
 /* Coin earned toast */
 .coin-toast{position:fixed;top:20px;left:50%;transform:translateX(-50%) translateY(-100px);z-index:100;padding:12px 24px;background:rgba(253,144,0,0.9);border-radius:var(--radius-full);font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:18px;color:#000;transition:transform .4s cubic-bezier(.34,1.56,.64,1);pointer-events:none}
 .coin-toast.show{transform:translateX(-50%) translateY(0)}
@@ -243,8 +293,8 @@ html,body{width:100%;height:100%;overflow:hidden;font-family:'Be Vietnam Pro',sa
   <div class="bottom-nav">
     <div class="nav-item active"><span class="nav-icon">🧭</span>QUEST</div>
     <div class="nav-item" onclick="showScreen('shop')"><span class="nav-icon">🛍</span>SHOP</div>
-    <div class="nav-item"><span class="nav-icon">📊</span>RANKS</div>
-    <div class="nav-item"><span class="nav-icon">👤</span>HERO</div>
+    <div class="nav-item" onclick="showScreen('ranks')"><span class="nav-icon">📊</span>RANKS</div>
+    <div class="nav-item" onclick="showScreen('hero')"><span class="nav-icon">👤</span>HERO</div>
   </div>
 </div>
 
@@ -299,6 +349,68 @@ html,body{width:100%;height:100%;overflow:hidden;font-family:'Be Vietnam Pro',sa
     <div class="nav-item active"><span class="nav-icon">🛍</span>SHOP</div>
     <div class="nav-item"><span class="nav-icon">📊</span>RANKS</div>
     <div class="nav-item"><span class="nav-icon">👤</span>HERO</div>
+  </div>
+</div>
+
+<!-- ========== RANKS SCREEN ========== -->
+<div id="ranks-screen" class="screen">
+  <div class="app-header">
+    <div class="app-logo"><div class="logo-icon">🌴</div><div class="logo-text">QUIZ RUSH</div></div>
+    <div class="coin-display" onclick="showScreen('shop')" style="cursor:pointer"><span class="coin-icon">🪙</span><span id="ranks-coins">0</span></div>
+  </div>
+  <div class="ranks-scroll">
+    <div class="ranks-hero">
+      <h1>YOUR <span>RANKINGS</span></h1>
+      <p>Level up by playing quizzes and earning XP!</p>
+    </div>
+    <div class="stats-grid" id="ranks-stats">
+      <div class="mini-stat orange"><div class="ms-val" id="rs-total-coins">0</div><div class="ms-label">Total Coins</div></div>
+      <div class="mini-stat cyan"><div class="ms-val" id="rs-games">0</div><div class="ms-label">Games Played</div></div>
+      <div class="mini-stat green"><div class="ms-val" id="rs-best">0</div><div class="ms-label">Best Score</div></div>
+      <div class="mini-stat red"><div class="ms-val" id="rs-streak">0</div><div class="ms-label">Best Streak</div></div>
+    </div>
+    <div id="ranks-list"></div>
+  </div>
+  <div class="bottom-nav">
+    <div class="nav-item" onclick="showScreen('upload')"><span class="nav-icon">🧭</span>QUEST</div>
+    <div class="nav-item" onclick="showScreen('shop')"><span class="nav-icon">🛍</span>SHOP</div>
+    <div class="nav-item active"><span class="nav-icon">📊</span>RANKS</div>
+    <div class="nav-item" onclick="showScreen('hero')"><span class="nav-icon">👤</span>HERO</div>
+  </div>
+</div>
+
+<!-- ========== HERO SCREEN ========== -->
+<div id="hero-screen" class="screen">
+  <div class="app-header">
+    <div class="app-logo"><div class="logo-icon">🌴</div><div class="logo-text">QUIZ RUSH</div></div>
+    <div class="coin-display" onclick="showScreen('shop')" style="cursor:pointer"><span class="coin-icon">🪙</span><span id="hero-coins">0</span></div>
+  </div>
+  <div class="hero-scroll">
+    <div class="hero-header">
+      <h1>YOUR <span>HERO</span></h1>
+    </div>
+    <div class="hero-3d-preview" id="hero-preview-3d"></div>
+    <div class="hero-name-tag">
+      <h2 id="hero-active-name">EXPLORER</h2>
+      <p id="hero-active-desc">The classic jungle adventurer</p>
+    </div>
+    <div class="hero-costumes-label">YOUR COSTUMES</div>
+    <div class="hero-costume-row" id="hero-costume-row"></div>
+    <div class="hero-stats-section">
+      <h3>CAREER STATS</h3>
+      <div class="stats-grid">
+        <div class="mini-stat orange"><div class="ms-val" id="hs-coins">0</div><div class="ms-label">Total Coins</div></div>
+        <div class="mini-stat cyan"><div class="ms-val" id="hs-games">0</div><div class="ms-label">Games Played</div></div>
+        <div class="mini-stat green"><div class="ms-val" id="hs-best">0</div><div class="ms-label">Best Score</div></div>
+        <div class="mini-stat red"><div class="ms-val" id="hs-streak">0</div><div class="ms-label">Best Streak</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="bottom-nav">
+    <div class="nav-item" onclick="showScreen('upload')"><span class="nav-icon">🧭</span>QUEST</div>
+    <div class="nav-item" onclick="showScreen('shop')"><span class="nav-icon">🛍</span>SHOP</div>
+    <div class="nav-item" onclick="showScreen('ranks')"><span class="nav-icon">📊</span>RANKS</div>
+    <div class="nav-item active"><span class="nav-icon">👤</span>HERO</div>
   </div>
 </div>
 
@@ -360,8 +472,8 @@ html,body{width:100%;height:100%;overflow:hidden;font-family:'Be Vietnam Pro',sa
   <div class="bottom-nav">
     <div class="nav-item" onclick="showScreen('upload')"><span class="nav-icon">🧭</span>QUEST</div>
     <div class="nav-item" onclick="showScreen('shop')"><span class="nav-icon">🛍</span>SHOP</div>
-    <div class="nav-item"><span class="nav-icon">🏛</span>HALL</div>
-    <div class="nav-item active"><span class="nav-icon">📖</span>LORE</div>
+    <div class="nav-item" onclick="showScreen('ranks')"><span class="nav-icon">📊</span>RANKS</div>
+    <div class="nav-item" onclick="showScreen('hero')"><span class="nav-icon">👤</span>HERO</div>
   </div>
 </div>
 
@@ -1040,10 +1152,14 @@ function showCoinToast(amount){
 // ========================================================
 // SCREEN NAVIGATION
 // ========================================================
+const SCREEN_MAP={upload:'upload-screen',shop:'shop-screen',results:'results-screen',game:'game-screen',ranks:'ranks-screen',hero:'hero-screen'};
 function showScreen(name){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
-  document.getElementById(name==='upload'?'upload-screen':name==='shop'?'shop-screen':name==='results'?'results-screen':'game-screen').classList.add('active');
+  const id=SCREEN_MAP[name]||'upload-screen';
+  document.getElementById(id).classList.add('active');
   if(name==='shop')refreshShop();
+  if(name==='ranks')refreshRanks();
+  if(name==='hero')refreshHero();
 }
 
 // ========================================================
@@ -1364,15 +1480,150 @@ document.getElementById('retry-btn').addEventListener('click',()=>{if(curQs){doc
 document.getElementById('new-btn').addEventListener('click',()=>{if(curGame)curGame.cleanup();showScreen('upload')});
 document.getElementById('shop-back-btn').addEventListener('click',()=>showScreen('upload'));
 
-// Award coins after each game ends
+// Award coins & record stats after each game ends
 const _origEnd=QuizGame.prototype._end;
 QuizGame.prototype._end=function(won){
   const coins=this.score;
   if(coins>0){CoinBank.addCoins(coins);setTimeout(()=>showCoinToast(coins),1500)}
+  GameStats.record(this.score,this.correct,this.cur,this.best);
   _origEnd.call(this,won);
 };
 
-// Sync coin display everywhere
+// ========================================================
+// STATS TRACKING (localStorage)
+// ========================================================
+const GameStats={
+  _key:'quizrush_stats',
+  _get(){try{return JSON.parse(localStorage.getItem(this._key)||'{}')}catch(e){return{}}},
+  _set(d){localStorage.setItem(this._key,JSON.stringify(d))},
+  record(score,correctCount,totalQ,bestStreak){
+    const s=this._get();
+    s.gamesPlayed=(s.gamesPlayed||0)+1;
+    s.totalCoinsEarned=(s.totalCoinsEarned||0)+score;
+    s.bestScore=Math.max(s.bestScore||0,score);
+    s.bestStreak=Math.max(s.bestStreak||0,bestStreak);
+    s.totalCorrect=(s.totalCorrect||0)+correctCount;
+    s.totalQuestions=(s.totalQuestions||0)+totalQ;
+    this._set(s);
+  },
+  get(){return this._get()}
+};
+
+// ========================================================
+// RANKS SCREEN
+// ========================================================
+const RANKS=[
+  {name:'Novice Scout',icon:'🌱',xp:0,bg:'rgba(117,253,0,0.1)',color:'var(--jungle-glow)'},
+  {name:'Trail Runner',icon:'🥾',xp:500,bg:'rgba(117,253,0,0.15)',color:'var(--jungle-glow)'},
+  {name:'Jungle Trekker',icon:'🌿',xp:2000,bg:'rgba(38,230,255,0.1)',color:'var(--oasis-glow)'},
+  {name:'Relic Hunter',icon:'🏺',xp:5000,bg:'rgba(253,144,0,0.1)',color:'var(--relic-glow)'},
+  {name:'Temple Raider',icon:'🏛',xp:15000,bg:'rgba(253,144,0,0.15)',color:'var(--relic-glow)'},
+  {name:'Expedition Leader',icon:'🧭',xp:40000,bg:'rgba(38,230,255,0.15)',color:'var(--oasis-glow)'},
+  {name:'Master Explorer',icon:'⭐',xp:80000,bg:'rgba(253,144,0,0.2)',color:'var(--relic-glow)'},
+  {name:'Jungle Legend',icon:'👑',xp:150000,bg:'linear-gradient(135deg,rgba(253,144,0,0.2),rgba(255,45,85,0.2))',color:'#ffcc00'},
+];
+
+function refreshRanks(){
+  const coins=CoinBank.getCoins();
+  const stats=GameStats.get();
+  const totalXP=stats.totalCoinsEarned||0;
+  document.getElementById('ranks-coins').textContent=coins.toLocaleString();
+  document.getElementById('rs-total-coins').textContent=(stats.totalCoinsEarned||0).toLocaleString();
+  document.getElementById('rs-games').textContent=(stats.gamesPlayed||0).toLocaleString();
+  document.getElementById('rs-best').textContent=(stats.bestScore||0).toLocaleString();
+  document.getElementById('rs-streak').textContent=(stats.bestStreak||0).toString();
+
+  let currentRankIdx=0;
+  for(let i=RANKS.length-1;i>=0;i--){if(totalXP>=RANKS[i].xp){currentRankIdx=i;break}}
+
+  const list=document.getElementById('ranks-list');list.innerHTML='';
+  RANKS.forEach((r,i)=>{
+    const unlocked=totalXP>=r.xp;const isCurrent=i===currentRankIdx;
+    const card=document.createElement('div');
+    card.className='rank-card'+(isCurrent?' current':'')+((!unlocked)?' locked':'');
+    card.innerHTML=`<div class="rank-icon" style="background:${r.bg}">${r.icon}</div><div class="rank-info"><div class="rank-name" style="color:${unlocked?r.color:'var(--text-dim)'}">${r.name}</div><div class="rank-req">${r.xp===0?'Starting rank':r.xp.toLocaleString()+' XP needed'}</div></div><div class="rank-check">${isCurrent?'◀':unlocked?'✓':'🔒'}</div>`;
+    list.appendChild(card);
+  });
+}
+
+// ========================================================
+// HERO SCREEN
+// ========================================================
+let heroPreview=null;
+
+function refreshHero(){
+  const coins=CoinBank.getCoins();
+  const stats=GameStats.get();
+  const owned=CoinBank.getOwned();
+  const equipped=CoinBank.getEquipped();
+
+  document.getElementById('hero-coins').textContent=coins.toLocaleString();
+  document.getElementById('hs-coins').textContent=(stats.totalCoinsEarned||0).toLocaleString();
+  document.getElementById('hs-games').textContent=(stats.gamesPlayed||0).toLocaleString();
+  document.getElementById('hs-best').textContent=(stats.bestScore||0).toLocaleString();
+  document.getElementById('hs-streak').textContent=(stats.bestStreak||0).toString();
+
+  // Active hero info
+  const names={explorer:'EXPLORER',gecko:'JUNGLE GECKO 🦎'};
+  const descs={explorer:'The classic jungle adventurer. Fedora, whip, and courage.',gecko:'The fastest critter in the jungle! Cute, green, and unstoppable.'};
+  document.getElementById('hero-active-name').textContent=names[equipped]||'EXPLORER';
+  document.getElementById('hero-active-desc').textContent=descs[equipped]||'';
+
+  // Big 3D preview of equipped hero
+  const container=document.getElementById('hero-preview-3d');
+  if(heroPreview&&heroPreview.renderer){heroPreview.renderer.dispose();heroPreview=null}
+  container.innerHTML='';
+  const w=container.clientWidth||300,h=container.clientHeight||280;
+  const scene=new THREE.Scene();scene.background=new THREE.Color(0x0a0e14);
+  const cam=new THREE.PerspectiveCamera(45,w/h,.1,50);cam.position.set(0,1.5,5);cam.lookAt(0,1,0);
+  const renderer=new THREE.WebGLRenderer({antialias:true});renderer.setSize(w,h);renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
+  container.appendChild(renderer.domElement);
+  scene.add(new THREE.AmbientLight(0xffffff,0.5));
+  const dl=new THREE.DirectionalLight(0xfff4cc,0.9);dl.position.set(3,5,3);scene.add(dl);
+  scene.add(new THREE.PointLight(0xff9933,1.2,15));
+  const rimLight=new THREE.PointLight(0x26e6ff,0.6,10);rimLight.position.set(-3,3,-2);scene.add(rimLight);
+  // Floor glow
+  const floor=new THREE.Mesh(new THREE.CircleGeometry(1.5,24),new THREE.MeshBasicMaterial({color:0x112211,transparent:true,opacity:.5}));
+  floor.rotation.x=-Math.PI/2;floor.position.y=0.01;scene.add(floor);
+
+  const model=equipped==='gecko'?buildGeckoModel():buildExplorerModel();
+  scene.add(model);
+  heroPreview={scene,cam,renderer,model};
+  let rot=0;
+  function animHero(){if(!heroPreview)return;requestAnimationFrame(animHero);rot+=0.012;model.rotation.y=rot;model.position.y=Math.sin(rot*2)*.06;renderer.render(scene,cam)}
+  animHero();
+
+  // Costume thumbnails
+  const row=document.getElementById('hero-costume-row');row.innerHTML='';
+  const allCostumes=[{id:'explorer',name:'Explorer'},{id:'gecko',name:'Gecko 🦎'}];
+  allCostumes.forEach(c=>{
+    const isOwned=owned.includes(c.id);const isActive=equipped===c.id;
+    const item=document.createElement('div');
+    item.className='hero-costume-item'+(isActive?' active':'')+((!isOwned)?' locked':'');
+    item.innerHTML=`<div class="hero-costume-thumb" id="hero-thumb-${c.id}"></div><div class="hero-costume-label">${c.name}</div>`;
+    if(isOwned&&!isActive){item.onclick=()=>{CoinBank.equip(c.id);refreshHero()}}
+    else if(!isOwned){item.onclick=()=>showScreen('shop')}
+    row.appendChild(item);
+    // Mini 3D preview in thumb
+    setTimeout(()=>{
+      const tc=document.getElementById('hero-thumb-'+c.id);if(!tc)return;
+      const tw=tc.clientWidth||100,th2=tc.clientHeight||100;
+      const ts=new THREE.Scene();ts.background=new THREE.Color(0x161b22);
+      const tcam=new THREE.PerspectiveCamera(50,tw/th2,.1,50);tcam.position.set(0,1.4,3.5);tcam.lookAt(0,1,0);
+      const tr=new THREE.WebGLRenderer({antialias:true});tr.setSize(tw,th2);tr.setPixelRatio(Math.min(window.devicePixelRatio,1.5));
+      tc.appendChild(tr.domElement);
+      ts.add(new THREE.AmbientLight(0xffffff,0.6));
+      const tdl=new THREE.DirectionalLight(0xffffff,0.7);tdl.position.set(2,4,2);ts.add(tdl);
+      const tm=c.id==='gecko'?buildGeckoModel():buildExplorerModel();
+      if(!isOwned){tm.traverse(ch=>{if(ch.isMesh){ch.material=ch.material.clone();ch.material.color.setHex(0x333333)}})}
+      ts.add(tm);
+      let trot=0;
+      function animThumb(){requestAnimationFrame(animThumb);trot+=0.02;tm.rotation.y=trot;tr.render(ts,tcam)}
+      animThumb();
+    },50);
+  });
+}
+
 // ========================================================
 // REDEEM CODES
 // ========================================================
@@ -1392,12 +1643,13 @@ function redeemCode(){
 }
 
 function syncCoins(){
-  const c=CoinBank.getCoins();
-  const el=document.getElementById('upload-coins');
-  if(el)el.textContent='🪙 '+c.toLocaleString();
+  const c=CoinBank.getCoins().toLocaleString();
+  ['upload-coins','shop-coins','ranks-coins','hero-coins'].forEach(id=>{
+    const el=document.getElementById(id);if(el)el.textContent=c;
+  });
 }
 
-// Update showScreen to also sync coins
+// Patch showScreen to sync coins on every screen change
 const _origShowScreen=showScreen;
 showScreen=function(name){
   _origShowScreen(name);

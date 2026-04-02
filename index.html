@@ -282,6 +282,14 @@ html,body{width:100%;height:100%;overflow:hidden;font-family:'Be Vietnam Pro',sa
         <div class="costume-price">🪙 150,000</div>
         <button class="costume-btn buy" id="btn-gecko" disabled>🔒 LOCKED</button>
       </div>
+      <div id="gecko-redeem" style="margin-top:14px;padding-top:14px;border-top:1px solid rgba(255,255,255,0.06)">
+        <div style="font-size:12px;color:var(--text-dim);font-weight:600;margin-bottom:8px;letter-spacing:1px">OR REDEEM A CODE</div>
+        <div style="display:flex;gap:8px">
+          <input type="text" id="redeem-code" placeholder="Enter code..." style="flex:1;padding:10px 14px;background:var(--bg-card-lo);border:2px solid rgba(255,255,255,0.08);border-radius:var(--radius-full);color:var(--text);font-family:'Be Vietnam Pro',sans-serif;font-size:14px;font-weight:600;outline:none;transition:border-color .2s" onfocus="this.style.borderColor='rgba(38,230,255,0.3)'" onblur="this.style.borderColor='rgba(255,255,255,0.08)'">
+          <button class="costume-btn buy" id="btn-redeem" style="white-space:nowrap" onclick="redeemCode()">REDEEM</button>
+        </div>
+        <div id="redeem-msg" style="font-size:12px;font-weight:600;margin-top:6px;display:none"></div>
+      </div>
     </div>
 
     <button class="big-btn secondary" id="shop-back-btn">⬅ BACK TO QUEST</button>
@@ -1069,12 +1077,15 @@ function refreshShop(){
   const pText=document.getElementById('gecko-progress-text');
   const pBar=document.getElementById('gecko-progress-bar');
 
+  const redeemDiv=document.getElementById('gecko-redeem');
   if(geckoOwned){
     geckoCard.className='costume-card '+(equipped==='gecko'?'equipped':'owned');
     pBar.style.display='none';pText.style.display='none';
+    if(redeemDiv)redeemDiv.style.display='none';
     if(equipped==='gecko'){geckoBtn.className='costume-btn equipped';geckoBtn.textContent='✓ EQUIPPED';geckoBtn.disabled=false;geckoBtn.onclick=null}
     else{geckoBtn.className='costume-btn equip';geckoBtn.textContent='EQUIP';geckoBtn.disabled=false;geckoBtn.onclick=()=>{CoinBank.equip('gecko');refreshShop()}}
   }else{
+    if(redeemDiv)redeemDiv.style.display='';
     geckoCard.className='costume-card locked';
     pBar.style.display='';pText.style.display='';
     const pct=Math.min(100,coins/COSTUMES.gecko.price*100);
@@ -1362,6 +1373,24 @@ QuizGame.prototype._end=function(won){
 };
 
 // Sync coin display everywhere
+// ========================================================
+// REDEEM CODES
+// ========================================================
+const REDEEM_CODES={'GECKO007':'gecko'};
+
+function redeemCode(){
+  const input=document.getElementById('redeem-code');
+  const msg=document.getElementById('redeem-msg');
+  const code=input.value.trim().toUpperCase();
+  if(!code){msg.style.display='block';msg.style.color='var(--danger)';msg.textContent='Enter a code first!';return}
+  const costumeId=REDEEM_CODES[code];
+  if(!costumeId){msg.style.display='block';msg.style.color='var(--danger)';msg.textContent='Invalid code. Try again!';return}
+  if(CoinBank.getOwned().includes(costumeId)){msg.style.display='block';msg.style.color='var(--oasis-glow)';msg.textContent='You already own this costume!';return}
+  CoinBank.own(costumeId);CoinBank.equip(costumeId);
+  input.value='';msg.style.display='block';msg.style.color='var(--jungle-glow)';msg.textContent='Unlocked! Jungle Gecko is now equipped!';
+  setTimeout(()=>refreshShop(),1200);
+}
+
 function syncCoins(){
   const c=CoinBank.getCoins();
   const el=document.getElementById('upload-coins');

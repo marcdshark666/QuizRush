@@ -161,8 +161,44 @@ html,body{width:100%;height:100%;overflow:hidden;font-family:'Be Vietnam Pro',sa
 .results-actions{margin-top:8px;margin-bottom:20px}
 .results-actions .big-btn+.big-btn{margin-top:12px}
 
+/* ===== SHOP SCREEN ===== */
+#shop-screen{background:var(--bg)}
+.shop-scroll{flex:1;overflow-y:auto;padding:0 20px 20px}
+.shop-hero{text-align:center;margin:16px 0 24px}
+.shop-hero h1{font-family:'Plus Jakarta Sans',sans-serif;font-size:2rem;font-weight:800;line-height:1.1}
+.shop-hero h1 span{background:linear-gradient(135deg,var(--jungle-glow),#00cc66);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.shop-hero p{color:var(--text-dim);font-size:14px;margin-top:8px}
+.coin-display{display:flex;align-items:center;justify-content:center;gap:10px;margin:16px 0;padding:12px 24px;background:rgba(253,144,0,0.1);border-radius:var(--radius-full);font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:24px;color:var(--relic-glow)}
+.coin-display .coin-icon{font-size:28px}
+.costume-card{background:var(--bg-card);border-radius:var(--radius-lg);padding:24px;margin-bottom:16px;position:relative;overflow:hidden;transition:all .3s}
+.costume-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+.costume-card.locked::before{background:linear-gradient(90deg,#4a4a4a,#6a6a6a)}
+.costume-card.owned::before{background:linear-gradient(90deg,var(--jungle),var(--jungle-glow))}
+.costume-card.equipped::before{background:linear-gradient(90deg,var(--oasis),var(--oasis-glow))}
+.costume-card.equipped{box-shadow:0 0 20px rgba(38,230,255,0.15)}
+.costume-preview{width:100%;height:180px;background:rgba(0,0,0,0.3);border-radius:var(--radius-md);margin-bottom:16px;display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative}
+.costume-preview canvas{max-width:100%;max-height:100%}
+.costume-info{display:flex;justify-content:space-between;align-items:flex-start}
+.costume-name{font-family:'Plus Jakarta Sans',sans-serif;font-size:20px;font-weight:800;letter-spacing:.5px}
+.costume-desc{font-size:13px;color:var(--text-dim);margin:6px 0 12px;line-height:1.5}
+.costume-price{display:flex;align-items:center;gap:6px;font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:16px;color:var(--relic-glow)}
+.costume-price.free{color:var(--jungle-glow)}
+.costume-btn{padding:12px 24px;border:none;border-radius:var(--radius-full);font-family:'Plus Jakarta Sans',sans-serif;font-size:14px;font-weight:800;letter-spacing:1px;cursor:pointer;transition:all .15s}
+.costume-btn:active{transform:scale(.95)}
+.costume-btn.buy{background:linear-gradient(180deg,var(--relic-glow),#e07800);color:var(--relic-text)}
+.costume-btn.buy:disabled{opacity:.4;cursor:not-allowed;transform:none}
+.costume-btn.equip{background:linear-gradient(180deg,var(--jungle-glow),#55cc00);color:#1a3a00}
+.costume-btn.equipped{background:rgba(38,230,255,0.15);color:var(--oasis-glow);cursor:default}
+.progress-bar{width:100%;height:8px;background:rgba(255,255,255,0.08);border-radius:var(--radius-full);margin:10px 0;overflow:hidden}
+.progress-bar-fill{height:100%;background:linear-gradient(90deg,var(--relic-glow),var(--jungle-glow));border-radius:var(--radius-full);transition:width .3s}
+.progress-text{font-size:11px;color:var(--text-dim);font-weight:600}
+
+/* Coin earned toast */
+.coin-toast{position:fixed;top:20px;left:50%;transform:translateX(-50%) translateY(-100px);z-index:100;padding:12px 24px;background:rgba(253,144,0,0.9);border-radius:var(--radius-full);font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:18px;color:#000;transition:transform .4s cubic-bezier(.34,1.56,.64,1);pointer-events:none}
+.coin-toast.show{transform:translateX(-50%) translateY(0)}
+
 ::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:2px}
-@media(min-width:600px){.upload-scroll,.results-scroll{max-width:480px;margin:0 auto}}
+@media(min-width:600px){.upload-scroll,.results-scroll,.shop-scroll{max-width:480px;margin:0 auto}}
   </style>
 </head>
 <body>
@@ -171,7 +207,7 @@ html,body{width:100%;height:100%;overflow:hidden;font-family:'Be Vietnam Pro',sa
 <div id="upload-screen" class="screen active">
   <div class="app-header">
     <div class="app-logo"><div class="logo-icon">🌴</div><div class="logo-text">QUIZ RUSH</div></div>
-    <div class="hearts-badge">❤️ 3</div>
+    <div class="hearts-badge" id="upload-coins" onclick="showScreen('shop')" style="cursor:pointer;background:rgba(253,144,0,0.1);color:var(--relic-glow)">🪙 0</div>
   </div>
   <div class="upload-scroll">
     <div class="upload-hero">
@@ -206,11 +242,60 @@ html,body{width:100%;height:100%;overflow:hidden;font-family:'Be Vietnam Pro',sa
   </div>
   <div class="bottom-nav">
     <div class="nav-item active"><span class="nav-icon">🧭</span>QUEST</div>
-    <div class="nav-item"><span class="nav-icon">🏆</span>LOOT</div>
+    <div class="nav-item" onclick="showScreen('shop')"><span class="nav-icon">🛍</span>SHOP</div>
     <div class="nav-item"><span class="nav-icon">📊</span>RANKS</div>
     <div class="nav-item"><span class="nav-icon">👤</span>HERO</div>
   </div>
 </div>
+
+<!-- ========== SHOP SCREEN ========== -->
+<div id="shop-screen" class="screen">
+  <div class="app-header">
+    <div class="app-logo"><div class="logo-icon">🌴</div><div class="logo-text">QUIZ RUSH</div></div>
+    <div class="coin-display"><span class="coin-icon">🪙</span><span id="shop-coins">0</span></div>
+  </div>
+  <div class="shop-scroll">
+    <div class="shop-hero">
+      <h1>COSTUME <span>SHOP</span></h1>
+      <p>Earn coins by playing quizzes. Unlock new runners!</p>
+    </div>
+
+    <!-- Default Explorer -->
+    <div class="costume-card equipped" id="costume-explorer">
+      <div class="costume-preview" id="preview-explorer"></div>
+      <div class="costume-name">EXPLORER</div>
+      <div class="costume-desc">The classic jungle adventurer. Fedora, whip, and a thirst for knowledge.</div>
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div class="costume-price free">FREE — DEFAULT</div>
+        <button class="costume-btn equipped" id="btn-explorer">✓ EQUIPPED</button>
+      </div>
+    </div>
+
+    <!-- Gecko Costume -->
+    <div class="costume-card locked" id="costume-gecko">
+      <div class="costume-preview" id="preview-gecko"></div>
+      <div class="costume-name">JUNGLE GECKO 🦎</div>
+      <div class="costume-desc">A cute green gecko with big googly eyes and a wiggly tail. The fastest critter in the jungle!</div>
+      <div class="progress-bar" id="gecko-progress-bar"><div class="progress-bar-fill" id="gecko-progress-fill" style="width:0%"></div></div>
+      <div class="progress-text" id="gecko-progress-text">0 / 150,000 coins needed</div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px">
+        <div class="costume-price">🪙 150,000</div>
+        <button class="costume-btn buy" id="btn-gecko" disabled>🔒 LOCKED</button>
+      </div>
+    </div>
+
+    <button class="big-btn secondary" id="shop-back-btn">⬅ BACK TO QUEST</button>
+  </div>
+  <div class="bottom-nav">
+    <div class="nav-item" onclick="showScreen('upload')"><span class="nav-icon">🧭</span>QUEST</div>
+    <div class="nav-item active"><span class="nav-icon">🛍</span>SHOP</div>
+    <div class="nav-item"><span class="nav-icon">📊</span>RANKS</div>
+    <div class="nav-item"><span class="nav-icon">👤</span>HERO</div>
+  </div>
+</div>
+
+<!-- Coin earned toast -->
+<div class="coin-toast" id="coin-toast">🪙 +0 COINS!</div>
 
 <!-- ========== GAME SCREEN (80%+ 3D, 20% questions) ========== -->
 <div id="game-screen" class="screen">
@@ -265,8 +350,8 @@ html,body{width:100%;height:100%;overflow:hidden;font-family:'Be Vietnam Pro',sa
     </div>
   </div>
   <div class="bottom-nav">
-    <div class="nav-item"><span class="nav-icon">🗺</span>MAP</div>
-    <div class="nav-item"><span class="nav-icon">🏆</span>LOOT</div>
+    <div class="nav-item" onclick="showScreen('upload')"><span class="nav-icon">🧭</span>QUEST</div>
+    <div class="nav-item" onclick="showScreen('shop')"><span class="nav-icon">🛍</span>SHOP</div>
     <div class="nav-item"><span class="nav-icon">🏛</span>HALL</div>
     <div class="nav-item active"><span class="nav-icon">📖</span>LORE</div>
   </div>
@@ -387,136 +472,207 @@ startBtn.addEventListener('click',async()=>{
 document.getElementById('demo-btn').addEventListener('click',()=>launchGame(DEMO_QUESTIONS));
 
 // ========================================================
-// 3D JUNGLE ENGINE
+// 3D JUNGLE ENGINE - SCROLLING WORLD
 // ========================================================
 class JungleEngine{
   constructor(){
     this.scene=null;this.camera=null;this.renderer=null;this.clock=new THREE.Clock();
     this.running=false;this.boulderDist=45;this.minBoulder=5;this.bob=0;this.bRot=0;this.shake=0;
-    this.player=null;this.boulder=null;this.torches=[];this.animals=[];this.vines=[];
+    this.player=null;this.boulder=null;this.torches=[];this.animals=[];
     this.leftLeg=null;this.rightLeg=null;this.leftArm=null;this.rightArm=null;
     this.playerLight=null;this.boulderLight=null;this.dustRing=null;
     this.stumbling=false;this.stumbleTimer=0;this.speedBoost=false;this.speedTimer=0;
+    // Scrolling world
+    this.worldSpeed=6;this.scrollPos=0;
+    this.scrollObjects=[];// {mesh, resetZ, spanZ}
+    this.CHUNK=60;this.FAR=-80;this.NEAR=15;
+    this.audioCtx=null;
   }
   init(){
     const c=document.getElementById('game-canvas-container');
     this.scene=new THREE.Scene();
-    this.scene.background=new THREE.Color(0x0a1a08);
-    this.scene.fog=new THREE.FogExp2(0x0a1a08,0.012);
+    this.scene.background=new THREE.Color(0x081808);
+    this.scene.fog=new THREE.FogExp2(0x081808,0.018);
     this.camera=new THREE.PerspectiveCamera(70,window.innerWidth/window.innerHeight,.1,200);
-    this.camera.position.set(0,4,10);this.camera.lookAt(0,1.5,-8);
+    this.camera.position.set(0,3.8,9);this.camera.lookAt(0,1.5,-6);
     this.renderer=new THREE.WebGLRenderer({antialias:true});
     this.renderer.setSize(window.innerWidth,window.innerHeight);
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
-    this.renderer.shadowMap.enabled=true;this.renderer.toneMapping=THREE.ACESFilmicToneMapping;this.renderer.toneMappingExposure=0.9;
+    this.renderer.shadowMap.enabled=true;this.renderer.toneMapping=THREE.ACESFilmicToneMapping;this.renderer.toneMappingExposure=0.85;
     c.innerHTML='';c.appendChild(this.renderer.domElement);
-    this._lights();this._jungle();this._player();this._boulder();this._animals();this._particles();
+    this._lights();this._ground();this._spawnChunk(0);this._spawnChunk(-this.CHUNK);this._spawnChunk(-this.CHUNK*2);
+    this._player();this._boulder();this._animals();this._particles();this._startMusic();
     window.addEventListener('resize',()=>this._resize());this.running=true;this._animate();
   }
   _lights(){
-    // Ambient jungle light
-    this.scene.add(new THREE.AmbientLight(0x1a3a1a,0.5));
-    // Sunbeams from above
-    const sun=new THREE.DirectionalLight(0xfff4cc,0.8);sun.position.set(5,20,-10);sun.castShadow=true;this.scene.add(sun);
-    // Player torch
-    this.playerLight=new THREE.PointLight(0xff9933,2.5,25);this.playerLight.position.set(0,3,4);this.playerLight.castShadow=true;this.scene.add(this.playerLight);
-    // Boulder glow
+    this.scene.add(new THREE.AmbientLight(0x1a3a1a,0.6));
+    const sun=new THREE.DirectionalLight(0xfff4cc,0.7);sun.position.set(5,20,-10);sun.castShadow=true;this.scene.add(sun);
+    this.playerLight=new THREE.PointLight(0xff9933,2.5,25);this.playerLight.position.set(0,3,5);this.playerLight.castShadow=true;this.scene.add(this.playerLight);
     this.boulderLight=new THREE.PointLight(0xff2200,2,30);this.scene.add(this.boulderLight);
-    // Scattered green ambient
-    for(let i=0;i<4;i++){const l=new THREE.PointLight(0x33ff33,0.3,15);l.position.set((Math.random()-.5)*6,2+Math.random()*3,-i*20);this.scene.add(l)}
   }
-  _jungle(){
-    // GROUND - jungle floor with moss
-    const gMat=new THREE.MeshStandardMaterial({color:0x2a4a1a,roughness:.95});
-    const g=new THREE.Mesh(new THREE.PlaneGeometry(12,250),gMat);
-    g.rotation.x=-Math.PI/2;g.position.z=-100;g.receiveShadow=true;this.scene.add(g);
-    // Path (lighter center)
-    const path=new THREE.Mesh(new THREE.PlaneGeometry(4,250),new THREE.MeshStandardMaterial({color:0x3a3020,roughness:.9}));
-    path.rotation.x=-Math.PI/2;path.position.set(0,.01,-100);path.receiveShadow=true;this.scene.add(path);
-
-    // TREES on both sides
+  // SCROLLING GROUND (2 tiles that wrap)
+  _ground(){
+    const L=120;
+    this.groundTiles=[];
+    for(let i=0;i<2;i++){
+      const grp=new THREE.Group();
+      // Jungle floor
+      const g=new THREE.Mesh(new THREE.PlaneGeometry(14,L),new THREE.MeshStandardMaterial({color:0x1a3a12,roughness:.95}));
+      g.rotation.x=-Math.PI/2;grp.add(g);
+      // Path
+      const p=new THREE.Mesh(new THREE.PlaneGeometry(3.5,L),new THREE.MeshStandardMaterial({color:0x3a3020,roughness:.9}));
+      p.rotation.x=-Math.PI/2;p.position.y=.01;grp.add(p);
+      grp.position.z=-i*L;
+      this.scene.add(grp);
+      this.groundTiles.push({grp,len:L});
+    }
+  }
+  // SPAWN A CHUNK of world objects (trees, vines, rivers, etc.)
+  _spawnChunk(startZ){
     const treeMat=new THREE.MeshStandardMaterial({color:0x3a2a1a,roughness:.9});
-    const leafMat=new THREE.MeshStandardMaterial({color:0x1a6a1a,roughness:.7});
-    const leafMat2=new THREE.MeshStandardMaterial({color:0x2a8a2a,roughness:.7});
-    for(let z=5;z>-180;z-=6){
+    const leafMats=[new THREE.MeshStandardMaterial({color:0x1a6a1a,roughness:.7}),new THREE.MeshStandardMaterial({color:0x2a8a2a,roughness:.7}),new THREE.MeshStandardMaterial({color:0x1a5a2a,roughness:.7})];
+    const vineMat=new THREE.MeshStandardMaterial({color:0x2a5a2a,roughness:.8});
+    const fernMat=new THREE.MeshStandardMaterial({color:0x3a7a3a,roughness:.8,side:THREE.DoubleSide});
+    const rockMat=new THREE.MeshStandardMaterial({color:0x4a4a3a,roughness:.9});
+    const mushMat=new THREE.MeshStandardMaterial({color:0x44ff44,emissive:0x22aa22,emissiveIntensity:.5});
+    const tMat=new THREE.MeshStandardMaterial({color:0x5a4530});
+
+    for(let z=startZ;z>startZ-this.CHUNK;z-=5){
       for(let side=-1;side<=1;side+=2){
-        const x=side*(3+Math.random()*2);
+        const x=side*(3+Math.random()*2.5);
+        const h=4+Math.random()*5;
         // Trunk
-        const h=4+Math.random()*4;
-        const trunk=new THREE.Mesh(new THREE.CylinderGeometry(.15,.25,h,6),treeMat);
+        const trunk=new THREE.Mesh(new THREE.CylinderGeometry(.12+Math.random()*.1,.2+Math.random()*.1,h,6),treeMat);
         trunk.position.set(x,h/2,z+Math.random()*3);trunk.castShadow=true;this.scene.add(trunk);
-        // Canopy (multiple spheres)
-        for(let j=0;j<3;j++){
-          const r=1+Math.random()*1.5;
-          const leaf=new THREE.Mesh(new THREE.SphereGeometry(r,6,5),Math.random()>.5?leafMat:leafMat2);
-          leaf.position.set(x+(Math.random()-.5)*1.5,h+Math.random()*1.5-.5,z+Math.random()*3);
-          leaf.scale.y=0.6;leaf.castShadow=true;this.scene.add(leaf);
+        this.scrollObjects.push({mesh:trunk,baseZ:trunk.position.z});
+        // Canopy
+        for(let j=0;j<2+Math.floor(Math.random()*2);j++){
+          const r=1+Math.random()*1.8;
+          const leaf=new THREE.Mesh(new THREE.SphereGeometry(r,6,5),leafMats[Math.floor(Math.random()*3)]);
+          leaf.position.set(x+(Math.random()-.5)*1.8,h+Math.random()*1.5-.5,z+Math.random()*3);
+          leaf.scale.y=.5+Math.random()*.2;leaf.castShadow=true;this.scene.add(leaf);
+          this.scrollObjects.push({mesh:leaf,baseZ:leaf.position.z});
+        }
+        // Vine (50% chance)
+        if(Math.random()>.5){
+          const pts=[];const vx=x+(Math.random()-.5)*1;const vz=z+Math.random()*2;const top=h+1;
+          for(let j=0;j<=6;j++)pts.push(new THREE.Vector3(vx+Math.sin(j*.6)*.25,top-j*(top/6),vz));
+          const vine=new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts),6,.02,4,false),vineMat);
+          this.scene.add(vine);this.scrollObjects.push({mesh:vine,baseZ:vz});
         }
       }
+      // Ferns
+      if(Math.random()>.3){
+        const fern=new THREE.Mesh(new THREE.PlaneGeometry(.4+Math.random()*.5,.8+Math.random()*.8),fernMat);
+        fern.position.set((Math.random()-.5)*9,.35,z+Math.random()*3);
+        fern.rotation.y=Math.random()*Math.PI;fern.rotation.x=-.2;this.scene.add(fern);
+        this.scrollObjects.push({mesh:fern,baseZ:fern.position.z});
+      }
+      // Rock
+      if(Math.random()>.7){
+        const r=new THREE.Mesh(new THREE.DodecahedronGeometry(.1+Math.random()*.25,0),rockMat);
+        r.position.set((Math.random()-.5)*7,.1,z+Math.random()*3);
+        r.rotation.set(Math.random()*Math.PI,Math.random()*Math.PI,0);this.scene.add(r);
+        this.scrollObjects.push({mesh:r,baseZ:r.position.z});
+      }
     }
-    // VINES hanging from canopy
-    const vineMat=new THREE.MeshStandardMaterial({color:0x2a5a2a,roughness:.8});
-    for(let i=0;i<40;i++){
-      const pts=[];const x=(Math.random()-.5)*8;const z=Math.random()*-160;const top=5+Math.random()*3;
-      for(let j=0;j<=8;j++){pts.push(new THREE.Vector3(x+Math.sin(j*.5)*.3,top-j*(top/8),z))}
-      const curve=new THREE.CatmullRomCurve3(pts);
-      const vine=new THREE.Mesh(new THREE.TubeGeometry(curve,8,.02,4,false),vineMat);
-      this.scene.add(vine);this.vines.push({mesh:vine,x,baseZ:z,top});
+    // RIVER crossing (1 per chunk)
+    const rz=startZ-15-Math.random()*30;
+    const riverMat=new THREE.MeshStandardMaterial({color:0x1a5a7a,roughness:.3,metalness:.4,transparent:true,opacity:.7});
+    const river=new THREE.Mesh(new THREE.PlaneGeometry(14,2.5),riverMat);
+    river.rotation.x=-Math.PI/2;river.position.set(0,.02,rz);this.scene.add(river);
+    this.scrollObjects.push({mesh:river,baseZ:rz,isRiver:true});
+    // River banks
+    const bankMat=new THREE.MeshStandardMaterial({color:0x2a4a2a,roughness:.9});
+    for(let s=-1;s<=1;s+=2){
+      const bank=new THREE.Mesh(new THREE.BoxGeometry(14,.15,.3),bankMat);
+      bank.position.set(0,.05,rz+s*1.25);this.scene.add(bank);
+      this.scrollObjects.push({mesh:bank,baseZ:rz+s*1.25});
     }
-    // FERNS & undergrowth
-    const fernMat=new THREE.MeshStandardMaterial({color:0x3a7a3a,roughness:.8,side:THREE.DoubleSide});
-    for(let i=0;i<80;i++){
-      const fern=new THREE.Mesh(new THREE.PlaneGeometry(.5+Math.random()*.5,1+Math.random()),fernMat);
-      fern.position.set((Math.random()-.5)*10,.4,Math.random()*-160);
-      fern.rotation.y=Math.random()*Math.PI;fern.rotation.x=-.2;this.scene.add(fern);
+    // Stepping stones in river
+    const stoneMat=new THREE.MeshStandardMaterial({color:0x6a6a5a,roughness:.8});
+    for(let i=0;i<4;i++){
+      const st=new THREE.Mesh(new THREE.CylinderGeometry(.25,.3,.15,6),stoneMat);
+      st.position.set(-1.5+i*1,.08,rz+(Math.random()-.5)*.8);this.scene.add(st);
+      this.scrollObjects.push({mesh:st,baseZ:rz});
     }
-    // ROCKS
-    const rockMat=new THREE.MeshStandardMaterial({color:0x4a4a3a,roughness:.9});
-    for(let i=0;i<30;i++){
-      const r=new THREE.Mesh(new THREE.DodecahedronGeometry(.1+Math.random()*.3,0),rockMat);
-      r.position.set((Math.random()-.5)*8,.1,Math.random()*-160);
-      r.rotation.set(Math.random()*Math.PI,Math.random()*Math.PI,0);this.scene.add(r);
-    }
-    // MUSHROOMS (glowing)
-    const mushMat=new THREE.MeshStandardMaterial({color:0x44ff44,emissive:0x22aa22,emissiveIntensity:.5,roughness:.5});
-    for(let i=0;i<15;i++){
-      const m=new THREE.Mesh(new THREE.SphereGeometry(.08,6,4),mushMat);
-      m.position.set((Math.random()>.5?1:-1)*(2+Math.random()*3),.08,Math.random()*-100);
-      m.scale.y=.6;this.scene.add(m);
-    }
-    // TORCH lights along path
-    const tMat=new THREE.MeshStandardMaterial({color:0x5a4530});
-    for(let z=0;z>-160;z-=20){
+    // Torches
+    for(let z2=startZ;z2>startZ-this.CHUNK;z2-=18){
       for(let s=-1;s<=1;s+=2){
         const holder=new THREE.Mesh(new THREE.CylinderGeometry(.04,.07,.6,5),tMat);
-        holder.position.set(s*2.2,1.5,z);this.scene.add(holder);
-        const fl=new THREE.PointLight(0xff6620,.8,10);fl.position.set(s*2.1,2,z);this.scene.add(fl);
+        holder.position.set(s*2.2,1.5,z2);this.scene.add(holder);
+        this.scrollObjects.push({mesh:holder,baseZ:z2});
+        const fl=new THREE.PointLight(0xff6620,.6,8);fl.position.set(s*2.1,2,z2);this.scene.add(fl);
         const fm=new THREE.Mesh(new THREE.SphereGeometry(.1,5,5),new THREE.MeshBasicMaterial({color:0xff8833}));
         fm.position.copy(fl.position);this.scene.add(fm);
-        this.torches.push({mesh:fm,light:fl,baseY:2});
+        this.torches.push({mesh:fm,light:fl,baseY:2,baseZ:z2});
+        this.scrollObjects.push({mesh:fm,baseZ:z2});
       }
+    }
+    // Glowing mushrooms
+    for(let i=0;i<4;i++){
+      const m=new THREE.Mesh(new THREE.SphereGeometry(.07,5,4),mushMat);
+      const mx=(Math.random()>.5?1:-1)*(2+Math.random()*3);
+      m.position.set(mx,.06,startZ-Math.random()*this.CHUNK);m.scale.y=.5;this.scene.add(m);
+      this.scrollObjects.push({mesh:m,baseZ:m.position.z});
     }
   }
   _player(){
     const g=new THREE.Group();
-    const bm=new THREE.MeshStandardMaterial({color:0x8B6914,roughness:.7});
-    // Body
-    const body=new THREE.Mesh(new THREE.BoxGeometry(.6,.8,.35),bm);body.position.y=1.2;body.castShadow=true;g.add(body);
+    // Skin
+    const skinMat=new THREE.MeshStandardMaterial({color:0xc49a6c,roughness:.6});
+    // Torso (jacket)
+    const jacketMat=new THREE.MeshStandardMaterial({color:0x6a4a1a,roughness:.7});
+    const torso=new THREE.Mesh(new THREE.BoxGeometry(.55,.75,.3),jacketMat);torso.position.y=1.2;torso.castShadow=true;g.add(torso);
+    // Belt
+    const beltMat=new THREE.MeshStandardMaterial({color:0x3a2210,roughness:.5});
+    const belt=new THREE.Mesh(new THREE.BoxGeometry(.58,.08,.32),beltMat);belt.position.y=.85;g.add(belt);
+    // Belt buckle
+    const buckle=new THREE.Mesh(new THREE.BoxGeometry(.08,.06,.02),new THREE.MeshStandardMaterial({color:0xccaa44,metalness:.8,roughness:.3}));
+    buckle.position.set(0,.85,-.17);g.add(buckle);
     // Head
-    const head=new THREE.Mesh(new THREE.SphereGeometry(.22,8,8),new THREE.MeshStandardMaterial({color:0xd4a574,roughness:.6}));
-    head.position.y=1.85;g.add(head);
-    // Fedora
-    const hm=new THREE.MeshStandardMaterial({color:0x3e2723,roughness:.8});
-    const brim=new THREE.Mesh(new THREE.CylinderGeometry(.35,.38,.05,12),hm);brim.position.y=2;g.add(brim);
-    const htop=new THREE.Mesh(new THREE.CylinderGeometry(.18,.22,.2,12),hm);htop.position.y=2.12;g.add(htop);
-    // Legs
-    const lm=new THREE.MeshStandardMaterial({color:0x5c4033,roughness:.8});
-    for(let s=-1;s<=1;s+=2){const l=new THREE.Mesh(new THREE.BoxGeometry(.2,.6,.25),lm);l.position.set(s*.15,.5,0);l.castShadow=true;g.add(l);if(s===-1)this.leftLeg=l;else this.rightLeg=l}
-    // Arms
-    for(let s=-1;s<=1;s+=2){const a=new THREE.Mesh(new THREE.BoxGeometry(.15,.55,.2),bm);a.position.set(s*.42,1.15,0);a.castShadow=true;g.add(a);if(s===-1)this.leftArm=a;else this.rightArm=a}
-    // Whip
-    const wc=new THREE.CatmullRomCurve3([new THREE.Vector3(.5,1.2,0),new THREE.Vector3(.8,1,.5),new THREE.Vector3(1,.8,1.2),new THREE.Vector3(.8,.6,2)]);
-    g.add(new THREE.Mesh(new THREE.TubeGeometry(wc,12,.015,4,false),new THREE.MeshStandardMaterial({color:0x2a1506})));
+    const head=new THREE.Mesh(new THREE.SphereGeometry(.2,10,8),skinMat);head.position.y=1.82;head.castShadow=true;g.add(head);
+    // Hair
+    const hairMat=new THREE.MeshStandardMaterial({color:0x3a2a1a,roughness:.8});
+    const hair=new THREE.Mesh(new THREE.SphereGeometry(.21,8,6),hairMat);
+    hair.position.y=1.86;hair.scale.set(1,.7,1);g.add(hair);
+    // Fedora (detailed)
+    const hatMat=new THREE.MeshStandardMaterial({color:0x3a2210,roughness:.7});
+    const brim=new THREE.Mesh(new THREE.CylinderGeometry(.38,.4,.04,16),hatMat);brim.position.y=2.0;g.add(brim);
+    const crown=new THREE.Mesh(new THREE.CylinderGeometry(.16,.22,.22,12),hatMat);crown.position.y=2.13;g.add(crown);
+    // Hat band
+    const band=new THREE.Mesh(new THREE.CylinderGeometry(.225,.225,.04,12),new THREE.MeshStandardMaterial({color:0x8a6a3a,roughness:.5}));
+    band.position.y=2.04;g.add(band);
+    // Eyes
+    const eyeMat=new THREE.MeshBasicMaterial({color:0x111111});
+    for(let s=-1;s<=1;s+=2){const e=new THREE.Mesh(new THREE.SphereGeometry(.025,6,4),eyeMat);e.position.set(s*.08,1.84,-.19);g.add(e)}
+    // Legs (pants)
+    const pantsMat=new THREE.MeshStandardMaterial({color:0x5a4a30,roughness:.8});
+    for(let s=-1;s<=1;s+=2){
+      const thigh=new THREE.Mesh(new THREE.BoxGeometry(.18,.35,.22),pantsMat);thigh.position.set(s*.14,.62,0);g.add(thigh);
+      const shin=new THREE.Mesh(new THREE.BoxGeometry(.16,.35,.2),pantsMat);shin.position.set(0,-.35,0);thigh.add(shin);
+      // Boot
+      const boot=new THREE.Mesh(new THREE.BoxGeometry(.18,.12,.26),new THREE.MeshStandardMaterial({color:0x2a1a0a,roughness:.6}));
+      boot.position.set(0,-.22,-.02);shin.add(boot);
+      if(s===-1)this.leftLeg=thigh;else this.rightLeg=thigh;
+    }
+    // Arms (jacket sleeves)
+    for(let s=-1;s<=1;s+=2){
+      const upper=new THREE.Mesh(new THREE.BoxGeometry(.14,.4,.16),jacketMat);upper.position.set(s*.38,1.25,0);g.add(upper);
+      // Forearm (skin)
+      const fore=new THREE.Mesh(new THREE.BoxGeometry(.12,.3,.14),skinMat);fore.position.set(0,-.35,0);upper.add(fore);
+      // Hand
+      const hand=new THREE.Mesh(new THREE.SphereGeometry(.06,5,4),skinMat);hand.position.set(0,-.18,0);fore.add(hand);
+      if(s===-1)this.leftArm=upper;else this.rightArm=upper;
+    }
+    // Whip (coiled at belt)
+    const whipMat=new THREE.MeshStandardMaterial({color:0x2a1506,roughness:.5});
+    const wc=new THREE.CatmullRomCurve3([new THREE.Vector3(.35,1,0),new THREE.Vector3(.6,.9,.3),new THREE.Vector3(.7,.7,.8),new THREE.Vector3(.5,.5,1.5)]);
+    g.add(new THREE.Mesh(new THREE.TubeGeometry(wc,10,.018,4,false),whipMat));
+    // Satchel
+    const satchel=new THREE.Mesh(new THREE.BoxGeometry(.2,.2,.1),new THREE.MeshStandardMaterial({color:0x5a3a1a,roughness:.6}));
+    satchel.position.set(-.32,.95,.1);g.add(satchel);
+
     g.position.set(0,0,3);this.player=g;this.scene.add(g);
   }
   _boulder(){
@@ -527,79 +683,97 @@ class JungleEngine{
     geo.computeVertexNormals();
     const b=new THREE.Mesh(geo,new THREE.MeshStandardMaterial({color:0x5a5a5a,roughness:.8,metalness:.2}));
     b.castShadow=true;g.add(b);
-    // Moss patches on boulder
-    for(let i=0;i<8;i++){const m=new THREE.Mesh(new THREE.SphereGeometry(.3+Math.random()*.3,5,4),new THREE.MeshStandardMaterial({color:0x3a6a3a,roughness:1}));
+    for(let i=0;i<6;i++){const m=new THREE.Mesh(new THREE.SphereGeometry(.2+Math.random()*.3,5,4),new THREE.MeshStandardMaterial({color:0x3a6a3a,roughness:1}));
       const a=Math.random()*Math.PI*2,e=Math.random()*Math.PI;
       m.position.set(Math.sin(e)*Math.cos(a)*2.3,Math.sin(e)*Math.sin(a)*2.3,Math.cos(e)*2.3);g.add(m)}
-    // Dust ring
     const ring=new THREE.Mesh(new THREE.RingGeometry(2.5,4,16),new THREE.MeshBasicMaterial({color:0x8a7560,transparent:true,opacity:.25,side:THREE.DoubleSide}));
     ring.rotation.x=-Math.PI/2;ring.position.y=-2;g.add(ring);this.dustRing=ring;
     g.position.set(0,2.5,3-this.boulderDist);this.boulder=g;this.scene.add(g);
   }
   _animals(){
-    // PARROTS
-    const colors=[0xff3333,0x33ff33,0x3333ff,0xffff33,0xff33ff];
-    for(let i=0;i<6;i++){
-      const g=new THREE.Group();const c=colors[i%colors.length];
-      const bd=new THREE.Mesh(new THREE.SphereGeometry(.15,6,5),new THREE.MeshStandardMaterial({color:c,roughness:.5}));
+    const colors=[0xff3333,0x33cc33,0x3366ff,0xffff33,0xff33ff,0xff6600];
+    // Birds & toucans
+    for(let i=0;i<8;i++){
+      const g=new THREE.Group();const c=colors[i%colors.length];const isToucan=i>=5;
+      const bd=new THREE.Mesh(new THREE.SphereGeometry(isToucan?.18:.14,6,5),new THREE.MeshStandardMaterial({color:isToucan?0x1a1a1a:c,roughness:.5}));
       bd.scale.set(1,1,1.5);g.add(bd);
-      const wl=new THREE.Mesh(new THREE.PlaneGeometry(.3,.15),new THREE.MeshStandardMaterial({color:c,side:THREE.DoubleSide,roughness:.5}));
-      wl.position.set(-.2,.05,0);g.add(wl);
-      const wr=new THREE.Mesh(new THREE.PlaneGeometry(.3,.15),new THREE.MeshStandardMaterial({color:c,side:THREE.DoubleSide,roughness:.5}));
-      wr.position.set(.2,.05,0);g.add(wr);
-      const beak=new THREE.Mesh(new THREE.ConeGeometry(.04,.1,4),new THREE.MeshStandardMaterial({color:0xffaa00}));
-      beak.position.set(0,0,-.2);beak.rotation.x=Math.PI/2;g.add(beak);
-      g.position.set((Math.random()-.5)*8,4+Math.random()*3,Math.random()*-80);
+      const beak=new THREE.Mesh(new THREE.ConeGeometry(isToucan?.08:.04,isToucan?.25:.1,4),new THREE.MeshStandardMaterial({color:isToucan?0xff6600:0xffaa00}));
+      beak.position.set(0,0,isToucan?-.3:-.2);beak.rotation.x=Math.PI/2;g.add(beak);
+      const wl=new THREE.Mesh(new THREE.PlaneGeometry(isToucan?.35:.28,.15),new THREE.MeshStandardMaterial({color:isToucan?0x222222:c,side:THREE.DoubleSide}));wl.position.set(-.2,.05,0);g.add(wl);
+      const wr=new THREE.Mesh(new THREE.PlaneGeometry(isToucan?.35:.28,.15),new THREE.MeshStandardMaterial({color:isToucan?0x222222:c,side:THREE.DoubleSide}));wr.position.set(.2,.05,0);g.add(wr);
+      g.position.set((Math.random()-.5)*8,4+Math.random()*3,Math.random()*-60);
       this.scene.add(g);
-      this.animals.push({mesh:g,type:'bird',wingL:wl,wingR:wr,baseY:g.position.y,baseX:g.position.x,speed:.5+Math.random()*.5,phase:Math.random()*Math.PI*2});
+      this.animals.push({mesh:g,type:'bird',wingL:wl,wingR:wr,baseY:g.position.y,baseX:g.position.x,speed:.3+Math.random()*.5,phase:Math.random()*Math.PI*2});
     }
-    // TOUCANS
-    for(let i=0;i<3;i++){
-      const g=new THREE.Group();
-      const tb=new THREE.Mesh(new THREE.SphereGeometry(.18,6,5),new THREE.MeshStandardMaterial({color:0x1a1a1a,roughness:.5}));
-      tb.scale.set(1,1,1.5);g.add(tb);
-      const beak=new THREE.Mesh(new THREE.ConeGeometry(.08,.25,5),new THREE.MeshStandardMaterial({color:0xff6600}));
-      beak.position.set(0,0,-.3);beak.rotation.x=Math.PI/2;g.add(beak);
-      const wl=new THREE.Mesh(new THREE.PlaneGeometry(.35,.18),new THREE.MeshStandardMaterial({color:0x222222,side:THREE.DoubleSide}));wl.position.set(-.25,.05,0);g.add(wl);
-      const wr=new THREE.Mesh(new THREE.PlaneGeometry(.35,.18),new THREE.MeshStandardMaterial({color:0x222222,side:THREE.DoubleSide}));wr.position.set(.25,.05,0);g.add(wr);
-      const breast=new THREE.Mesh(new THREE.SphereGeometry(.1,5,4),new THREE.MeshStandardMaterial({color:0xffff00}));
-      breast.position.set(0,-.05,-.1);g.add(breast);
-      g.position.set((Math.random()-.5)*6,5+Math.random()*2,-10+Math.random()*-60);
-      this.scene.add(g);
-      this.animals.push({mesh:g,type:'bird',wingL:wl,wingR:wr,baseY:g.position.y,baseX:g.position.x,speed:.3+Math.random()*.3,phase:Math.random()*Math.PI*2});
-    }
-    // MONKEYS
-    for(let i=0;i<4;i++){
+    // Monkeys
+    for(let i=0;i<5;i++){
       const g=new THREE.Group();const mMat=new THREE.MeshStandardMaterial({color:0x6a4a2a,roughness:.7});
       const mbody=new THREE.Mesh(new THREE.SphereGeometry(.2,6,5),mMat);mbody.scale.set(1,1.2,1);g.add(mbody);
       const mhead=new THREE.Mesh(new THREE.SphereGeometry(.14,6,5),mMat);mhead.position.y=.3;g.add(mhead);
-      const mface=new THREE.Mesh(new THREE.SphereGeometry(.08,5,4),new THREE.MeshStandardMaterial({color:0xd4a574}));
-      mface.position.set(0,.3,-.12);g.add(mface);
+      const mface=new THREE.Mesh(new THREE.SphereGeometry(.08,5,4),new THREE.MeshStandardMaterial({color:0xd4a574}));mface.position.set(0,.3,-.12);g.add(mface);
       for(let s=-1;s<=1;s+=2){const arm=new THREE.Mesh(new THREE.BoxGeometry(.06,.5,.06),mMat);arm.position.set(s*.22,.15,0);g.add(arm)}
       const tc=new THREE.CatmullRomCurve3([new THREE.Vector3(0,-.15,.1),new THREE.Vector3(0,-.3,.3),new THREE.Vector3(.1,-.2,.5)]);
       g.add(new THREE.Mesh(new THREE.TubeGeometry(tc,6,.02,4,false),mMat));
-      const x=(Math.random()>.5?1:-1)*(2+Math.random()*2);
-      g.position.set(x,3+Math.random()*3,-5+Math.random()*-80);
+      const x=(Math.random()>.5?1:-1)*(2.5+Math.random()*2);
+      g.position.set(x,3+Math.random()*3,-5+Math.random()*-60);
       this.scene.add(g);
       this.animals.push({mesh:g,type:'monkey',baseY:g.position.y,baseX:x,speed:.8+Math.random()*.5,phase:Math.random()*Math.PI*2});
     }
-    // BUTTERFLIES
-    for(let i=0;i<10;i++){
+    // Butterflies
+    for(let i=0;i<8;i++){
       const g=new THREE.Group();
       const bc=new THREE.MeshBasicMaterial({color:[0xff66aa,0xffaa33,0x66ffaa,0xaa66ff,0x66aaff][i%5],transparent:true,opacity:.8,side:THREE.DoubleSide});
       const wl=new THREE.Mesh(new THREE.CircleGeometry(.06,5),bc);wl.position.x=-.05;g.add(wl);
       const wr=new THREE.Mesh(new THREE.CircleGeometry(.06,5),bc);wr.position.x=.05;g.add(wr);
-      g.position.set((Math.random()-.5)*8,1+Math.random()*4,Math.random()*-60);
+      g.position.set((Math.random()-.5)*7,1+Math.random()*3,Math.random()*-40);
       this.scene.add(g);
       this.animals.push({mesh:g,type:'butterfly',wingL:wl,wingR:wr,baseY:g.position.y,baseX:g.position.x,speed:1+Math.random(),phase:Math.random()*Math.PI*2});
     }
   }
   _particles(){
     const n=300;const geo=new THREE.BufferGeometry();const pos=new Float32Array(n*3);
-    for(let i=0;i<n;i++){pos[i*3]=(Math.random()-.5)*10;pos[i*3+1]=Math.random()*6;pos[i*3+2]=Math.random()*-60}
+    for(let i=0;i<n;i++){pos[i*3]=(Math.random()-.5)*10;pos[i*3+1]=Math.random()*6;pos[i*3+2]=Math.random()*-50}
     geo.setAttribute('position',new THREE.BufferAttribute(pos,3));
     this.particles=new THREE.Points(geo,new THREE.PointsMaterial({color:0xccddaa,size:.04,transparent:true,opacity:.5,sizeAttenuation:true}));
     this.scene.add(this.particles);
+  }
+  // ADVENTURE MUSIC (Web Audio API - procedural)
+  _startMusic(){
+    try{
+      const AC=window.AudioContext||window.webkitAudioContext;
+      this.audioCtx=new AC();const ctx=this.audioCtx;
+      // Create a looping adventure melody
+      const melody=[392,440,494,523,587,523,494,440,392,330,349,392,440,494,440,392];
+      const bass=[196,196,220,220,262,262,247,247,196,196,220,220,262,262,247,247];
+      const tempo=.22;
+      const playNote=(freq,start,dur,type,vol,dest)=>{
+        const o=ctx.createOscillator();const g=ctx.createGain();
+        o.type=type;o.frequency.setValueAtTime(freq,start);
+        g.gain.setValueAtTime(0,start);g.gain.linearRampToValueAtTime(vol,start+.02);
+        g.gain.linearRampToValueAtTime(vol*.6,start+dur*.7);g.gain.linearRampToValueAtTime(0,start+dur);
+        o.connect(g);g.connect(dest);o.start(start);o.stop(start+dur);
+      };
+      const masterGain=ctx.createGain();masterGain.gain.value=0.12;masterGain.connect(ctx.destination);
+      const scheduleLoop=()=>{
+        if(!this.running){masterGain.gain.linearRampToValueAtTime(0,ctx.currentTime+.5);return}
+        const now=ctx.currentTime;
+        for(let i=0;i<melody.length;i++){
+          playNote(melody[i],now+i*tempo,tempo*.8,'triangle',.3,masterGain);
+          playNote(bass[i],now+i*tempo,tempo*.9,'sine',.2,masterGain);
+        }
+        // Drum beat
+        for(let i=0;i<melody.length;i++){
+          if(i%2===0){
+            const n=ctx.createBufferSource();const buf=ctx.createBuffer(1,ctx.sampleRate*.08,ctx.sampleRate);
+            const d=buf.getChannelData(0);for(let j=0;j<d.length;j++)d[j]=(Math.random()*2-1)*Math.exp(-j/800);
+            n.buffer=buf;const ng=ctx.createGain();ng.gain.value=.15;n.connect(ng);ng.connect(masterGain);
+            n.start(now+i*tempo);
+          }
+        }
+        setTimeout(scheduleLoop,melody.length*tempo*1000-100);
+      };
+      scheduleLoop();
+    }catch(e){console.log('Audio not available')}
   }
 
   // === GAME ACTIONS ===
@@ -611,18 +785,43 @@ class JungleEngine{
 
   _animate(){
     if(!this.running)return;requestAnimationFrame(()=>this._animate());
-    const dt=this.clock.getDelta(),t=this.clock.getElapsedTime();
+    const dt=Math.min(this.clock.getDelta(),.05),t=this.clock.getElapsedTime();
 
-    // Stumble timer
+    // Stumble/boost timers
     if(this.stumbling){this.stumbleTimer-=dt;if(this.stumbleTimer<=0)this.stumbling=false}
     if(this.speedBoost){this.speedTimer-=dt;if(this.speedTimer<=0)this.speedBoost=false}
+
+    // SCROLL SPEED
+    const spd=this.stumbling?2:this.speedBoost?12:this.worldSpeed;
+    const scroll=dt*spd;
+    this.scrollPos+=scroll;
+
+    // SCROLL GROUND TILES
+    for(const tile of this.groundTiles){
+      tile.grp.position.z+=scroll;
+      if(tile.grp.position.z>tile.len){tile.grp.position.z-=tile.len*2}
+    }
+    // SCROLL WORLD OBJECTS
+    for(const obj of this.scrollObjects){
+      obj.mesh.position.z+=scroll;
+      if(obj.mesh.position.z>this.NEAR){
+        obj.mesh.position.z+=this.FAR-this.NEAR;// wrap to far
+      }
+    }
+    // SCROLL TORCHES
+    for(const tc of this.torches){
+      tc.light.position.z+=scroll;
+      if(tc.light.position.z>this.NEAR)tc.light.position.z+=this.FAR-this.NEAR;
+      tc.light.intensity=.5+Math.random()*.5;
+      tc.mesh.position.y=tc.baseY+Math.sin(t*8+tc.baseY)*.04;
+      tc.mesh.scale.setScalar(.7+Math.random()*.5);
+    }
 
     // Player running
     const runSpeed=this.stumbling?4:this.speedBoost?18:12;
     this.bob+=dt*runSpeed;
     if(this.player){
       if(this.stumbling){
-        // Stumble animation - wobble and slow
         this.player.position.y=Math.abs(Math.sin(this.bob))*.05;
         this.player.rotation.x=Math.sin(t*15)*.15;
         this.player.rotation.z=Math.sin(t*12)*.2;
@@ -630,27 +829,28 @@ class JungleEngine{
         this.player.position.y=Math.abs(Math.sin(this.bob))*.2;
         this.player.rotation.x=0;this.player.rotation.z=0;
       }
-      if(this.leftLeg){this.leftLeg.rotation.x=Math.sin(this.bob)*(this.stumbling?.3:.7);this.rightLeg.rotation.x=-Math.sin(this.bob)*(this.stumbling?.3:.7)}
-      if(this.leftArm){this.leftArm.rotation.x=-Math.sin(this.bob)*(this.stumbling?.2:.5);this.rightArm.rotation.x=Math.sin(this.bob)*(this.stumbling?.2:.5)}
+      if(this.leftLeg){this.leftLeg.rotation.x=Math.sin(this.bob)*(this.stumbling?.3:.8);this.rightLeg.rotation.x=-Math.sin(this.bob)*(this.stumbling?.3:.8)}
+      if(this.leftArm){this.leftArm.rotation.x=-Math.sin(this.bob)*(this.stumbling?.2:.6);this.rightArm.rotation.x=Math.sin(this.bob)*(this.stumbling?.2:.6)}
     }
 
     // Boulder
     if(this.boulder){
-      this.bRot+=dt*(this.stumbling?3:this.speedBoost?1:2);
+      this.bRot+=dt*(this.stumbling?4:this.speedBoost?1:2.5);
       this.boulder.rotation.x=this.bRot;this.boulder.rotation.z=Math.sin(t*2)*.06;
       this.boulder.position.z=3-this.boulderDist;
-      this.boulderLight.position.set(this.boulder.position.x,this.boulder.position.y+3,this.boulder.position.z);
+      this.boulderLight.position.set(0,this.boulder.position.y+3,this.boulder.position.z);
       const df=1-(this.boulderDist-this.minBoulder)/45;
       this.boulderLight.intensity=1+df*4;
       if(this.dustRing)this.dustRing.material.opacity=.15+Math.sin(t*4)*.1;
     }
 
-    // Animals
+    // Animals (scroll + animate)
     for(const a of this.animals){
+      a.mesh.position.z+=scroll;
+      if(a.mesh.position.z>this.NEAR)a.mesh.position.z-=80;
       if(a.type==='bird'){
         a.mesh.position.x=a.baseX+Math.sin(t*a.speed+a.phase)*3;
-        a.mesh.position.y=a.baseY+Math.sin(t*a.speed*.7+a.phase)*1;
-        a.mesh.position.z+=(this.speedBoost?.03:.015);if(a.mesh.position.z>10)a.mesh.position.z=-80;
+        a.mesh.position.y=a.baseY+Math.sin(t*a.speed*.7+a.phase)*.8;
         if(a.wingL){a.wingL.rotation.z=Math.sin(t*8+a.phase)*.6;a.wingR.rotation.z=-Math.sin(t*8+a.phase)*.6}
       }else if(a.type==='monkey'){
         a.mesh.position.x=a.baseX+Math.sin(t*a.speed+a.phase)*1.5;
@@ -659,37 +859,36 @@ class JungleEngine{
       }else if(a.type==='butterfly'){
         a.mesh.position.x=a.baseX+Math.sin(t*a.speed+a.phase)*2;
         a.mesh.position.y=a.baseY+Math.sin(t*a.speed*1.3+a.phase)*.5;
-        a.mesh.position.z+=.005;if(a.mesh.position.z>5)a.mesh.position.z=-60;
         if(a.wingL){a.wingL.rotation.y=Math.sin(t*12+a.phase)*.8;a.wingR.rotation.y=-Math.sin(t*12+a.phase)*.8}
       }
     }
 
-    // Torches
-    for(const tc of this.torches){tc.light.intensity=.6+Math.random()*.5;tc.mesh.position.y=tc.baseY+Math.sin(t*8+tc.baseY)*.04;tc.mesh.scale.setScalar(.7+Math.random()*.5)}
-
     // Player light
     if(this.playerLight){this.playerLight.intensity=2+Math.sin(t*6)*.3+Math.random()*.2;this.playerLight.position.set(Math.sin(t*3)*.1,3+Math.sin(t*5)*.1,5)}
 
-    // Camera shake
+    // Camera shake + slight bob
+    const camY=3.8+Math.sin(this.bob*.5)*.08;
     if(this.shake>0){
-      this.camera.position.x=(Math.random()-.5)*this.shake;this.camera.position.y=4+(Math.random()-.5)*this.shake*.5;
+      this.camera.position.x=(Math.random()-.5)*this.shake;this.camera.position.y=camY+(Math.random()-.5)*this.shake*.5;
       this.shake*=.9;if(this.shake<.01)this.shake=0;
-    }else{this.camera.position.x=0;this.camera.position.y=4}
+    }else{this.camera.position.x=Math.sin(t*.3)*.05;this.camera.position.y=camY}
 
-    // Particles drift
+    // Particles
     if(this.particles){
       const p=this.particles.geometry.attributes.position.array;
-      for(let i=0;i<p.length;i+=3){p[i+1]+=Math.sin(t+i)*.003;p[i]+=Math.cos(t*.3+i)*.002;if(p[i+1]>7)p[i+1]=0}
+      for(let i=0;i<p.length;i+=3){p[i+1]+=Math.sin(t+i)*.003;p[i]+=Math.cos(t*.3+i)*.002;p[i+2]+=scroll;if(p[i+2]>10)p[i+2]-=60;if(p[i+1]>7)p[i+1]=0}
       this.particles.geometry.attributes.position.needsUpdate=true;
-      this.particles.material.opacity=.3+(1-this.boulderDist/50)*.4;
     }
 
-    // Fog based on danger
-    this.scene.fog.density=.01+(1-this.boulderDist/50)*.008;
+    this.scene.fog.density=.015+(1-this.boulderDist/50)*.01;
     this.renderer.render(this.scene,this.camera);
   }
   _resize(){if(!this.camera)return;this.camera.aspect=window.innerWidth/window.innerHeight;this.camera.updateProjectionMatrix();this.renderer.setSize(window.innerWidth,window.innerHeight)}
-  destroy(){this.running=false;if(this.renderer){this.renderer.dispose();this.renderer.domElement.remove()}}
+  destroy(){
+    this.running=false;
+    if(this.audioCtx)try{this.audioCtx.close()}catch(e){}
+    if(this.renderer){this.renderer.dispose();this.renderer.domElement.remove()}
+  }
 }
 
 // ========================================================
@@ -811,12 +1010,373 @@ class QuizGame{
 }
 
 // ========================================================
+// COIN SYSTEM (localStorage)
+// ========================================================
+const CoinBank={
+  _key:'quizrush_coins',_costumeKey:'quizrush_costumes',_equippedKey:'quizrush_equipped',
+  getCoins(){return parseInt(localStorage.getItem(this._key)||'0')},
+  addCoins(n){const c=this.getCoins()+n;localStorage.setItem(this._key,c);return c},
+  getOwned(){try{return JSON.parse(localStorage.getItem(this._costumeKey)||'["explorer"]')}catch(e){return['explorer']}},
+  own(id){const o=this.getOwned();if(!o.includes(id)){o.push(id);localStorage.setItem(this._costumeKey,JSON.stringify(o))}},
+  getEquipped(){return localStorage.getItem(this._equippedKey)||'explorer'},
+  equip(id){localStorage.setItem(this._equippedKey,id)},
+  spend(n){const c=this.getCoins();if(c>=n){localStorage.setItem(this._key,c-n);return true}return false}
+};
+
+function showCoinToast(amount){
+  const t=document.getElementById('coin-toast');
+  t.textContent='🪙 +'+amount.toLocaleString()+' COINS!';
+  t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);
+}
+
+// ========================================================
+// SCREEN NAVIGATION
+// ========================================================
+function showScreen(name){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(name==='upload'?'upload-screen':name==='shop'?'shop-screen':name==='results'?'results-screen':'game-screen').classList.add('active');
+  if(name==='shop')refreshShop();
+}
+
+// ========================================================
+// SHOP LOGIC
+// ========================================================
+const COSTUMES={
+  explorer:{name:'Explorer',price:0},
+  gecko:{name:'Jungle Gecko',price:150000}
+};
+
+let shopPreviews={};
+
+function refreshShop(){
+  const coins=CoinBank.getCoins();
+  const owned=CoinBank.getOwned();
+  const equipped=CoinBank.getEquipped();
+  document.getElementById('shop-coins').textContent=coins.toLocaleString();
+
+  // Explorer card
+  const expCard=document.getElementById('costume-explorer');
+  const expBtn=document.getElementById('btn-explorer');
+  expCard.className='costume-card '+(equipped==='explorer'?'equipped':'owned');
+  if(equipped==='explorer'){expBtn.className='costume-btn equipped';expBtn.textContent='✓ EQUIPPED';expBtn.onclick=null}
+  else{expBtn.className='costume-btn equip';expBtn.textContent='EQUIP';expBtn.onclick=()=>{CoinBank.equip('explorer');refreshShop()}}
+
+  // Gecko card
+  const geckoCard=document.getElementById('costume-gecko');
+  const geckoBtn=document.getElementById('btn-gecko');
+  const geckoOwned=owned.includes('gecko');
+  const pFill=document.getElementById('gecko-progress-fill');
+  const pText=document.getElementById('gecko-progress-text');
+  const pBar=document.getElementById('gecko-progress-bar');
+
+  if(geckoOwned){
+    geckoCard.className='costume-card '+(equipped==='gecko'?'equipped':'owned');
+    pBar.style.display='none';pText.style.display='none';
+    if(equipped==='gecko'){geckoBtn.className='costume-btn equipped';geckoBtn.textContent='✓ EQUIPPED';geckoBtn.disabled=false;geckoBtn.onclick=null}
+    else{geckoBtn.className='costume-btn equip';geckoBtn.textContent='EQUIP';geckoBtn.disabled=false;geckoBtn.onclick=()=>{CoinBank.equip('gecko');refreshShop()}}
+  }else{
+    geckoCard.className='costume-card locked';
+    pBar.style.display='';pText.style.display='';
+    const pct=Math.min(100,coins/COSTUMES.gecko.price*100);
+    pFill.style.width=pct+'%';
+    pText.textContent=coins.toLocaleString()+' / '+COSTUMES.gecko.price.toLocaleString()+' coins needed';
+    if(coins>=COSTUMES.gecko.price){
+      geckoBtn.className='costume-btn buy';geckoBtn.textContent='🪙 BUY — 150K';geckoBtn.disabled=false;
+      geckoBtn.onclick=()=>{if(CoinBank.spend(COSTUMES.gecko.price)){CoinBank.own('gecko');CoinBank.equip('gecko');refreshShop()}}
+    }else{geckoBtn.className='costume-btn buy';geckoBtn.textContent='🔒 LOCKED';geckoBtn.disabled=true;geckoBtn.onclick=null}
+  }
+
+  // Render 3D previews
+  renderCostumePreviews();
+}
+
+function renderCostumePreviews(){
+  // Clean up old previews
+  Object.values(shopPreviews).forEach(p=>{if(p.renderer)p.renderer.dispose()});
+  shopPreviews={};
+  renderPreview('preview-explorer','explorer');
+  renderPreview('preview-gecko','gecko');
+}
+
+function renderPreview(containerId,costumeId){
+  const container=document.getElementById(containerId);if(!container)return;
+  container.innerHTML='';
+  const w=container.clientWidth||200,h=container.clientHeight||180;
+  const scene=new THREE.Scene();
+  scene.background=new THREE.Color(0x0d1117);
+  const cam=new THREE.PerspectiveCamera(50,w/h,.1,50);
+  cam.position.set(0,1.5,4);cam.lookAt(0,1,0);
+  const renderer=new THREE.WebGLRenderer({antialias:true});
+  renderer.setSize(w,h);renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
+  container.appendChild(renderer.domElement);
+  scene.add(new THREE.AmbientLight(0xffffff,0.6));
+  const dl=new THREE.DirectionalLight(0xfff4cc,0.8);dl.position.set(3,5,3);scene.add(dl);
+  const pl=new THREE.PointLight(0xff9933,1,15);pl.position.set(-1,2,3);scene.add(pl);
+
+  let model;
+  if(costumeId==='gecko')model=buildGeckoModel();
+  else model=buildExplorerModel();
+  scene.add(model);
+
+  shopPreviews[costumeId]={scene,cam,renderer,model};
+  let rot=0;
+  function animPreview(){
+    if(!shopPreviews[costumeId])return;
+    requestAnimationFrame(animPreview);
+    rot+=0.015;model.rotation.y=Math.sin(rot)*.6;
+    model.position.y=Math.sin(rot*2)*.05;
+    renderer.render(scene,cam);
+  }
+  animPreview();
+}
+
+// ========================================================
+// GECKO 3D MODEL (based on reference image)
+// ========================================================
+function buildGeckoModel(){
+  const g=new THREE.Group();
+  const green=new THREE.MeshStandardMaterial({color:0x2d8a4e,roughness:.5});
+  const lightGreen=new THREE.MeshStandardMaterial({color:0x5aab6e,roughness:.5});
+  const belly=new THREE.MeshStandardMaterial({color:0x7ac48a,roughness:.5});
+  const eyeWhite=new THREE.MeshStandardMaterial({color:0xffffff,roughness:.3});
+  const eyeBlack=new THREE.MeshBasicMaterial({color:0x111111});
+  const mouth=new THREE.MeshStandardMaterial({color:0x1a6a3a,roughness:.6});
+
+  // Body (round, chubby)
+  const bodyGeo=new THREE.SphereGeometry(.45,12,10);
+  const bodyMesh=new THREE.Mesh(bodyGeo,green);
+  bodyMesh.scale.set(1,1.15,1);bodyMesh.position.y=1.0;g.add(bodyMesh);
+
+  // Belly (lighter front)
+  const bellyMesh=new THREE.Mesh(new THREE.SphereGeometry(.38,10,8),belly);
+  bellyMesh.scale.set(.85,1.1,.6);bellyMesh.position.set(0,1.0,-.2);g.add(bellyMesh);
+
+  // Head (big, round)
+  const headGeo=new THREE.SphereGeometry(.38,12,10);
+  const headMesh=new THREE.Mesh(headGeo,green);
+  headMesh.position.y=1.65;g.add(headMesh);
+
+  // Snout (wide smile area)
+  const snout=new THREE.Mesh(new THREE.SphereGeometry(.28,10,8),lightGreen);
+  snout.scale.set(1.1,.7,.8);snout.position.set(0,1.55,-.28);g.add(snout);
+
+  // Smile line
+  const smileCurve=new THREE.CatmullRomCurve3([
+    new THREE.Vector3(-.18,1.48,-.38),new THREE.Vector3(0,1.44,-.42),new THREE.Vector3(.18,1.48,-.38)
+  ]);
+  const smileLine=new THREE.Mesh(new THREE.TubeGeometry(smileCurve,8,.012,4,false),mouth);
+  g.add(smileLine);
+
+  // Nostrils
+  for(let s=-1;s<=1;s+=2){
+    const n=new THREE.Mesh(new THREE.SphereGeometry(.02,4,4),mouth);
+    n.position.set(s*.08,1.6,-.42);g.add(n);
+  }
+
+  // BIG EYES (googly, like reference)
+  for(let s=-1;s<=1;s+=2){
+    // Eye socket bump
+    const bump=new THREE.Mesh(new THREE.SphereGeometry(.18,8,8),green);
+    bump.position.set(s*.2,1.85,-.2);g.add(bump);
+    // White of eye
+    const ew=new THREE.Mesh(new THREE.SphereGeometry(.16,10,8),eyeWhite);
+    ew.position.set(s*.2,1.85,-.3);g.add(ew);
+    // Pupil (big black)
+    const ep=new THREE.Mesh(new THREE.SphereGeometry(.085,8,6),eyeBlack);
+    ep.position.set(s*.18,1.85,-.44);g.add(ep);
+    // Eye shine
+    const shine=new THREE.Mesh(new THREE.SphereGeometry(.03,5,4),new THREE.MeshBasicMaterial({color:0xffffff}));
+    shine.position.set(s*.15,1.9,-.46);g.add(shine);
+  }
+
+  // Arms (short, stubby with little hands)
+  for(let s=-1;s<=1;s+=2){
+    const arm=new THREE.Group();
+    const upper=new THREE.Mesh(new THREE.CylinderGeometry(.08,.07,.3,6),green);
+    upper.rotation.z=s*-.5;arm.add(upper);
+    // Hand with fingers
+    const hand=new THREE.Mesh(new THREE.SphereGeometry(.08,6,5),lightGreen);
+    hand.position.y=-.2;upper.add(hand);
+    // Little fingers
+    for(let f=-1;f<=1;f++){
+      const finger=new THREE.Mesh(new THREE.SphereGeometry(.03,4,3),lightGreen);
+      finger.position.set(f*.04,-.07,-.02);hand.add(finger);
+    }
+    arm.position.set(s*.45,1.15,-.05);
+    // One arm waving
+    if(s===1){arm.rotation.z=-.8;arm.position.set(s*.5,1.3,-.05)}
+    g.add(arm);
+  }
+
+  // Legs (short, chubby)
+  for(let s=-1;s<=1;s+=2){
+    const leg=new THREE.Mesh(new THREE.CylinderGeometry(.1,.09,.25,6),green);
+    leg.position.set(s*.2,.5,0);g.add(leg);
+    // Foot (flat, wide)
+    const foot=new THREE.Mesh(new THREE.SphereGeometry(.12,6,5),lightGreen);
+    foot.scale.set(1.2,.5,1.4);foot.position.set(s*.2,.32,-.05);g.add(foot);
+    // Toes
+    for(let t=-1;t<=1;t++){
+      const toe=new THREE.Mesh(new THREE.SphereGeometry(.035,4,3),lightGreen);
+      toe.position.set(s*.2+t*.05,.3,-.17);g.add(toe);
+    }
+  }
+
+  // Tail (curvy, thick)
+  const tailPts=[
+    new THREE.Vector3(0,.8,.25),new THREE.Vector3(0,.6,.55),
+    new THREE.Vector3(.15,.45,.85),new THREE.Vector3(.3,.5,1.1),
+    new THREE.Vector3(.2,.65,1.3)
+  ];
+  const tailCurve=new THREE.CatmullRomCurve3(tailPts);
+  const tailGeo=new THREE.TubeGeometry(tailCurve,12,.1,6,false);
+  // Taper the tail
+  const tailPos=tailGeo.attributes.position;
+  for(let i=0;i<tailPos.count;i++){
+    const z=tailPos.getZ(i);const taper=1-Math.max(0,(z-.3)/.8)*.6;
+    const x=tailPos.getX(i),y=tailPos.getY(i);
+    tailPos.setX(i,x*taper);tailPos.setY(i,y*taper);
+  }
+  tailGeo.computeVertexNormals();
+  const tail=new THREE.Mesh(tailGeo,green);
+  g.add(tail);
+
+  return g;
+}
+
+function buildExplorerModel(){
+  const g=new THREE.Group();
+  const skinMat=new THREE.MeshStandardMaterial({color:0xc49a6c,roughness:.6});
+  const jacketMat=new THREE.MeshStandardMaterial({color:0x6a4a1a,roughness:.7});
+  const hatMat=new THREE.MeshStandardMaterial({color:0x3a2210,roughness:.7});
+  const pantsMat=new THREE.MeshStandardMaterial({color:0x5a4a30,roughness:.8});
+  // Torso
+  const torso=new THREE.Mesh(new THREE.BoxGeometry(.55,.75,.3),jacketMat);torso.position.y=1.2;g.add(torso);
+  // Belt
+  const belt=new THREE.Mesh(new THREE.BoxGeometry(.58,.08,.32),new THREE.MeshStandardMaterial({color:0x3a2210,roughness:.5}));belt.position.y=.85;g.add(belt);
+  // Head
+  const head=new THREE.Mesh(new THREE.SphereGeometry(.2,10,8),skinMat);head.position.y=1.82;g.add(head);
+  // Fedora
+  const brim=new THREE.Mesh(new THREE.CylinderGeometry(.38,.4,.04,16),hatMat);brim.position.y=2.0;g.add(brim);
+  const crown=new THREE.Mesh(new THREE.CylinderGeometry(.16,.22,.22,12),hatMat);crown.position.y=2.13;g.add(crown);
+  // Eyes
+  const eyeMat=new THREE.MeshBasicMaterial({color:0x111111});
+  for(let s=-1;s<=1;s+=2){const e=new THREE.Mesh(new THREE.SphereGeometry(.025,6,4),eyeMat);e.position.set(s*.08,1.84,-.19);g.add(e)}
+  // Legs
+  for(let s=-1;s<=1;s+=2){
+    const leg=new THREE.Mesh(new THREE.BoxGeometry(.18,.55,.22),pantsMat);leg.position.set(s*.14,.5,0);g.add(leg);
+    const boot=new THREE.Mesh(new THREE.BoxGeometry(.18,.12,.26),new THREE.MeshStandardMaterial({color:0x2a1a0a}));boot.position.set(s*.14,.2,-.02);g.add(boot);
+  }
+  // Arms
+  for(let s=-1;s<=1;s+=2){
+    const arm=new THREE.Mesh(new THREE.BoxGeometry(.14,.55,.16),jacketMat);arm.position.set(s*.38,1.1,0);g.add(arm);
+    const hand=new THREE.Mesh(new THREE.SphereGeometry(.06,5,4),skinMat);hand.position.set(s*.38,.78,0);g.add(hand);
+  }
+  return g;
+}
+
+// ========================================================
+// GECKO PLAYER FOR IN-GAME (with animated limbs)
+// ========================================================
+JungleEngine.prototype._geckoPlayer=function(){
+  const g=new THREE.Group();
+  const green=new THREE.MeshStandardMaterial({color:0x2d8a4e,roughness:.5});
+  const lightGreen=new THREE.MeshStandardMaterial({color:0x5aab6e,roughness:.5});
+  const bellyMat=new THREE.MeshStandardMaterial({color:0x7ac48a,roughness:.5});
+  const eyeWhite=new THREE.MeshStandardMaterial({color:0xffffff,roughness:.3});
+  const eyeBlack=new THREE.MeshBasicMaterial({color:0x111111});
+
+  // Body
+  const body=new THREE.Mesh(new THREE.SphereGeometry(.45,12,10),green);
+  body.scale.set(1,1.15,1);body.position.y=1.0;g.add(body);
+  // Belly
+  const bellyM=new THREE.Mesh(new THREE.SphereGeometry(.38,10,8),bellyMat);
+  bellyM.scale.set(.85,1.1,.6);bellyM.position.set(0,1.0,-.2);g.add(bellyM);
+  // Head
+  const head=new THREE.Mesh(new THREE.SphereGeometry(.38,12,10),green);
+  head.position.y=1.65;g.add(head);
+  // Snout
+  const snout=new THREE.Mesh(new THREE.SphereGeometry(.28,10,8),lightGreen);
+  snout.scale.set(1.1,.7,.8);snout.position.set(0,1.55,-.28);g.add(snout);
+  // Smile
+  const sc=new THREE.CatmullRomCurve3([new THREE.Vector3(-.18,1.48,-.38),new THREE.Vector3(0,1.44,-.42),new THREE.Vector3(.18,1.48,-.38)]);
+  g.add(new THREE.Mesh(new THREE.TubeGeometry(sc,8,.012,4,false),new THREE.MeshStandardMaterial({color:0x1a6a3a})));
+  // Eyes
+  for(let s=-1;s<=1;s+=2){
+    const bump=new THREE.Mesh(new THREE.SphereGeometry(.18,8,8),green);bump.position.set(s*.2,1.85,-.2);g.add(bump);
+    const ew=new THREE.Mesh(new THREE.SphereGeometry(.16,10,8),eyeWhite);ew.position.set(s*.2,1.85,-.3);g.add(ew);
+    const ep=new THREE.Mesh(new THREE.SphereGeometry(.085,8,6),eyeBlack);ep.position.set(s*.18,1.85,-.44);g.add(ep);
+    const shine=new THREE.Mesh(new THREE.SphereGeometry(.03,5,4),new THREE.MeshBasicMaterial({color:0xffffff}));shine.position.set(s*.15,1.9,-.46);g.add(shine);
+  }
+  // Legs (animated)
+  for(let s=-1;s<=1;s+=2){
+    const leg=new THREE.Mesh(new THREE.CylinderGeometry(.1,.09,.3,6),green);
+    leg.position.set(s*.2,.55,0);g.add(leg);
+    const foot=new THREE.Mesh(new THREE.SphereGeometry(.12,6,5),lightGreen);
+    foot.scale.set(1.2,.5,1.4);foot.position.set(0,-.2,-.05);leg.add(foot);
+    if(s===-1)this.leftLeg=leg;else this.rightLeg=leg;
+  }
+  // Arms (animated)
+  for(let s=-1;s<=1;s+=2){
+    const arm=new THREE.Mesh(new THREE.CylinderGeometry(.08,.07,.3,6),green);
+    arm.position.set(s*.48,1.15,-.05);arm.rotation.z=s*-.4;g.add(arm);
+    const hand=new THREE.Mesh(new THREE.SphereGeometry(.08,6,5),lightGreen);
+    hand.position.y=-.2;arm.add(hand);
+    if(s===-1)this.leftArm=arm;else this.rightArm=arm;
+  }
+  // Tail
+  const tailPts=[new THREE.Vector3(0,.8,.25),new THREE.Vector3(0,.6,.55),new THREE.Vector3(.15,.45,.85),new THREE.Vector3(.3,.5,1.1),new THREE.Vector3(.2,.65,1.3)];
+  const tailGeo=new THREE.TubeGeometry(new THREE.CatmullRomCurve3(tailPts),12,.1,6,false);
+  const tp=tailGeo.attributes.position;
+  for(let i=0;i<tp.count;i++){const z=tp.getZ(i);const taper=1-Math.max(0,(z-.3)/.8)*.6;tp.setX(i,tp.getX(i)*taper);tp.setY(i,tp.getY(i)*taper)}
+  tailGeo.computeVertexNormals();
+  g.add(new THREE.Mesh(tailGeo,green));
+
+  g.position.set(0,0,3);this.player=g;this.scene.add(g);
+};
+
+// Override _player based on costume
+const _origPlayerFn=JungleEngine.prototype._player;
+JungleEngine.prototype._player=function(){
+  if(CoinBank.getEquipped()==='gecko')this._geckoPlayer();
+  else _origPlayerFn.call(this);
+};
+
+// ========================================================
 // GLOBAL
 // ========================================================
 let curGame=null,curQs=null;
+
 function launchGame(q){curQs=q;if(curGame)curGame.cleanup();curGame=new QuizGame(q);curGame.start()}
+
 document.getElementById('retry-btn').addEventListener('click',()=>{if(curQs){document.getElementById('results-screen').classList.remove('active');if(curGame)curGame.cleanup();curGame=new QuizGame(curQs);curGame.start()}});
-document.getElementById('new-btn').addEventListener('click',()=>{if(curGame)curGame.cleanup();document.getElementById('results-screen').classList.remove('active');document.getElementById('game-screen').classList.remove('active');document.getElementById('upload-screen').classList.add('active')});
+document.getElementById('new-btn').addEventListener('click',()=>{if(curGame)curGame.cleanup();showScreen('upload')});
+document.getElementById('shop-back-btn').addEventListener('click',()=>showScreen('upload'));
+
+// Award coins after each game ends
+const _origEnd=QuizGame.prototype._end;
+QuizGame.prototype._end=function(won){
+  const coins=this.score;
+  if(coins>0){CoinBank.addCoins(coins);setTimeout(()=>showCoinToast(coins),1500)}
+  _origEnd.call(this,won);
+};
+
+// Sync coin display everywhere
+function syncCoins(){
+  const c=CoinBank.getCoins();
+  const el=document.getElementById('upload-coins');
+  if(el)el.textContent='🪙 '+c.toLocaleString();
+}
+
+// Update showScreen to also sync coins
+const _origShowScreen=showScreen;
+showScreen=function(name){
+  _origShowScreen(name);
+  syncCoins();
+};
+
+// Init on page load
+syncCoins();
 </script>
 </body>
 </html>

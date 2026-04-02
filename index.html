@@ -808,7 +808,7 @@ class JungleEngine{
       m.position.set(Math.sin(e)*Math.cos(a)*2.3,Math.sin(e)*Math.sin(a)*2.3,Math.cos(e)*2.3);g.add(m)}
     const ring=new THREE.Mesh(new THREE.RingGeometry(2.5,4,16),new THREE.MeshBasicMaterial({color:0x8a7560,transparent:true,opacity:.25,side:THREE.DoubleSide}));
     ring.rotation.x=-Math.PI/2;ring.position.y=-2;g.add(ring);this.dustRing=ring;
-    g.position.set(0,2.5,3-this.boulderDist);this.boulder=g;this.scene.add(g);
+    g.position.set(0,2.5,3+this.boulderDist);this.boulder=g;this.scene.add(g);
   }
   _animals(){
     const colors=[0xff3333,0x33cc33,0x3366ff,0xffff33,0xff33ff,0xff6600];
@@ -911,27 +911,27 @@ class JungleEngine{
     if(this.stumbling){this.stumbleTimer-=dt;if(this.stumbleTimer<=0)this.stumbling=false}
     if(this.speedBoost){this.speedTimer-=dt;if(this.speedTimer<=0)this.speedBoost=false}
 
-    // SCROLL SPEED
+    // SCROLL SPEED (negative = toward camera, objects come from ahead)
     const spd=this.stumbling?2:this.speedBoost?12:this.worldSpeed;
     const scroll=dt*spd;
     this.scrollPos+=scroll;
 
-    // SCROLL GROUND TILES
+    // SCROLL GROUND TILES (toward -Z = away from camera, past player)
     for(const tile of this.groundTiles){
-      tile.grp.position.z+=scroll;
-      if(tile.grp.position.z>tile.len){tile.grp.position.z-=tile.len*2}
+      tile.grp.position.z-=scroll;
+      if(tile.grp.position.z<-tile.len){tile.grp.position.z+=tile.len*2}
     }
-    // SCROLL WORLD OBJECTS
+    // SCROLL WORLD OBJECTS (toward -Z = away from camera)
     for(const obj of this.scrollObjects){
-      obj.mesh.position.z+=scroll;
-      if(obj.mesh.position.z>this.NEAR){
-        obj.mesh.position.z+=this.FAR-this.NEAR;// wrap to far
+      obj.mesh.position.z-=scroll;
+      if(obj.mesh.position.z<this.FAR){
+        obj.mesh.position.z+=this.NEAR-this.FAR;// wrap to near
       }
     }
     // SCROLL TORCHES
     for(const tc of this.torches){
-      tc.light.position.z+=scroll;
-      if(tc.light.position.z>this.NEAR)tc.light.position.z+=this.FAR-this.NEAR;
+      tc.light.position.z-=scroll;
+      if(tc.light.position.z<this.FAR)tc.light.position.z+=this.NEAR-this.FAR;
       tc.light.intensity=.5+Math.random()*.5;
       tc.mesh.position.y=tc.baseY+Math.sin(t*8+tc.baseY)*.04;
       tc.mesh.scale.setScalar(.7+Math.random()*.5);
@@ -957,7 +957,7 @@ class JungleEngine{
     if(this.boulder){
       this.bRot+=dt*(this.stumbling?4:this.speedBoost?1:2.5);
       this.boulder.rotation.x=this.bRot;this.boulder.rotation.z=Math.sin(t*2)*.06;
-      this.boulder.position.z=3-this.boulderDist;
+      this.boulder.position.z=3+this.boulderDist;
       this.boulderLight.position.set(0,this.boulder.position.y+3,this.boulder.position.z);
       const df=1-(this.boulderDist-this.minBoulder)/45;
       this.boulderLight.intensity=1+df*4;
@@ -966,8 +966,8 @@ class JungleEngine{
 
     // Animals (scroll + animate)
     for(const a of this.animals){
-      a.mesh.position.z+=scroll;
-      if(a.mesh.position.z>this.NEAR)a.mesh.position.z-=80;
+      a.mesh.position.z-=scroll;
+      if(a.mesh.position.z<this.FAR)a.mesh.position.z+=80;
       if(a.type==='bird'){
         a.mesh.position.x=a.baseX+Math.sin(t*a.speed+a.phase)*3;
         a.mesh.position.y=a.baseY+Math.sin(t*a.speed*.7+a.phase)*.8;
@@ -996,7 +996,7 @@ class JungleEngine{
     // Particles
     if(this.particles){
       const p=this.particles.geometry.attributes.position.array;
-      for(let i=0;i<p.length;i+=3){p[i+1]+=Math.sin(t+i)*.003;p[i]+=Math.cos(t*.3+i)*.002;p[i+2]+=scroll;if(p[i+2]>10)p[i+2]-=60;if(p[i+1]>7)p[i+1]=0}
+      for(let i=0;i<p.length;i+=3){p[i+1]+=Math.sin(t+i)*.003;p[i]+=Math.cos(t*.3+i)*.002;p[i+2]-=scroll;if(p[i+2]<-60)p[i+2]+=70;if(p[i+1]>7)p[i+1]=0}
       this.particles.geometry.attributes.position.needsUpdate=true;
     }
 

@@ -48,15 +48,9 @@ html,body{width:100%;height:100%;overflow:hidden;font-family:'Be Vietnam Pro',sa
 .upload-hero h1{font-family:'Plus Jakarta Sans',sans-serif;font-size:2.4rem;font-weight:800;line-height:1.05;letter-spacing:-.03em}
 .upload-hero h1 span{background:linear-gradient(135deg,var(--relic-glow),#ff6600);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
 .upload-hero p{color:var(--text-dim);font-size:14px;margin-top:10px;line-height:1.55}
-.moai-hover{position:relative;width:112px;height:112px;margin:0 auto 18px;display:flex;align-items:center;justify-content:center;pointer-events:none;animation:moaiFloat 3.4s ease-in-out infinite}
-.moai-hover::before{content:'';position:absolute;inset:16px;background:radial-gradient(circle,rgba(255,255,255,.2),rgba(255,255,255,.03) 55%,transparent 70%);filter:blur(10px);opacity:.95}
-.moai-hover::after{content:'';position:absolute;left:50%;bottom:8px;width:54px;height:16px;transform:translateX(-50%);background:radial-gradient(circle,rgba(0,0,0,.45),transparent 72%);filter:blur(6px);animation:moaiShadow 3.4s ease-in-out infinite}
-.moai-core{position:relative;display:flex;align-items:center;justify-content:center;width:78px;height:78px;border-radius:28px;background:linear-gradient(180deg,rgba(255,255,255,.11),rgba(255,255,255,.02));box-shadow:inset 0 1px 0 rgba(255,255,255,.14),0 22px 34px rgba(0,0,0,.24)}
-.moai-glyph{position:relative;font-size:56px;line-height:1;filter:drop-shadow(0 10px 18px rgba(0,0,0,.28))}
-.no-api-pill{display:inline-flex;align-items:center;gap:8px;margin-top:14px;padding:9px 14px;border-radius:999px;background:rgba(38,230,255,.08);color:#96f5ff;font-size:11px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;box-shadow:inset 0 1px 0 rgba(255,255,255,.06)}
-.no-api-pill::before{content:'✓';display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:rgba(38,230,255,.18);font-size:11px;color:#baf9ff}
-@keyframes moaiFloat{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-10px) scale(1.02)}}
-@keyframes moaiShadow{0%,100%{transform:translateX(-50%) scaleX(1);opacity:.35}50%{transform:translateX(-50%) scaleX(.8);opacity:.18}}
+.moai-hover{display:flex;align-items:center;justify-content:center;margin:0 auto 12px;font-size:60px;line-height:1;animation:moaiFloat 3.2s ease-in-out infinite;filter:drop-shadow(0 12px 14px rgba(0,0,0,.18))}
+.moai-glyph{font-size:1em;line-height:1}
+@keyframes moaiFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
 
 .upload-card{background:var(--bg-card);border-radius:var(--radius-lg);padding:24px;margin-bottom:16px;position:relative;overflow:hidden}
 .upload-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;border-radius:2rem 2rem 0 0}
@@ -283,18 +277,15 @@ html,body{width:100%;height:100%;overflow:hidden;font-family:'Be Vietnam Pro',sa
 <div id="upload-screen" class="screen active">
   <div class="app-header">
     <div class="app-logo"><div class="logo-icon">🌴</div><div class="logo-text">QUIZ RUSH</div></div>
-    <div class="hearts-badge" id="upload-coins" onclick="showScreen('shop')" style="cursor:pointer;background:rgba(253,144,0,0.1);color:var(--relic-glow)">🪙 0</div>
+    <div class="hearts-badge" id="upload-coins" onclick="showScreen('shop')" style="cursor:pointer;background:rgba(54,36,18,.72);color:#ffb12b;padding:9px 18px;min-width:56px;justify-content:center">0</div>
   </div>
   <div class="upload-scroll">
     <div class="upload-hero">
       <div class="moai-hover" aria-hidden="true">
-        <div class="moai-core">
-          <div class="moai-glyph">🗿</div>
-        </div>
+        <div class="moai-glyph">🗿</div>
       </div>
       <h1>FEED ME YOUR<br><span>KNOWLEDGE!</span></h1>
       <p>Drop a PDF, paste text, or enter notes.<br>I'll turn them into a jungle escape quiz!</p>
-      <div class="no-api-pill">No API Key Needed</div>
     </div>
 
     <div class="upload-card relic">

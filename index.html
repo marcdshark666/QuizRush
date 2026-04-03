@@ -27,6 +27,7 @@ html,body{width:100%;height:100%;overflow:hidden;font-family:'Be Vietnam Pro',sa
 
 /* ===== SHARED ===== */
 .app-header{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;z-index:10}
+#upload-screen .app-header{justify-content:flex-start}
 .app-logo{display:flex;align-items:center;gap:10px}
 .logo-icon{width:36px;height:36px;background:linear-gradient(135deg,var(--relic-glow),var(--relic));border-radius:var(--radius-md);display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:0 4px 20px rgba(253,144,0,0.3)}
 .logo-text{font-family:'Plus Jakarta Sans',sans-serif;font-size:22px;font-weight:800;letter-spacing:1px;background:linear-gradient(135deg,var(--relic-glow),#ffcc00);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
@@ -277,7 +278,6 @@ html,body{width:100%;height:100%;overflow:hidden;font-family:'Be Vietnam Pro',sa
 <div id="upload-screen" class="screen active">
   <div class="app-header">
     <div class="app-logo"><div class="logo-icon">🌴</div><div class="logo-text">QUIZ RUSH</div></div>
-    <div class="hearts-badge" id="upload-coins" onclick="showScreen('shop')" style="cursor:pointer;background:rgba(54,36,18,.72);color:#ffb12b;padding:9px 18px;min-width:56px;justify-content:center">0</div>
   </div>
   <div class="upload-scroll">
     <div class="upload-hero">
@@ -1669,7 +1669,7 @@ function redeemCode(){
 
 function syncCoins(){
   const c=CoinBank.getCoins().toLocaleString();
-  ['upload-coins','shop-coins','ranks-coins','hero-coins'].forEach(id=>{
+  ['shop-coins','ranks-coins','hero-coins'].forEach(id=>{
     const el=document.getElementById(id);if(el)el.textContent=c;
   });
 }

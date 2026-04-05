@@ -297,11 +297,21 @@ html,body{width:100%;height:100%;overflow:hidden;font-family:'Be Vietnam Pro',sa
       <div class="file-selected" id="file-selected"></div>
     </div>
 
+    <div class="upload-card oasis">
+      <div class="card-header"><div class="card-icon oasis">🔗</div><span class="pill-badge cyan">Web Link</span></div>
+      <h3>PASTE A LINK</h3>
+      <p class="card-desc">Enter a URL and we'll extract the text content.</p>
+      <input type="url" id="url-input" class="text-field" placeholder="https://en.wikipedia.org/wiki/..." style="resize:none">
+      <div class="file-selected" id="url-status"></div>
+    </div>
+
     <div class="upload-card jungle">
       <div class="card-header"><div class="card-icon jungle">📝</div><span class="pill-badge green">Quick Scribe</span></div>
       <h3>PASTE YOUR NOTES</h3>
       <textarea id="text-input" class="text-field" rows="5" placeholder="Paste your study material, lecture notes, article text here... The more detail, the better the quiz!"></textarea>
     </div>
+
+    <div id="error-banner" style="display:none;padding:14px 20px;background:var(--danger-bg);border-radius:var(--radius-full);color:var(--danger);font-weight:700;font-size:14px;text-align:center;margin-bottom:12px"></div>
 
     <button class="big-btn primary" id="start-btn"><span>⚡</span><span class="btn-label">ANALYZE & START</span><span>▶</span></button>
     <div id="loading-msg" style="display:none;text-align:center;padding:16px;font-weight:700;font-size:15px">
@@ -504,10 +514,53 @@ html,body{width:100%;height:100%;overflow:hidden;font-family:'Be Vietnam Pro',sa
 // PDF EXTRACTION
 // ========================================================
 pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-async function extractPDF(file){
-  const pdf=await pdfjsLib.getDocument({data:await file.arrayBuffer()}).promise;
-  let t='';for(let i=1;i<=pdf.numPages;i++){const p=await pdf.getPage(i);const c=await p.getTextContent();t+=c.items.map(x=>x.str).join(' ')+'\n';}
+async function extractPDF(file,onProgress){
+  const data=await file.arrayBuffer();
+  const pdf=await pdfjsLib.getDocument({data}).promise;
+  const total=pdf.numPages;
+  let t='';
+  // Process in batches of 10 pages to avoid memory issues on large PDFs
+  const batchSize=10;
+  for(let start=1;start<=total;start+=batchSize){
+    const end=Math.min(start+batchSize-1,total);
+    const promises=[];
+    for(let i=start;i<=end;i++){
+      promises.push(pdf.getPage(i).then(p=>p.getTextContent()).then(c=>c.items.map(x=>x.str).join(' ')));
+    }
+    const results=await Promise.all(promises);
+    t+=results.join('\n')+'\n';
+    if(onProgress)onProgress(Math.min(end,total),total);
+  }
   return t;
+}
+
+// Extract text from a URL via CORS proxy
+async function extractURL(url){
+  // Try multiple free CORS proxies
+  const proxies=[
+    'https://api.allorigins.win/raw?url=',
+    'https://corsproxy.io/?',
+  ];
+  let html='';
+  for(const proxy of proxies){
+    try{
+      const resp=await fetch(proxy+encodeURIComponent(url),{signal:AbortSignal.timeout(15000)});
+      if(resp.ok){html=await resp.text();break}
+    }catch(e){continue}
+  }
+  if(!html)throw new Error('Could not fetch URL. Try pasting the text directly instead.');
+  // Parse HTML and extract text content
+  const parser=new DOMParser();
+  const doc=parser.parseFromString(html,'text/html');
+  // Remove script, style, nav, footer, header elements
+  doc.querySelectorAll('script,style,nav,footer,header,aside,iframe,noscript').forEach(el=>el.remove());
+  // Get text from article, main, or body
+  const article=doc.querySelector('article')||doc.querySelector('main')||doc.querySelector('.content')||doc.body;
+  let text=article?article.textContent:'';
+  // Clean up whitespace
+  text=text.replace(/\s+/g,' ').replace(/\n\s*\n/g,'\n').trim();
+  if(text.length<50)throw new Error('Could not extract enough text from this URL. Try pasting the content instead.');
+  return text;
 }
 
 // ========================================================
@@ -593,8 +646,12 @@ const DEMO_QUESTIONS=[
 // ========================================================
 // UPLOAD LOGIC
 // ========================================================
-const dropZone=document.getElementById('drop-zone'),fileInput=document.getElementById('file-input'),fileSelected=document.getElementById('file-selected'),startBtn=document.getElementById('start-btn'),loadingMsg=document.getElementById('loading-msg');
+const dropZone=document.getElementById('drop-zone'),fileInput=document.getElementById('file-input'),fileSelected=document.getElementById('file-selected'),startBtn=document.getElementById('start-btn'),loadingMsg=document.getElementById('loading-msg'),errorBanner=document.getElementById('error-banner');
 let selectedFile=null;
+
+function showError(msg){errorBanner.textContent='⚠️ '+msg;errorBanner.style.display='block';setTimeout(()=>errorBanner.style.display='none',6000)}
+function setLoading(msg){loadingMsg.querySelector('span').textContent=msg;loadingMsg.style.display='block'}
+
 dropZone.addEventListener('click',()=>fileInput.click());
 dropZone.addEventListener('dragover',e=>{e.preventDefault();dropZone.classList.add('dragover')});
 dropZone.addEventListener('dragleave',()=>dropZone.classList.remove('dragover'));
@@ -602,14 +659,56 @@ dropZone.addEventListener('drop',e=>{e.preventDefault();dropZone.classList.remov
 fileInput.addEventListener('change',()=>{if(fileInput.files.length){selectedFile=fileInput.files[0];fileSelected.textContent='✅ '+selectedFile.name;fileSelected.classList.add('show')}});
 
 startBtn.addEventListener('click',async()=>{
+  errorBanner.style.display='none';
   let text='';
-  if(selectedFile){const ext=selectedFile.name.split('.').pop().toLowerCase();text=ext==='pdf'?await extractPDF(selectedFile):await selectedFile.text()}
-  if(!text)text=document.getElementById('text-input').value.trim();
-  if(text.length<50)return alert('Please provide at least 50 characters of content!');
-  startBtn.disabled=true;loadingMsg.style.display='block';
-  try{const q=generateMCQs(text);if(!q||q.length<5)throw new Error('Not enough questions');launchGame(q)}
-  catch(e){alert('Error: '+e.message)}
-  finally{startBtn.disabled=false;loadingMsg.style.display='none'}
+  startBtn.disabled=true;
+  try{
+    // 1. Try PDF/file
+    if(selectedFile){
+      const ext=selectedFile.name.split('.').pop().toLowerCase();
+      if(ext==='pdf'){
+        setLoading('Reading PDF...');
+        text=await extractPDF(selectedFile,(done,total)=>{
+          setLoading(`Reading PDF... page ${done}/${total}`);
+        });
+      }else{
+        setLoading('Reading file...');
+        text=await selectedFile.text();
+      }
+    }
+    // 2. Try URL
+    if(!text||text.trim().length<30){
+      const url=document.getElementById('url-input').value.trim();
+      if(url&&(url.startsWith('http://')||url.startsWith('https://'))){
+        setLoading('Fetching webpage...');
+        const urlStatus=document.getElementById('url-status');
+        try{
+          text=await extractURL(url);
+          urlStatus.textContent='✅ Text extracted from URL';
+          urlStatus.classList.add('show');
+        }catch(e){
+          urlStatus.textContent='❌ '+e.message;
+          urlStatus.classList.add('show');
+          urlStatus.style.background='var(--danger-bg)';urlStatus.style.color='var(--danger)';
+        }
+      }
+    }
+    // 3. Try pasted text
+    if(!text||text.trim().length<30){
+      text=document.getElementById('text-input').value.trim();
+    }
+    if(!text||text.length<50){showError('Please provide at least 50 characters of content! Upload a PDF, paste a URL, or type/paste text.');startBtn.disabled=false;loadingMsg.style.display='none';return}
+    setLoading('Generating quiz from your content...');
+    // Use setTimeout to let the UI update before heavy processing
+    await new Promise(r=>setTimeout(r,100));
+    const q=generateMCQs(text);
+    if(!q||q.length<5)throw new Error('Not enough questions generated — try longer or more detailed text.');
+    loadingMsg.style.display='none';
+    launchGame(q);
+  }catch(e){
+    showError(e.message||'Something went wrong. Try different content.');
+    loadingMsg.style.display='none';
+  }finally{startBtn.disabled=false}
 });
 document.getElementById('demo-btn').addEventListener('click',()=>launchGame(DEMO_QUESTIONS));
 

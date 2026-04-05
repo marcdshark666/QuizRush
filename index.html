@@ -255,6 +255,17 @@ html,body{width:100%;height:100%;overflow:hidden;font-family:'Be Vietnam Pro',sa
 .hero-stats-section{margin-top:20px}
 .hero-stats-section h3{font-family:'Plus Jakarta Sans',sans-serif;font-size:16px;font-weight:800;letter-spacing:1px;margin-bottom:12px}
 
+/* ===== DIFFICULTY SELECTOR ===== */
+.diff-btn{flex:1;min-width:calc(33% - 8px);padding:12px 8px;background:var(--bg-card-lo);border:2px solid rgba(255,255,255,0.06);border-radius:var(--radius-md);cursor:pointer;transition:all .2s;display:flex;flex-direction:column;align-items:center;gap:4px;color:var(--text)}
+.diff-btn:hover{border-color:rgba(253,144,0,0.3);background:rgba(253,144,0,0.05)}
+.diff-btn.active{border-color:var(--relic-glow);background:rgba(253,144,0,0.1);box-shadow:0 0 15px rgba(253,144,0,0.15)}
+.diff-btn .diff-icon{font-size:20px}
+.diff-btn .diff-name{font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:12px;letter-spacing:1px;text-transform:uppercase}
+.diff-btn .diff-hearts{font-size:10px;color:var(--text-dim);font-weight:600}
+.diff-btn.active .diff-name{color:var(--relic-glow)}
+.diff-btn[data-diff="insane"].active{border-color:var(--danger);background:rgba(255,45,85,0.1);box-shadow:0 0 15px rgba(255,45,85,0.15)}
+.diff-btn[data-diff="insane"].active .diff-name{color:var(--danger)}
+
 /* Coin earned toast */
 .coin-toast{position:fixed;top:20px;left:50%;transform:translateX(-50%) translateY(-100px);z-index:100;padding:12px 24px;background:rgba(253,144,0,0.9);border-radius:var(--radius-full);font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:18px;color:#000;transition:transform .4s cubic-bezier(.34,1.56,.64,1);pointer-events:none}
 .coin-toast.show{transform:translateX(-50%) translateY(0)}
@@ -309,6 +320,29 @@ html,body{width:100%;height:100%;overflow:hidden;font-family:'Be Vietnam Pro',sa
       <div class="card-header"><div class="card-icon jungle">📝</div><span class="pill-badge green">Quick Scribe</span></div>
       <h3>PASTE YOUR NOTES</h3>
       <textarea id="text-input" class="text-field" rows="5" placeholder="Paste your study material, lecture notes, article text here... The more detail, the better the quiz!"></textarea>
+    </div>
+
+    <div class="upload-card" style="background:var(--bg-card)">
+      <div class="card-header"><div class="card-icon" style="background:rgba(255,45,85,0.15)">🎯</div><span class="pill-badge" style="background:rgba(255,45,85,0.15);color:var(--danger)">Challenge</span></div>
+      <h3>DIFFICULTY</h3>
+      <p class="card-desc">Choose your challenge level. Harder = fewer lives!</p>
+      <div id="diff-selector" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px">
+        <button class="diff-btn" data-diff="beginner" onclick="setDifficulty('beginner')">
+          <span class="diff-icon">🌱</span><span class="diff-name">Beginner</span><span class="diff-hearts">❤️×10</span>
+        </button>
+        <button class="diff-btn active" data-diff="easy" onclick="setDifficulty('easy')">
+          <span class="diff-icon">🟢</span><span class="diff-name">Easy</span><span class="diff-hearts">❤️×5</span>
+        </button>
+        <button class="diff-btn" data-diff="medium" onclick="setDifficulty('medium')">
+          <span class="diff-icon">🟡</span><span class="diff-name">Medium</span><span class="diff-hearts">❤️×4</span>
+        </button>
+        <button class="diff-btn" data-diff="hard" onclick="setDifficulty('hard')">
+          <span class="diff-icon">🔴</span><span class="diff-name">Hard</span><span class="diff-hearts">❤️×3</span>
+        </button>
+        <button class="diff-btn" data-diff="insane" onclick="setDifficulty('insane')">
+          <span class="diff-icon">💀</span><span class="diff-name">Insane</span><span class="diff-hearts">❤️×1</span>
+        </button>
+      </div>
     </div>
 
     <div id="error-banner" style="display:none;padding:14px 20px;background:var(--danger-bg);border-radius:var(--radius-full);color:var(--danger);font-weight:700;font-size:14px;text-align:center;margin-bottom:12px"></div>
@@ -564,67 +598,311 @@ async function extractURL(url){
 }
 
 // ========================================================
-// FREE MCQ GENERATOR (NO API KEY NEEDED)
+// DIFFICULTY SYSTEM
+// ========================================================
+let selectedDifficulty='easy';
+const DIFFICULTY={
+  beginner:{hearts:10,label:'Beginner',timer:90},
+  easy:{hearts:5,label:'Easy',timer:60},
+  medium:{hearts:4,label:'Medium',timer:60},
+  hard:{hearts:3,label:'Hard',timer:50},
+  insane:{hearts:1,label:'Insane',timer:45}
+};
+function setDifficulty(d){
+  selectedDifficulty=d;
+  document.querySelectorAll('.diff-btn').forEach(b=>{b.classList.toggle('active',b.dataset.diff===d)});
+}
+
+// ========================================================
+// LANGUAGE DETECTION
+// ========================================================
+function detectLanguage(text){
+  const sample=text.substring(0,2000).toLowerCase();
+  // Swedish indicators
+  const sv=['och','att','det','som','för','med','är','den','har','kan','inte','till','var','från','alla','hade','eller','ska','denna','även','efter','under','mycket','också','vid','sitt','andra','utan','när','mellan','över'];
+  // English indicators
+  const en=['the','and','was','that','for','with','are','this','have','from','they','been','has','their','which','will','each','about','how','than','them','these','would','other','into','more','some','could','after'];
+  let svCount=0,enCount=0;
+  const words=sample.split(/\s+/);
+  words.forEach(w=>{if(sv.includes(w))svCount++;if(en.includes(w))enCount++});
+  if(svCount>enCount*1.2)return'sv';
+  // French
+  const fr=['les','des','est','une','que','dans','pour','avec','sur','pas','sont','cette','mais','ses','aux','tout','aussi','entre','après','depuis'];
+  let frCount=0;words.forEach(w=>{if(fr.includes(w))frCount++});
+  if(frCount>enCount*1.2)return'fr';
+  // Spanish
+  const es=['los','las','una','del','que','por','con','para','esta','como','más','pero','sus','entre','cuando','sobre','todo','desde','también'];
+  let esCount=0;words.forEach(w=>{if(es.includes(w))esCount++});
+  if(esCount>enCount*1.2)return'es';
+  // German
+  const de=['und','der','die','das','ist','von','den','mit','sich','des','auf','für','nicht','auch','ein','dem','eine','als','noch','werden'];
+  let deCount=0;words.forEach(w=>{if(de.includes(w))deCount++});
+  if(deCount>enCount*1.2)return'de';
+  return'en';
+}
+
+// Language-specific question templates
+const Q_TEMPLATES={
+  en:{
+    what_is:(subj)=>`What is ${subj}?`,
+    what_was:(subj)=>`What was ${subj}?`,
+    which_correct:(topic)=>`Which of the following is true about ${topic}?`,
+    what_means:(term)=>`What does "${term}" refer to?`,
+    what_happened:(when)=>`What happened ${when}?`,
+    who_did:(action)=>`Who ${action}?`,
+    how_many:(topic)=>`How many/much ${topic}?`,
+    why:(topic)=>`Why ${topic}?`,
+    which_not:(topic)=>`Which of the following is NOT true about ${topic}?`,
+    what_purpose:(subj)=>`What is the purpose of ${subj}?`,
+    what_result:(event)=>`What was the result of ${event}?`,
+    what_caused:(event)=>`What caused ${event}?`,
+  },
+  sv:{
+    what_is:(subj)=>`Vad är ${subj}?`,
+    what_was:(subj)=>`Vad var ${subj}?`,
+    which_correct:(topic)=>`Vilket av följande stämmer om ${topic}?`,
+    what_means:(term)=>`Vad avses med "${term}"?`,
+    what_happened:(when)=>`Vad hände ${when}?`,
+    who_did:(action)=>`Vem ${action}?`,
+    how_many:(topic)=>`Hur mycket/många ${topic}?`,
+    why:(topic)=>`Varför ${topic}?`,
+    which_not:(topic)=>`Vilket av följande stämmer INTE om ${topic}?`,
+    what_purpose:(subj)=>`Vad är syftet med ${subj}?`,
+    what_result:(event)=>`Vad blev resultatet av ${event}?`,
+    what_caused:(event)=>`Vad orsakade ${event}?`,
+  },
+  fr:{
+    what_is:(subj)=>`Qu'est-ce que ${subj} ?`,
+    what_was:(subj)=>`Qu'était ${subj} ?`,
+    which_correct:(topic)=>`Laquelle des affirmations suivantes est vraie à propos de ${topic} ?`,
+    what_means:(term)=>`Que signifie "${term}" ?`,
+    what_happened:(when)=>`Que s'est-il passé ${when} ?`,
+    who_did:(action)=>`Qui ${action} ?`,
+    how_many:(topic)=>`Combien ${topic} ?`,
+    why:(topic)=>`Pourquoi ${topic} ?`,
+    which_not:(topic)=>`Laquelle des affirmations suivantes est FAUSSE à propos de ${topic} ?`,
+    what_purpose:(subj)=>`Quel est le but de ${subj} ?`,
+    what_result:(event)=>`Quel a été le résultat de ${event} ?`,
+    what_caused:(event)=>`Qu'est-ce qui a causé ${event} ?`,
+  },
+  es:{
+    what_is:(subj)=>`¿Qué es ${subj}?`,
+    what_was:(subj)=>`¿Qué fue ${subj}?`,
+    which_correct:(topic)=>`¿Cuál de las siguientes afirmaciones es correcta sobre ${topic}?`,
+    what_means:(term)=>`¿Qué significa "${term}"?`,
+    what_happened:(when)=>`¿Qué sucedió ${when}?`,
+    who_did:(action)=>`¿Quién ${action}?`,
+    how_many:(topic)=>`¿Cuánto/cuántos ${topic}?`,
+    why:(topic)=>`¿Por qué ${topic}?`,
+    which_not:(topic)=>`¿Cuál de las siguientes NO es correcta sobre ${topic}?`,
+    what_purpose:(subj)=>`¿Cuál es el propósito de ${subj}?`,
+    what_result:(event)=>`¿Cuál fue el resultado de ${event}?`,
+    what_caused:(event)=>`¿Qué causó ${event}?`,
+  },
+  de:{
+    what_is:(subj)=>`Was ist ${subj}?`,
+    what_was:(subj)=>`Was war ${subj}?`,
+    which_correct:(topic)=>`Welche der folgenden Aussagen über ${topic} ist richtig?`,
+    what_means:(term)=>`Was bedeutet "${term}"?`,
+    what_happened:(when)=>`Was geschah ${when}?`,
+    who_did:(action)=>`Wer ${action}?`,
+    how_many:(topic)=>`Wie viel/viele ${topic}?`,
+    why:(topic)=>`Warum ${topic}?`,
+    which_not:(topic)=>`Welche der folgenden Aussagen über ${topic} ist FALSCH?`,
+    what_purpose:(subj)=>`Was ist der Zweck von ${subj}?`,
+    what_result:(event)=>`Was war das Ergebnis von ${event}?`,
+    what_caused:(event)=>`Was verursachte ${event}?`,
+  }
+};
+
+// ========================================================
+// FREE MCQ GENERATOR (NO API KEY — Professor-quality)
 // ========================================================
 function generateMCQs(text){
+  const lang=detectLanguage(text);
+  const T=Q_TEMPLATES[lang]||Q_TEMPLATES.en;
+
+  // Split into sentences
   const sents=text.replace(/\n+/g,' ').replace(/\s+/g,' ')
     .split(/(?<=[.!?])\s+/).map(s=>s.trim())
-    .filter(s=>s.length>25&&s.length<350&&/[a-zA-Z]{3}/.test(s));
-  if(sents.length<5)throw new Error('Not enough content — add more text!');
+    .filter(s=>s.length>20&&s.length<400&&/[a-zA-ZáàäåéèêëíîïóòöôúùüûñçæøÅÄÖ]{3}/i.test(s));
+  if(sents.length<3)throw new Error(lang==='sv'?'Inte tillräckligt med innehåll — lägg till mer text!':'Not enough content — add more text!');
 
-  function keyTerms(s){
-    const t=[];
-    (s.match(/(?<=\s)[A-Z][a-zA-Zéèêëàâäùûüôöîïç-]{2,}/g)||[]).forEach(x=>t.push(x));
-    (s.match(/\d[\d,.]*\s*(%|percent|million|billion|km|miles|years?|BC|AD|CE|BCE|century)?/g)||[]).forEach(x=>t.push(x.trim()));
-    (s.match(/[""\u201c]([^""\u201d]+)[""\u201d]/g)||[]).forEach(x=>t.push(x.replace(/[""\u201c\u201d]/g,'')));
-    return[...new Set(t)].filter(x=>x.length>1);
+  // Extract key concepts like a professor would
+  function extractConcepts(s){
+    const concepts=[];
+    // Named entities (capitalized terms)
+    (s.match(/(?:^|\s)([A-ZÁÀÄÅÉÈÊËÍÎÏÓÒÖÔÚÙÜÛÑÇÆØ][a-záàäåéèêëíîïóòöôúùüûñçæø]+(?:\s+[A-ZÁÀÄÅÉÈÊËÍÎÏÓÒÖÔÚÙÜÛÑÇÆØ][a-záàäåéèêëíîïóòöôúùüûñçæø]+)*)/g)||[]).forEach(x=>concepts.push(x.trim()));
+    // Numbers with context (years, quantities, percentages)
+    (s.match(/\d[\d,.]*\s*(?:%|percent|procent|million|miljon|billion|miljard|km|miles|mil|years?|år|BC|AD|CE|BCE|century|hundra|sekund|minut|timm)/gi)||[]).forEach(x=>concepts.push(x.trim()));
+    // Quoted terms
+    (s.match(/[""\u201c]([^""\u201d]+)[""\u201d]/g)||[]).forEach(x=>concepts.push(x.replace(/[""\u201c\u201d]/g,'')));
+    // Technical terms (words with specific patterns)
+    (s.match(/\b[A-Z]{2,}\b/g)||[]).forEach(x=>concepts.push(x));
+    return[...new Set(concepts)].filter(x=>x.length>1&&x.length<60);
   }
 
+  // Score sentences by educational value (like a professor grading importance)
   const scored=sents.map((s,i)=>{
-    let sc=0;const terms=keyTerms(s);sc+=terms.length*3;
-    if(/\d/.test(s))sc+=2;if(/(?:is|are|was|were|called|known as|defined|refers to)/i.test(s))sc+=4;
-    if(/(?:because|therefore|caused|result|due to)/i.test(s))sc+=3;
-    if(/(?:first|largest|most|least|important|discovered|invented|founded|built)/i.test(s))sc+=3;
-    if(s.length>50&&s.length<200)sc+=1;return{s,sc,terms,i};
+    let sc=0;const concepts=extractConcepts(s);
+    sc+=concepts.length*4;
+    // Definitions (highest value)
+    if(/(?:is|are|was|were|är|var|kallas|definieras|bedeutet|est|son|significa)\s/i.test(s))sc+=6;
+    // Cause/effect (high value)
+    if(/(?:because|therefore|caused|result|due to|leads to|eftersom|därför|orsakar|leder till|resulterar|weil|daher|parce que|porque)/i.test(s))sc+=5;
+    // Numbers and data (high value for quizzes)
+    if(/\d/.test(s))sc+=4;
+    // Key actions/events
+    if(/(?:discovered|invented|founded|built|created|developed|introduced|established|upptäckte|grundade|byggde|skapade|utvecklade)/i.test(s))sc+=4;
+    // Rules, laws, principles
+    if(/(?:rule|law|principle|theory|method|process|regel|lag|princip|teori|metod|process|Gesetz|Regel|Prinzip|loi|règle|ley|regla)/i.test(s))sc+=5;
+    // Superlatives (important facts)
+    if(/(?:first|largest|most|least|important|main|primary|key|major|crucial|först|störst|viktigast|viktig|huvud)/i.test(s))sc+=3;
+    // Good sentence length for questions
+    if(s.length>40&&s.length<250)sc+=2;
+    return{s,sc,concepts,i};
   }).sort((a,b)=>b.sc-a.sc);
 
-  const allTerms=[...new Set(scored.flatMap(x=>x.terms))];
+  // Collect all concepts for distractor generation
+  const allConcepts=[...new Set(scored.flatMap(x=>x.concepts))];
+  // Collect key phrases from different sentences for diverse distractors
+  const keyPhrases=scored.map(x=>{
+    const words=x.s.split(/\s+/);
+    // Extract meaningful chunks
+    const chunks=[];
+    for(let i=0;i<words.length-2;i+=3){
+      const chunk=words.slice(i,i+Math.min(4,words.length-i)).join(' ').replace(/[.!?,;:]+$/,'');
+      if(chunk.length>5&&chunk.length<80)chunks.push(chunk);
+    }
+    return chunks;
+  }).flat();
 
-  const templates=[
-    {p:/(.+?)\s+(?:is|are)\s+(?:a|an|the)?\s*(.+)/i,q:m=>`What is ${m[1]}?`,a:m=>m[2].replace(/[.!?]$/,'')},
-    {p:/(.+?)\s+(?:was|were)\s+(?:a|an|the)?\s*(.+)/i,q:m=>`What was ${m[1]}?`,a:m=>m[2].replace(/[.!?]$/,'')},
-    {p:/(.+?)\s+(?:is called|is known as)\s+(.+)/i,q:m=>`What is ${m[1]} called?`,a:m=>m[2].replace(/[.!?]$/,'')},
-    {p:/(.+?)\s+(?:discovered|invented|created|founded|built)\s+(.+)/i,q:m=>`What did ${m[1]} discover/create?`,a:m=>m[2].replace(/[.!?]$/,'')},
-    {p:/In\s+(\d{3,4}),?\s+(.+)/i,q:m=>`What happened in ${m[1]}?`,a:m=>m[2].replace(/[.!?]$/,'')},
+  // Question generation patterns (NO fill-in-blank — only proper MCQ)
+  const patterns=[
+    // Definition pattern: "X is/are Y"
+    {p:/^(.{3,60}?)\s+(?:is|are)\s+(?:a|an|the)?\s*(.{8,})/i,
+     q:(m)=>T.what_is(m[1].trim()),a:(m)=>m[2].replace(/[.!?]$/,'').trim()},
+    // Past definition: "X was/were Y"
+    {p:/^(.{3,60}?)\s+(?:was|were)\s+(?:a|an|the)?\s*(.{8,})/i,
+     q:(m)=>T.what_was(m[1].trim()),a:(m)=>m[2].replace(/[.!?]$/,'').trim()},
+    // Swedish: "X är Y"
+    {p:/^(.{3,60}?)\s+(?:är|var)\s+(?:en|ett|den|det)?\s*(.{8,})/i,
+     q:(m)=>T.what_is(m[1].trim()),a:(m)=>m[2].replace(/[.!?]$/,'').trim()},
+    // Named/called: "X is called/known as Y"
+    {p:/(.{3,50}?)\s+(?:is called|is known as|kallas|heter|benämns)\s+(.{3,})/i,
+     q:(m)=>T.what_means(m[1].trim()),a:(m)=>m[2].replace(/[.!?]$/,'').trim()},
+    // Discovery/creation: "X discovered/invented Y"
+    {p:/(.{3,50}?)\s+(?:discovered|invented|created|founded|built|upptäckte|grundade|skapade)\s+(.{3,})/i,
+     q:(m)=>T.who_did(m[0].split(/\s+/).slice(0,3).join(' ')+'...'),a:(m)=>m[1].trim()},
+    // Year pattern: "In YEAR, X"
+    {p:/(?:In|År|I|Im|En|El)\s+(\d{3,4}),?\s+(.{10,})/i,
+     q:(m)=>T.what_happened('in/'+m[1]+'?'),a:(m)=>m[2].replace(/[.!?]$/,'').trim()},
+    // Because/cause: "X because Y" → Why X?
+    {p:/(.{10,60}?)\s+(?:because|since|due to|eftersom|därför att|på grund av)\s+(.{8,})/i,
+     q:(m)=>T.why(m[1].trim().toLowerCase()+'?'),a:(m)=>m[2].replace(/[.!?]$/,'').trim()},
+    // Result: "X led to/resulted in Y"
+    {p:/(.{10,60}?)\s+(?:led to|resulted in|caused|ledde till|resulterade i|orsakade)\s+(.{8,})/i,
+     q:(m)=>T.what_result(m[1].trim()),a:(m)=>m[2].replace(/[.!?]$/,'').trim()},
+    // Purpose: "X is used to/for Y"
+    {p:/(.{3,50}?)\s+(?:is used (?:to|for)|används (?:för|till)|dient|sert à|se usa para)\s+(.{5,})/i,
+     q:(m)=>T.what_purpose(m[1].trim()),a:(m)=>m[2].replace(/[.!?]$/,'').trim()},
   ];
 
-  function makeQ(x){
-    for(const t of templates){const m=x.s.match(t.p);if(m){const q=t.q(m),a=t.a(m);if(q.length>15&&a.length>2&&a.length<120)return{q,a,src:x.s}}}
-    const terms=keyTerms(x.s);if(terms.length>0){const tgt=terms[Math.floor(Math.random()*terms.length)];
-      const blank=x.s.replace(new RegExp(tgt.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'g'),'______').replace(/[.!?]$/,'');
-      if(blank!==x.s)return{q:'Fill in the blank: '+blank+'?',a:tgt,src:x.s}}
-    return{q:`Which statement about "${(x.terms[0]||'this topic')}" is correct?`,a:x.s.replace(/[.!?]$/,'').substring(0,100),src:x.s};
+  function makeQuestion(x){
+    // Try pattern-based questions first
+    for(const pat of patterns){
+      const m=x.s.match(pat.p);
+      if(m){
+        const q=pat.q(m);
+        let a=pat.a(m);
+        if(a.length>100)a=a.substring(0,97)+'...';
+        if(q.length>10&&a.length>2)return{q,a,src:x.s};
+      }
+    }
+    // Fallback: "Which is true about [key concept]?" — use the whole sentence as the correct answer
+    const topic=x.concepts[0]||x.s.split(/\s+/).slice(0,4).join(' ');
+    const answer=x.s.replace(/[.!?]$/,'');
+    return{
+      q:T.which_correct(topic),
+      a:answer.length>100?answer.substring(0,97)+'...':answer,
+      src:x.s
+    };
   }
 
-  function distractors(correct,skip){
-    const d=[];const cl=correct.toLowerCase();
-    const shuffled=[...allTerms].sort(()=>Math.random()-.5);
-    for(const t of shuffled){if(d.length>=3)break;if(t.toLowerCase()===cl||correct.includes(t))continue;d.push(t)}
-    while(d.length<3){const s=sents[Math.floor(Math.random()*sents.length)];if(s===correct)continue;
-      const w=s.split(/\s+/);const f=w.slice(0,Math.min(5,Math.max(2,correct.split(/\s+/).length))).join(' ');
-      if(f.toLowerCase()!==cl&&!d.includes(f))d.push(f)}
-    return d.slice(0,3);
+  // Generate plausible distractors (wrong answers that sound real)
+  function makeDistractors(correctAnswer,sourceSent,usedIdx){
+    const distractors=[];
+    const correctLower=correctAnswer.toLowerCase();
+    const correctWords=new Set(correctAnswer.toLowerCase().split(/\s+/));
+
+    // Strategy 1: Use concepts from OTHER sentences (most plausible)
+    const otherSents=scored.filter(x=>x.i!==usedIdx&&x.sc>2);
+    for(const other of otherSents){
+      if(distractors.length>=3)break;
+      // Extract a comparable-length phrase from this sentence
+      const words=other.s.split(/\s+/);
+      const targetLen=correctAnswer.split(/\s+/).length;
+      const start=Math.floor(Math.random()*Math.max(1,words.length-targetLen));
+      let phrase=words.slice(start,start+targetLen).join(' ').replace(/[.!?,;:]+$/,'');
+      if(phrase.length>100)phrase=phrase.substring(0,97)+'...';
+      if(phrase.length>3&&phrase.toLowerCase()!==correctLower&&!distractors.some(d=>d.toLowerCase()===phrase.toLowerCase())){
+        // Check it's not too similar to correct answer
+        const phraseWords=new Set(phrase.toLowerCase().split(/\s+/));
+        const overlap=[...phraseWords].filter(w=>correctWords.has(w)).length;
+        if(overlap<correctWords.size*0.6){
+          distractors.push(phrase);
+        }
+      }
+    }
+
+    // Strategy 2: Swap key terms in the correct answer
+    if(distractors.length<3){
+      for(const concept of allConcepts){
+        if(distractors.length>=3)break;
+        if(correctAnswer.includes(concept))continue;
+        // Create a modified version of a random sentence excerpt
+        const randSent=sents[Math.floor(Math.random()*sents.length)];
+        const words=randSent.split(/\s+/);
+        const targetLen=Math.max(2,Math.min(8,correctAnswer.split(/\s+/).length));
+        let phrase=words.slice(0,targetLen).join(' ').replace(/[.!?,;:]+$/,'');
+        if(phrase.length>100)phrase=phrase.substring(0,97)+'...';
+        if(phrase.length>3&&phrase.toLowerCase()!==correctLower&&!distractors.some(d=>d===phrase)){
+          distractors.push(phrase);
+        }
+      }
+    }
+
+    // Strategy 3: Last resort — use key phrases
+    while(distractors.length<3&&keyPhrases.length>0){
+      const rp=keyPhrases[Math.floor(Math.random()*keyPhrases.length)];
+      if(rp.toLowerCase()!==correctLower&&!distractors.includes(rp)){
+        distractors.push(rp.length>100?rp.substring(0,97)+'...':rp);
+      }
+    }
+
+    return distractors.slice(0,3);
   }
 
+  // Build final question set
   const qs=[];const used=new Set();
   for(const x of scored){
-    if(qs.length>=12)break;if(used.has(x.i))continue;
-    const r=makeQ(x);const ds=distractors(r.a,x.i);if(ds.length<3)continue;
-    const ci=Math.floor(Math.random()*4);const opts=[];const L=['A','B','C','D'];let di=0;
-    for(let i=0;i<4;i++)opts.push(i===ci?`${L[i]}) ${r.a.substring(0,90)}`:`${L[i]}) ${ds[di++].substring(0,90)}`);
-    qs.push({question:r.q,options:opts,correct:ci,explanation:r.src.substring(0,160)});used.add(x.i);
+    if(qs.length>=12)break;
+    if(used.has(x.i))continue;
+    const r=makeQuestion(x);
+    const ds=makeDistractors(r.a,r.src,x.i);
+    if(ds.length<3)continue;
+
+    // Randomize correct answer position
+    const ci=Math.floor(Math.random()*4);
+    const opts=[];const L=['A','B','C','D'];let di=0;
+    for(let i=0;i<4;i++){
+      const text=i===ci?r.a:ds[di++];
+      opts.push(`${L[i]}) ${text.substring(0,100)}`);
+    }
+    qs.push({question:r.q,options:opts,correct:ci,explanation:r.src.substring(0,180)});
+    used.add(x.i);
   }
-  if(qs.length<5)throw new Error('Could not make enough questions — try longer/more detailed text.');
+  if(qs.length<3)throw new Error(lang==='sv'?'Kunde inte generera tillräckligt med frågor — prova med längre eller mer detaljerad text.':'Could not generate enough questions — try longer or more detailed text.');
   return qs;
 }
 
@@ -1137,9 +1415,11 @@ class JungleEngine{
 // ========================================================
 class QuizGame{
   constructor(qs){
+    const diff=DIFFICULTY[selectedDifficulty]||DIFFICULTY.easy;
     this.qs=qs.slice(0,12);this.cur=0;this.score=0;this.streak=0;this.best=0;
-    this.correct=0;this.total=60;this.left=60;this.hearts=3;
+    this.correct=0;this.total=diff.timer;this.left=diff.timer;this.hearts=diff.hearts;
     this.timer=null;this.engine=null;this.answering=false;this.results=[];this.target=10;
+    this.difficulty=selectedDifficulty;
   }
   start(){
     document.getElementById('upload-screen').classList.remove('active');

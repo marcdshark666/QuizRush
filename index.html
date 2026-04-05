@@ -602,11 +602,11 @@ async function extractURL(url){
 // ========================================================
 let selectedDifficulty='easy';
 const DIFFICULTY={
-  beginner:{hearts:10,label:'Beginner',timer:90},
-  easy:{hearts:5,label:'Easy',timer:60},
-  medium:{hearts:4,label:'Medium',timer:60},
-  hard:{hearts:3,label:'Hard',timer:50},
-  insane:{hearts:1,label:'Insane',timer:45}
+  beginner:{hearts:10,label:'Beginner',timer:90, scoreMulti:0.5, timePenalty:2, boulderHit:4, boulderReward:10},
+  easy:    {hearts:5, label:'Easy',    timer:60, scoreMulti:1.0, timePenalty:3, boulderHit:6, boulderReward:8},
+  medium:  {hearts:4, label:'Medium',  timer:60, scoreMulti:1.5, timePenalty:5, boulderHit:8, boulderReward:8},
+  hard:    {hearts:3, label:'Hard',    timer:50, scoreMulti:2.0, timePenalty:7, boulderHit:10,boulderReward:6},
+  insane:  {hearts:1, label:'Insane',  timer:45, scoreMulti:3.0, timePenalty:10,boulderHit:14,boulderReward:5}
 };
 function setDifficulty(d){
   selectedDifficulty=d;
@@ -1475,17 +1475,20 @@ class QuizGame{
     document.querySelectorAll('.q-opt').forEach((el,i)=>{el.classList.add('disabled');if(i===q.correct)el.classList.add('correct');if(i===idx&&!ok)el.classList.add('wrong')});
     this.results.push({question:q.question,selected:q.options[idx],correct:q.options[q.correct],isCorrect:ok,explanation:q.explanation});
 
+    const diff=DIFFICULTY[this.difficulty]||DIFFICULTY.easy;
     if(ok){
       this.correct++;this.streak++;if(this.streak>this.best)this.best=this.streak;
       const bonus=Math.min(this.streak*50,250),tb=Math.floor(this.left/this.total*100);
-      this.score+=100+bonus+tb;
-      if(this.engine){this.engine.pushBoulderBack(8);this.engine.boost()}
-      this._fb(true,'CORRECT! +'+(100+bonus+tb));
+      const raw=100+bonus+tb;
+      const pts=Math.round(raw*diff.scoreMulti);
+      this.score+=pts;
+      if(this.engine){this.engine.pushBoulderBack(diff.boulderReward);this.engine.boost()}
+      this._fb(true,'CORRECT! +'+pts);
     }else{
       this.streak=0;this.hearts--;
-      if(this.engine){this.engine.moveBoulderCloser(8);this.engine.shake=.5;this.engine.stumble()}
-      this.left=Math.max(0,this.left-5);
-      this._fb(false,'WRONG! -5s');
+      if(this.engine){this.engine.moveBoulderCloser(diff.boulderHit);this.engine.shake=.5;this.engine.stumble()}
+      this.left=Math.max(0,this.left-diff.timePenalty);
+      this._fb(false,'WRONG! -'+diff.timePenalty+'s');
       if(this.hearts<=0){setTimeout(()=>this._end(false),1500);return}
     }
     this._hud();

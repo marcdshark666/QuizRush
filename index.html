@@ -98,20 +98,20 @@ html,body{width:100%;height:100%;overflow:hidden;font-family:'Be Vietnam Pro',sa
 #hud-hearts{letter-spacing:2px}
 
 /* Question strip - bottom 20%, glassmorphism */
-.q-strip{position:absolute;bottom:0;left:0;right:0;z-index:20;padding:14px 18px 22px;background:linear-gradient(to top,rgba(6,10,8,.97) 0%,rgba(6,10,8,.9) 62%,rgba(6,10,8,.15) 100%);backdrop-filter:blur(18px) saturate(1.08);border-top:1px solid rgba(255,255,255,.06);max-height:35vh;transition:transform .3s}
+.q-strip{position:absolute;bottom:0;left:0;right:0;z-index:20;padding:8px 10px 12px;background:rgba(6,10,8,.70);backdrop-filter:blur(12px);max-height:40vh;transition:transform .3s}
 .q-strip.hidden{transform:translateY(100%);pointer-events:none}
-.q-strip .q-progress{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.q-strip .q-progress{display:flex;align-items:center;gap:6px;margin-bottom:4px}
 .q-strip .q-dots{display:flex;gap:8px;flex:1}
 .q-strip .q-dot{width:100%;height:6px;border-radius:999px;background:rgba(255,255,255,.08);transition:background .3s,box-shadow .3s}
 .q-strip .q-dot.done{background:#5fff7a;box-shadow:0 0 14px rgba(95,255,122,.25)}.q-strip .q-dot.fail{background:#ff4d71}.q-strip .q-dot.current{background:#ff9e16;box-shadow:0 0 10px rgba(255,158,22,.35)}
 .q-strip .q-count{font-size:12px;font-weight:800;color:#ffb12b;white-space:nowrap;letter-spacing:1px}
-.q-strip .q-text{font-family:'Plus Jakarta Sans',sans-serif;font-size:17px;font-weight:700;line-height:1.35;margin-bottom:14px;color:#f7f7f3}
-.q-strip .q-opts{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.q-opt{display:flex;align-items:center;gap:14px;min-height:78px;padding:18px 18px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:24px;cursor:pointer;transition:all .15s;font-size:13px;font-weight:600;color:var(--text);box-shadow:inset 0 1px 0 rgba(255,255,255,.03)}
+.q-strip .q-text{font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;font-weight:700;line-height:1.25;margin-bottom:6px;color:#f7f7f3;max-height:2.6em;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.q-strip .q-opts{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.q-opt{display:flex;align-items:center;gap:8px;min-height:44px;padding:8px 10px;background:rgba(255,255,255,.05);border:2px solid rgba(255,255,255,.08);border-radius:var(--radius-md);cursor:pointer;transition:all .15s;color:var(--text)}
 .q-opt:hover{background:rgba(255,158,22,.09);border-color:rgba(255,158,22,.32)}
 .q-opt:active{transform:scale(.97)}
-.q-opt .ol{width:42px;height:42px;border-radius:12px;background:rgba(255,255,255,.06);display:flex;align-items:center;justify-content:center;font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:20px;color:#9aa7b8;flex-shrink:0}
-.q-opt .ot{flex:1;line-height:1.35;font-size:17px;font-weight:700}
+.q-opt .ol{width:30px;height:30px;border-radius:8px;background:rgba(255,255,255,.06);display:flex;align-items:center;justify-content:center;font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:14px;color:#9aa7b8;flex-shrink:0}
+.q-opt .ot{flex:1;line-height:1.2;font-size:12px;font-weight:600;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
 .q-opt.correct{background:rgba(0,230,118,0.15);border-color:var(--success)}.q-opt.correct .ol{background:var(--success);color:#000}
 .q-opt.wrong{background:rgba(255,45,85,0.15);border-color:var(--danger)}.q-opt.wrong .ol{background:var(--danger);color:#fff}
 .q-opt.disabled{pointer-events:none;opacity:.4}
@@ -272,10 +272,7 @@ html,body{width:100%;height:100%;overflow:hidden;font-family:'Be Vietnam Pro',sa
 
 ::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:2px}
 @media(max-width:820px){
-  .q-strip .q-opts{grid-template-columns:1fr}
-  .q-opt{min-height:68px;padding:16px}
-  .q-opt .ot{font-size:15px}
-  .hud-stat{min-width:0;padding:11px 14px;font-size:14px}
+  .hud-stat{min-width:0;padding:8px 10px;font-size:13px}
   .result-hero h1{font-size:3.2rem}
   .xp-value{font-size:3.4rem}
   .stat-card .sc-value{font-size:2.6rem}
@@ -376,39 +373,20 @@ html,body{width:100%;height:100%;overflow:hidden;font-family:'Be Vietnam Pro',sa
       <p>Earn coins by playing quizzes. Unlock new runners!</p>
     </div>
 
-    <!-- Default Explorer -->
-    <div class="costume-card equipped" id="costume-explorer">
-      <div class="costume-preview" id="preview-explorer"></div>
-      <div class="costume-name">EXPLORER</div>
-      <div class="costume-desc">The classic jungle adventurer. Fedora, whip, and a thirst for knowledge.</div>
-      <div style="display:flex;justify-content:space-between;align-items:center">
-        <div class="costume-price free">FREE — DEFAULT</div>
-        <button class="costume-btn equipped" id="btn-explorer">✓ EQUIPPED</button>
+    <div id="shop-costume-list"></div>
+
+    <div class="upload-card" style="background:var(--bg-card);margin-top:16px">
+      <div class="card-header"><div class="card-icon" style="background:rgba(38,230,255,0.15)">🔑</div><span class="pill-badge cyan">VIP Code</span></div>
+      <h3>REDEEM CODE</h3>
+      <p class="card-desc">Got a VIP code? Unlock all premium costumes instantly!</p>
+      <div style="display:flex;gap:8px">
+        <input type="text" id="redeem-code" placeholder="Enter VIP code..." style="flex:1;padding:10px 14px;background:var(--bg-card-lo);border:2px solid rgba(255,255,255,0.08);border-radius:var(--radius-full);color:var(--text);font-family:'Be Vietnam Pro',sans-serif;font-size:14px;font-weight:600;outline:none" onfocus="this.style.borderColor='rgba(38,230,255,0.3)'" onblur="this.style.borderColor='rgba(255,255,255,0.08)'">
+        <button class="costume-btn buy" onclick="redeemCode()" style="white-space:nowrap">REDEEM</button>
       </div>
+      <div id="redeem-msg" style="font-size:12px;font-weight:600;margin-top:6px;display:none"></div>
     </div>
 
-    <!-- Gecko Costume -->
-    <div class="costume-card locked" id="costume-gecko">
-      <div class="costume-preview" id="preview-gecko"></div>
-      <div class="costume-name">JUNGLE GECKO 🦎</div>
-      <div class="costume-desc">A cute green gecko with big googly eyes and a wiggly tail. The fastest critter in the jungle!</div>
-      <div class="progress-bar" id="gecko-progress-bar"><div class="progress-bar-fill" id="gecko-progress-fill" style="width:0%"></div></div>
-      <div class="progress-text" id="gecko-progress-text">0 / 150,000 coins needed</div>
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px">
-        <div class="costume-price">🪙 150,000</div>
-        <button class="costume-btn buy" id="btn-gecko" disabled>🔒 LOCKED</button>
-      </div>
-      <div id="gecko-redeem" style="margin-top:14px;padding-top:14px;border-top:1px solid rgba(255,255,255,0.06)">
-        <div style="font-size:12px;color:var(--text-dim);font-weight:600;margin-bottom:8px;letter-spacing:1px">OR REDEEM A CODE</div>
-        <div style="display:flex;gap:8px">
-          <input type="text" id="redeem-code" placeholder="Enter code..." style="flex:1;padding:10px 14px;background:var(--bg-card-lo);border:2px solid rgba(255,255,255,0.08);border-radius:var(--radius-full);color:var(--text);font-family:'Be Vietnam Pro',sans-serif;font-size:14px;font-weight:600;outline:none;transition:border-color .2s" onfocus="this.style.borderColor='rgba(38,230,255,0.3)'" onblur="this.style.borderColor='rgba(255,255,255,0.08)'">
-          <button class="costume-btn buy" id="btn-redeem" style="white-space:nowrap" onclick="redeemCode()">REDEEM</button>
-        </div>
-        <div id="redeem-msg" style="font-size:12px;font-weight:600;margin-top:6px;display:none"></div>
-      </div>
-    </div>
-
-    <button class="big-btn secondary" id="shop-back-btn">⬅ BACK TO QUEST</button>
+    <button class="big-btn secondary" id="shop-back-btn" style="margin-top:16px">⬅ BACK TO QUEST</button>
   </div>
   <div class="bottom-nav">
     <div class="nav-item" onclick="showScreen('upload')"><span class="nav-icon">🧭</span>QUEST</div>
@@ -716,190 +694,257 @@ const Q_TEMPLATES={
 };
 
 // ========================================================
-// FREE MCQ GENERATOR (NO API KEY — Professor-quality)
+// FREE MCQ GENERATOR (NO API KEY — Pedagogisk Mätning)
+// Principer: Atomicitet, Aktivt Återkallande, Kontextuell
+// Tydlighet, Diagnostiska Distraktorer, Ingen Ledtråd
 // ========================================================
 function generateMCQs(text){
   const lang=detectLanguage(text);
   const T=Q_TEMPLATES[lang]||Q_TEMPLATES.en;
 
-  // Split into sentences
+  // Split into sentences — preserve paragraph breaks for topic grouping
+  const paragraphs=text.split(/\n\s*\n/).filter(p=>p.trim().length>10);
   const sents=text.replace(/\n+/g,' ').replace(/\s+/g,' ')
     .split(/(?<=[.!?])\s+/).map(s=>s.trim())
     .filter(s=>s.length>20&&s.length<400&&/[a-zA-ZáàäåéèêëíîïóòöôúùüûñçæøÅÄÖ]{3}/i.test(s));
   if(sents.length<3)throw new Error(lang==='sv'?'Inte tillräckligt med innehåll — lägg till mer text!':'Not enough content — add more text!');
 
-  // Extract key concepts like a professor would
+  // Extract key concepts (named entities, technical terms, numbers, quoted terms)
   function extractConcepts(s){
     const concepts=[];
-    // Named entities (capitalized terms)
     (s.match(/(?:^|\s)([A-ZÁÀÄÅÉÈÊËÍÎÏÓÒÖÔÚÙÜÛÑÇÆØ][a-záàäåéèêëíîïóòöôúùüûñçæø]+(?:\s+[A-ZÁÀÄÅÉÈÊËÍÎÏÓÒÖÔÚÙÜÛÑÇÆØ][a-záàäåéèêëíîïóòöôúùüûñçæø]+)*)/g)||[]).forEach(x=>concepts.push(x.trim()));
-    // Numbers with context (years, quantities, percentages)
     (s.match(/\d[\d,.]*\s*(?:%|percent|procent|million|miljon|billion|miljard|km|miles|mil|years?|år|BC|AD|CE|BCE|century|hundra|sekund|minut|timm)/gi)||[]).forEach(x=>concepts.push(x.trim()));
-    // Quoted terms
     (s.match(/[""\u201c]([^""\u201d]+)[""\u201d]/g)||[]).forEach(x=>concepts.push(x.replace(/[""\u201c\u201d]/g,'')));
-    // Technical terms (words with specific patterns)
     (s.match(/\b[A-Z]{2,}\b/g)||[]).forEach(x=>concepts.push(x));
     return[...new Set(concepts)].filter(x=>x.length>1&&x.length<60);
   }
 
-  // Score sentences by educational value (like a professor grading importance)
+  // Build a concept-to-sentences index for diagnostic distractors
+  const conceptIndex={};
   const scored=sents.map((s,i)=>{
     let sc=0;const concepts=extractConcepts(s);
     sc+=concepts.length*4;
-    // Definitions (highest value)
     if(/(?:is|are|was|were|är|var|kallas|definieras|bedeutet|est|son|significa)\s/i.test(s))sc+=6;
-    // Cause/effect (high value)
     if(/(?:because|therefore|caused|result|due to|leads to|eftersom|därför|orsakar|leder till|resulterar|weil|daher|parce que|porque)/i.test(s))sc+=5;
-    // Numbers and data (high value for quizzes)
     if(/\d/.test(s))sc+=4;
-    // Key actions/events
     if(/(?:discovered|invented|founded|built|created|developed|introduced|established|upptäckte|grundade|byggde|skapade|utvecklade)/i.test(s))sc+=4;
-    // Rules, laws, principles
     if(/(?:rule|law|principle|theory|method|process|regel|lag|princip|teori|metod|process|Gesetz|Regel|Prinzip|loi|règle|ley|regla)/i.test(s))sc+=5;
-    // Superlatives (important facts)
     if(/(?:first|largest|most|least|important|main|primary|key|major|crucial|först|störst|viktigast|viktig|huvud)/i.test(s))sc+=3;
-    // Good sentence length for questions
     if(s.length>40&&s.length<250)sc+=2;
+    // Index concepts for distractor lookup
+    concepts.forEach(c=>{const k=c.toLowerCase();if(!conceptIndex[k])conceptIndex[k]=[];conceptIndex[k].push(i)});
     return{s,sc,concepts,i};
   }).sort((a,b)=>b.sc-a.sc);
 
-  // Collect all concepts for distractor generation
   const allConcepts=[...new Set(scored.flatMap(x=>x.concepts))];
-  // Collect key phrases from different sentences for diverse distractors
-  const keyPhrases=scored.map(x=>{
-    const words=x.s.split(/\s+/);
-    // Extract meaningful chunks
-    const chunks=[];
-    for(let i=0;i<words.length-2;i+=3){
-      const chunk=words.slice(i,i+Math.min(4,words.length-i)).join(' ').replace(/[.!?,;:]+$/,'');
-      if(chunk.length>5&&chunk.length<80)chunks.push(chunk);
-    }
-    return chunks;
-  }).flat();
 
-  // Question generation patterns (NO fill-in-blank — only proper MCQ)
+  // Build a semantic category map: group similar concepts together
+  // This enables "same-category" distractors (pedagogical principle)
+  const categoryMap={};
+  allConcepts.forEach(c=>{
+    // Group by first significant word or common root
+    const key=c.split(/\s+/)[0].toLowerCase().substring(0,5);
+    if(!categoryMap[key])categoryMap[key]=[];
+    categoryMap[key].push(c);
+  });
+
+  // Expanded question patterns — atomic, clear, no fill-in-blank
   const patterns=[
-    // Definition pattern: "X is/are Y"
+    // Definition: "X is/are Y"
     {p:/^(.{3,60}?)\s+(?:is|are)\s+(?:a|an|the)?\s*(.{8,})/i,
-     q:(m)=>T.what_is(m[1].trim()),a:(m)=>m[2].replace(/[.!?]$/,'').trim()},
+     q:(m)=>T.what_is(m[1].trim()),a:(m)=>m[2].replace(/[.!?]$/,'').trim(),type:'def'},
     // Past definition: "X was/were Y"
     {p:/^(.{3,60}?)\s+(?:was|were)\s+(?:a|an|the)?\s*(.{8,})/i,
-     q:(m)=>T.what_was(m[1].trim()),a:(m)=>m[2].replace(/[.!?]$/,'').trim()},
-    // Swedish: "X är Y"
+     q:(m)=>T.what_was(m[1].trim()),a:(m)=>m[2].replace(/[.!?]$/,'').trim(),type:'def'},
+    // Swedish: "X är/var Y"
     {p:/^(.{3,60}?)\s+(?:är|var)\s+(?:en|ett|den|det)?\s*(.{8,})/i,
-     q:(m)=>T.what_is(m[1].trim()),a:(m)=>m[2].replace(/[.!?]$/,'').trim()},
-    // Named/called: "X is called/known as Y"
+     q:(m)=>T.what_is(m[1].trim()),a:(m)=>m[2].replace(/[.!?]$/,'').trim(),type:'def'},
+    // Named/called
     {p:/(.{3,50}?)\s+(?:is called|is known as|kallas|heter|benämns)\s+(.{3,})/i,
-     q:(m)=>T.what_means(m[1].trim()),a:(m)=>m[2].replace(/[.!?]$/,'').trim()},
-    // Discovery/creation: "X discovered/invented Y"
+     q:(m)=>T.what_means(m[1].trim()),a:(m)=>m[2].replace(/[.!?]$/,'').trim(),type:'term'},
+    // Discovery/creation
     {p:/(.{3,50}?)\s+(?:discovered|invented|created|founded|built|upptäckte|grundade|skapade)\s+(.{3,})/i,
-     q:(m)=>T.who_did(m[0].split(/\s+/).slice(0,3).join(' ')+'...'),a:(m)=>m[1].trim()},
-    // Year pattern: "In YEAR, X"
+     q:(m)=>T.who_did(m[0].split(/\s+/).slice(0,3).join(' ')+'...'),a:(m)=>m[1].trim(),type:'who'},
+    // Year pattern
     {p:/(?:In|År|I|Im|En|El)\s+(\d{3,4}),?\s+(.{10,})/i,
-     q:(m)=>T.what_happened('in/'+m[1]+'?'),a:(m)=>m[2].replace(/[.!?]$/,'').trim()},
-    // Because/cause: "X because Y" → Why X?
+     q:(m)=>T.what_happened(m[1]),a:(m)=>m[2].replace(/[.!?]$/,'').trim(),type:'event'},
+    // Because/cause
     {p:/(.{10,60}?)\s+(?:because|since|due to|eftersom|därför att|på grund av)\s+(.{8,})/i,
-     q:(m)=>T.why(m[1].trim().toLowerCase()+'?'),a:(m)=>m[2].replace(/[.!?]$/,'').trim()},
-    // Result: "X led to/resulted in Y"
+     q:(m)=>T.why(m[1].trim().replace(/[.!?]$/,'').toLowerCase()),a:(m)=>m[2].replace(/[.!?]$/,'').trim(),type:'cause'},
+    // Result
     {p:/(.{10,60}?)\s+(?:led to|resulted in|caused|ledde till|resulterade i|orsakade)\s+(.{8,})/i,
-     q:(m)=>T.what_result(m[1].trim()),a:(m)=>m[2].replace(/[.!?]$/,'').trim()},
-    // Purpose: "X is used to/for Y"
+     q:(m)=>T.what_result(m[1].trim()),a:(m)=>m[2].replace(/[.!?]$/,'').trim(),type:'result'},
+    // Purpose
     {p:/(.{3,50}?)\s+(?:is used (?:to|for)|används (?:för|till)|dient|sert à|se usa para)\s+(.{5,})/i,
-     q:(m)=>T.what_purpose(m[1].trim()),a:(m)=>m[2].replace(/[.!?]$/,'').trim()},
+     q:(m)=>T.what_purpose(m[1].trim()),a:(m)=>m[2].replace(/[.!?]$/,'').trim(),type:'purpose'},
+    // Characteristic: "X has/have/had Y"
+    {p:/^(.{3,50}?)\s+(?:has|have|had|har|hade)\s+(?:a|an)?\s*(.{8,})/i,
+     q:(m)=>T.which_correct(m[1].trim()),a:(m)=>m[1].trim()+' '+m[0].match(/(?:has|have|had|har|hade)/i)[0]+' '+m[2].replace(/[.!?]$/,'').trim(),type:'fact'},
+    // Comparison: "X is more/less/bigger/smaller than Y"
+    {p:/(.{3,50}?)\s+(?:is|are|was|were|är|var)\s+(?:more|less|bigger|larger|smaller|faster|slower|större|mindre|snabbare|långsammare)\s+(?:than|än)\s+(.{3,})/i,
+     q:(m)=>T.which_correct(m[1].trim()+' vs '+m[2].replace(/[.!?]$/,'').trim()),a:(m)=>m[0].replace(/[.!?]$/,'').trim(),type:'compare'},
   ];
 
   function makeQuestion(x){
-    // Try pattern-based questions first
     for(const pat of patterns){
       const m=x.s.match(pat.p);
       if(m){
         const q=pat.q(m);
         let a=pat.a(m);
         if(a.length>100)a=a.substring(0,97)+'...';
-        if(q.length>10&&a.length>2)return{q,a,src:x.s};
+        if(q.length>10&&a.length>2)return{q,a,src:x.s,type:pat.type};
       }
     }
-    // Fallback: "Which is true about [key concept]?" — use the whole sentence as the correct answer
+    // Fallback: atomic fact question about the key concept
     const topic=x.concepts[0]||x.s.split(/\s+/).slice(0,4).join(' ');
     const answer=x.s.replace(/[.!?]$/,'');
     return{
       q:T.which_correct(topic),
       a:answer.length>100?answer.substring(0,97)+'...':answer,
-      src:x.s
+      src:x.s,
+      type:'fact'
     };
   }
 
-  // Generate plausible distractors (wrong answers that sound real)
-  function makeDistractors(correctAnswer,sourceSent,usedIdx){
+  // ---- DIAGNOSTIC DISTRACTOR ENGINE ----
+  // Principle: Distractors represent plausible misconceptions,
+  // same category/length as correct answer. Never absurd.
+  function makeDistractors(correctAnswer,sourceSent,usedIdx,qType){
     const distractors=[];
     const correctLower=correctAnswer.toLowerCase();
-    const correctWords=new Set(correctAnswer.toLowerCase().split(/\s+/));
+    const correctWords=new Set(correctLower.split(/\s+/).filter(w=>w.length>3));
+    const targetWordCount=correctAnswer.split(/\s+/).length;
 
-    // Strategy 1: Use concepts from OTHER sentences (most plausible)
-    const otherSents=scored.filter(x=>x.i!==usedIdx&&x.sc>2);
-    for(const other of otherSents){
+    // Helper: normalize length to match correct answer (+/- 40%)
+    function normLen(phrase){
+      const words=phrase.split(/\s+/);
+      const minW=Math.max(1,Math.floor(targetWordCount*0.6));
+      const maxW=Math.ceil(targetWordCount*1.4)+1;
+      if(words.length>maxW)return words.slice(0,maxW).join(' ');
+      if(words.length<minW)return null;
+      return phrase;
+    }
+
+    // Helper: check if distractor is valid (not duplicate, not too similar)
+    function isValid(d){
+      if(!d||d.length<3)return false;
+      const dl=d.toLowerCase();
+      if(dl===correctLower)return false;
+      if(distractors.some(x=>x.toLowerCase()===dl))return false;
+      // Check overlap — distractors should share <50% words with correct (avoid giving away answer)
+      const dWords=new Set(dl.split(/\s+/).filter(w=>w.length>3));
+      const overlap=[...dWords].filter(w=>correctWords.has(w)).length;
+      if(correctWords.size>0&&overlap>=correctWords.size*0.5)return false;
+      return true;
+    }
+
+    // Strategy 1: Related concepts from same-category sentences (most diagnostic)
+    // Find sentences discussing similar topics but with different facts
+    const relatedSents=scored.filter(x=>{
+      if(x.i===usedIdx)return false;
+      // Check if shares at least 1 concept with source
+      return x.concepts.some(c=>sourceSent.toLowerCase().includes(c.toLowerCase()));
+    }).sort((a,b)=>b.sc-a.sc);
+
+    for(const rel of relatedSents){
       if(distractors.length>=3)break;
-      // Extract a comparable-length phrase from this sentence
-      const words=other.s.split(/\s+/);
-      const targetLen=correctAnswer.split(/\s+/).length;
-      const start=Math.floor(Math.random()*Math.max(1,words.length-targetLen));
-      let phrase=words.slice(start,start+targetLen).join(' ').replace(/[.!?,;:]+$/,'');
-      if(phrase.length>100)phrase=phrase.substring(0,97)+'...';
-      if(phrase.length>3&&phrase.toLowerCase()!==correctLower&&!distractors.some(d=>d.toLowerCase()===phrase.toLowerCase())){
-        // Check it's not too similar to correct answer
-        const phraseWords=new Set(phrase.toLowerCase().split(/\s+/));
-        const overlap=[...phraseWords].filter(w=>correctWords.has(w)).length;
-        if(overlap<correctWords.size*0.6){
-          distractors.push(phrase);
+      // Extract a phrase of similar structure from this related sentence
+      for(const pat of patterns){
+        const m=rel.s.match(pat.p);
+        if(m&&pat.type===qType){
+          let d=pat.a(m);
+          if(d.length>100)d=d.substring(0,97)+'...';
+          d=normLen(d);
+          if(d&&isValid(d)){distractors.push(d);break}
         }
+      }
+      // If no pattern match, extract a comparable chunk
+      if(distractors.length<3){
+        const words=rel.s.split(/\s+/);
+        const start=Math.max(0,Math.floor(Math.random()*Math.max(1,words.length-targetWordCount)));
+        let chunk=words.slice(start,start+targetWordCount).join(' ').replace(/[.!?,;:]+$/,'');
+        chunk=normLen(chunk);
+        if(chunk&&isValid(chunk))distractors.push(chunk);
       }
     }
 
-    // Strategy 2: Swap key terms in the correct answer
+    // Strategy 2: Concept substitution — swap key term in correct answer with related concept
     if(distractors.length<3){
-      for(const concept of allConcepts){
+      const correctConcepts=extractConcepts(correctAnswer);
+      for(const cc of correctConcepts){
         if(distractors.length>=3)break;
-        if(correctAnswer.includes(concept))continue;
-        // Create a modified version of a random sentence excerpt
-        const randSent=sents[Math.floor(Math.random()*sents.length)];
-        const words=randSent.split(/\s+/);
-        const targetLen=Math.max(2,Math.min(8,correctAnswer.split(/\s+/).length));
-        let phrase=words.slice(0,targetLen).join(' ').replace(/[.!?,;:]+$/,'');
-        if(phrase.length>100)phrase=phrase.substring(0,97)+'...';
-        if(phrase.length>3&&phrase.toLowerCase()!==correctLower&&!distractors.some(d=>d===phrase)){
-          distractors.push(phrase);
+        // Find alternative concepts from the same category
+        const catKey=cc.split(/\s+/)[0].toLowerCase().substring(0,5);
+        const siblings=(categoryMap[catKey]||[]).filter(x=>x!==cc);
+        for(const sib of siblings){
+          if(distractors.length>=3)break;
+          let d=correctAnswer.replace(cc,sib);
+          d=normLen(d);
+          if(d&&isValid(d))distractors.push(d);
         }
       }
     }
 
-    // Strategy 3: Last resort — use key phrases
-    while(distractors.length<3&&keyPhrases.length>0){
-      const rp=keyPhrases[Math.floor(Math.random()*keyPhrases.length)];
-      if(rp.toLowerCase()!==correctLower&&!distractors.includes(rp)){
-        distractors.push(rp.length>100?rp.substring(0,97)+'...':rp);
+    // Strategy 3: Phrases from other high-scoring sentences (same approximate length)
+    if(distractors.length<3){
+      const others=scored.filter(x=>x.i!==usedIdx).sort(()=>Math.random()-.5);
+      for(const other of others){
+        if(distractors.length>=3)break;
+        const words=other.s.split(/\s+/);
+        // Try multiple positions for length-matched phrases
+        for(let attempt=0;attempt<3&&distractors.length<3;attempt++){
+          const start=Math.floor(Math.random()*Math.max(1,words.length-targetWordCount));
+          let phrase=words.slice(start,start+Math.max(2,targetWordCount)).join(' ').replace(/[.!?,;:]+$/,'');
+          phrase=normLen(phrase);
+          if(phrase&&isValid(phrase))distractors.push(phrase);
+        }
       }
+    }
+
+    // Strategy 4: Emergency — generate from all concepts, ensuring same category feel
+    let emergency=0;
+    while(distractors.length<3&&emergency<50){
+      emergency++;
+      const rIdx=Math.floor(Math.random()*sents.length);
+      if(rIdx===usedIdx)continue;
+      const words=sents[rIdx].split(/\s+/);
+      const start=Math.floor(Math.random()*Math.max(1,words.length-2));
+      let phrase=words.slice(start,start+Math.max(2,targetWordCount)).join(' ').replace(/[.!?,;:]+$/,'');
+      if(phrase.length>100)phrase=phrase.substring(0,97)+'...';
+      if(phrase&&phrase.length>3&&isValid(phrase))distractors.push(phrase);
     }
 
     return distractors.slice(0,3);
   }
 
-  // Build final question set
+  // Build final question set with randomized correct-answer positions
   const qs=[];const used=new Set();
+  // Track correct-answer positions to ensure even distribution (no clue from position)
+  const posCount=[0,0,0,0];
+
   for(const x of scored){
     if(qs.length>=12)break;
     if(used.has(x.i))continue;
     const r=makeQuestion(x);
-    const ds=makeDistractors(r.a,r.src,x.i);
+    const ds=makeDistractors(r.a,r.src,x.i,r.type);
     if(ds.length<3)continue;
 
-    // Randomize correct answer position
-    const ci=Math.floor(Math.random()*4);
+    // Choose position for correct answer — prefer least-used position (anti-pattern detection)
+    const minPos=Math.min(...posCount);
+    const candidates=posCount.map((c,i)=>c===minPos?i:-1).filter(i=>i>=0);
+    const ci=candidates[Math.floor(Math.random()*candidates.length)];
+    posCount[ci]++;
+
     const opts=[];const L=['A','B','C','D'];let di=0;
     for(let i=0;i<4;i++){
       const text=i===ci?r.a:ds[di++];
       opts.push(`${L[i]}) ${text.substring(0,100)}`);
     }
-    qs.push({question:r.q,options:opts,correct:ci,explanation:r.src.substring(0,180)});
+
+    // Build pedagogical explanation (why correct + why others wrong)
+    let explanation=r.src.substring(0,180);
+
+    qs.push({question:r.q,options:opts,correct:ci,explanation});
     used.add(x.i);
   }
   if(qs.length<3)throw new Error(lang==='sv'?'Kunde inte generera tillräckligt med frågor — prova med längre eller mer detaljerad text.':'Could not generate enough questions — try longer or more detailed text.');
@@ -1207,7 +1252,7 @@ class JungleEngine{
       m.position.set(Math.sin(e)*Math.cos(a)*2.3,Math.sin(e)*Math.sin(a)*2.3,Math.cos(e)*2.3);g.add(m)}
     const ring=new THREE.Mesh(new THREE.RingGeometry(2.5,4,16),new THREE.MeshBasicMaterial({color:0x8a7560,transparent:true,opacity:.25,side:THREE.DoubleSide}));
     ring.rotation.x=-Math.PI/2;ring.position.y=-2;g.add(ring);this.dustRing=ring;
-    g.position.set(0,2.5,3+this.boulderDist);this.boulder=g;this.scene.add(g);
+    g.position.set(0,2.5,3-this.boulderDist);this.boulder=g;this.scene.add(g);
   }
   _animals(){
     const colors=[0xff3333,0x33cc33,0x3366ff,0xffff33,0xff33ff,0xff6600];
@@ -1352,15 +1397,19 @@ class JungleEngine{
       if(this.leftArm){this.leftArm.rotation.x=-Math.sin(this.bob)*(this.stumbling?.2:.6);this.rightArm.rotation.x=Math.sin(this.bob)*(this.stumbling?.2:.6)}
     }
 
-    // Boulder
+    // Boulder — rolls faster and closer as lives decrease
     if(this.boulder){
-      this.bRot+=dt*(this.stumbling?4:this.speedBoost?1:2.5);
+      const df=1-(this.boulderDist-this.minBoulder)/45;// 0=far, 1=very close
+      const dangerSpeed=1+df*4;// rotation speeds up as boulder gets closer
+      this.bRot+=dt*(this.stumbling?dangerSpeed*1.5:this.speedBoost?1:dangerSpeed);
       this.boulder.rotation.x=this.bRot;this.boulder.rotation.z=Math.sin(t*2)*.06;
-      this.boulder.position.z=3+this.boulderDist;
+      this.boulder.position.z=3-this.boulderDist;
+      // Scale boulder slightly bigger when close (menacing)
+      const sc=1+df*.3;this.boulder.scale.setScalar(sc);
       this.boulderLight.position.set(0,this.boulder.position.y+3,this.boulder.position.z);
-      const df=1-(this.boulderDist-this.minBoulder)/45;
-      this.boulderLight.intensity=1+df*4;
-      if(this.dustRing)this.dustRing.material.opacity=.15+Math.sin(t*4)*.1;
+      this.boulderLight.intensity=1+df*6;
+      this.boulderLight.color.setHex(df>.7?0xff0000:0xff2200);
+      if(this.dustRing)this.dustRing.material.opacity=.15+df*.3+Math.sin(t*4)*.1;
     }
 
     // Animals (scroll + animate)
@@ -1572,62 +1621,61 @@ function showScreen(name){
 // ========================================================
 const COSTUMES={
   explorer:{name:'Explorer',price:0},
-  gecko:{name:'Jungle Gecko',price:150000}
+  gecko:{name:'Jungle Gecko',price:150000},
+  karate:{name:'Karate Kid',price:120000},
+  tarzan:{name:'Tarzan',price:130000},
+  gorilla:{name:'Gorilla',price:160000},
+  inca:{name:'Inca Warrior',price:140000}
 };
 
 let shopPreviews={};
+
+const COSTUME_META={
+  explorer:{emoji:'🤠',desc:'The classic jungle adventurer. Fedora, whip, and courage.'},
+  gecko:{emoji:'🦎',desc:'Cute green gecko with googly eyes. Fastest critter in the jungle!'},
+  karate:{emoji:'🥋',desc:'Disciplined martial artist. Fast reflexes and focused mind.'},
+  tarzan:{emoji:'🌿',desc:'King of the jungle. Swings through vines with raw power.'},
+  gorilla:{emoji:'🦍',desc:'Mighty silverback. Unstoppable force of nature.'},
+  inca:{emoji:'🏛',desc:'Ancient Inca warrior. Bearer of the Sun God\'s wisdom.'}
+};
 
 function refreshShop(){
   const coins=CoinBank.getCoins();
   const owned=CoinBank.getOwned();
   const equipped=CoinBank.getEquipped();
   document.getElementById('shop-coins').textContent=coins.toLocaleString();
-
-  // Explorer card
-  const expCard=document.getElementById('costume-explorer');
-  const expBtn=document.getElementById('btn-explorer');
-  expCard.className='costume-card '+(equipped==='explorer'?'equipped':'owned');
-  if(equipped==='explorer'){expBtn.className='costume-btn equipped';expBtn.textContent='✓ EQUIPPED';expBtn.onclick=null}
-  else{expBtn.className='costume-btn equip';expBtn.textContent='EQUIP';expBtn.onclick=()=>{CoinBank.equip('explorer');refreshShop()}}
-
-  // Gecko card
-  const geckoCard=document.getElementById('costume-gecko');
-  const geckoBtn=document.getElementById('btn-gecko');
-  const geckoOwned=owned.includes('gecko');
-  const pFill=document.getElementById('gecko-progress-fill');
-  const pText=document.getElementById('gecko-progress-text');
-  const pBar=document.getElementById('gecko-progress-bar');
-
-  const redeemDiv=document.getElementById('gecko-redeem');
-  if(geckoOwned){
-    geckoCard.className='costume-card '+(equipped==='gecko'?'equipped':'owned');
-    pBar.style.display='none';pText.style.display='none';
-    if(redeemDiv)redeemDiv.style.display='none';
-    if(equipped==='gecko'){geckoBtn.className='costume-btn equipped';geckoBtn.textContent='✓ EQUIPPED';geckoBtn.disabled=false;geckoBtn.onclick=null}
-    else{geckoBtn.className='costume-btn equip';geckoBtn.textContent='EQUIP';geckoBtn.disabled=false;geckoBtn.onclick=()=>{CoinBank.equip('gecko');refreshShop()}}
-  }else{
-    if(redeemDiv)redeemDiv.style.display='';
-    geckoCard.className='costume-card locked';
-    pBar.style.display='';pText.style.display='';
-    const pct=Math.min(100,coins/COSTUMES.gecko.price*100);
-    pFill.style.width=pct+'%';
-    pText.textContent=coins.toLocaleString()+' / '+COSTUMES.gecko.price.toLocaleString()+' coins needed';
-    if(coins>=COSTUMES.gecko.price){
-      geckoBtn.className='costume-btn buy';geckoBtn.textContent='🪙 BUY — 150K';geckoBtn.disabled=false;
-      geckoBtn.onclick=()=>{if(CoinBank.spend(COSTUMES.gecko.price)){CoinBank.own('gecko');CoinBank.equip('gecko');refreshShop()}}
-    }else{geckoBtn.className='costume-btn buy';geckoBtn.textContent='🔒 LOCKED';geckoBtn.disabled=true;geckoBtn.onclick=null}
-  }
-
-  // Render 3D previews
-  renderCostumePreviews();
-}
-
-function renderCostumePreviews(){
-  // Clean up old previews
+  // Clean old previews
   Object.values(shopPreviews).forEach(p=>{if(p.renderer)p.renderer.dispose()});
   shopPreviews={};
-  renderPreview('preview-explorer','explorer');
-  renderPreview('preview-gecko','gecko');
+  const list=document.getElementById('shop-costume-list');list.innerHTML='';
+
+  for(const[id,c]of Object.entries(COSTUMES)){
+    const isOwned=owned.includes(id)||c.price===0;
+    const isEquipped=equipped===id;
+    const meta=COSTUME_META[id]||{emoji:'👤',desc:''};
+    const card=document.createElement('div');
+    card.className='costume-card '+(isEquipped?'equipped':isOwned?'owned':'locked');
+    let html=`<div class="costume-preview" id="preview-${id}"></div>`;
+    html+=`<div class="costume-name">${c.name} ${meta.emoji}</div>`;
+    html+=`<div class="costume-desc">${meta.desc}</div>`;
+    if(!isOwned){
+      const pct=Math.min(100,coins/c.price*100);
+      html+=`<div class="progress-bar"><div class="progress-bar-fill" style="width:${pct}%"></div></div>`;
+      html+=`<div class="progress-text">${coins.toLocaleString()} / ${c.price.toLocaleString()} coins</div>`;
+    }
+    html+=`<div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px">`;
+    if(c.price===0){html+=`<div class="costume-price free">FREE</div>`}
+    else{html+=`<div class="costume-price">🪙 ${(c.price/1000).toFixed(0)}K</div>`}
+    html+=`<button class="costume-btn" id="btn-${id}"></button></div>`;
+    card.innerHTML=html;list.appendChild(card);
+    const btn=card.querySelector(`#btn-${id}`);
+    if(isEquipped){btn.className='costume-btn equipped';btn.textContent='✓ EQUIPPED'}
+    else if(isOwned){btn.className='costume-btn equip';btn.textContent='EQUIP';btn.onclick=()=>{CoinBank.equip(id);refreshShop()}}
+    else if(coins>=c.price){btn.className='costume-btn buy';btn.textContent='🪙 BUY';btn.onclick=()=>{if(CoinBank.spend(c.price)){CoinBank.own(id);CoinBank.equip(id);refreshShop()}}}
+    else{btn.className='costume-btn buy';btn.textContent='🔒 LOCKED';btn.disabled=true}
+    // Render preview
+    setTimeout(()=>renderPreview('preview-'+id,id),50);
+  }
 }
 
 function renderPreview(containerId,costumeId){
@@ -1645,9 +1693,8 @@ function renderPreview(containerId,costumeId){
   const dl=new THREE.DirectionalLight(0xfff4cc,0.8);dl.position.set(3,5,3);scene.add(dl);
   const pl=new THREE.PointLight(0xff9933,1,15);pl.position.set(-1,2,3);scene.add(pl);
 
-  let model;
-  if(costumeId==='gecko')model=buildGeckoModel();
-  else model=buildExplorerModel();
+  const _buildMap={gecko:buildGeckoModel,karate:buildKarateModel,tarzan:buildTarzanModel,gorilla:buildGorillaModel,inca:buildIncaModel};
+  let model=(_buildMap[costumeId]||buildExplorerModel)();
   scene.add(model);
 
   shopPreviews[costumeId]={scene,cam,renderer,model};
@@ -1809,6 +1856,101 @@ function buildExplorerModel(){
   return g;
 }
 
+function _addM(g,geo,mat,x,y,z){const m=new THREE.Mesh(geo,mat);m.position.set(x,y,z);g.add(m);return m}
+
+function buildKarateModel(){
+  const g=new THREE.Group();
+  const skinMat=new THREE.MeshStandardMaterial({color:0xd4a574,roughness:.6});
+  const giMat=new THREE.MeshStandardMaterial({color:0xf0f0f0,roughness:.5});
+  const beltMat=new THREE.MeshStandardMaterial({color:0x111111,roughness:.4});
+  const hairMat=new THREE.MeshStandardMaterial({color:0x1a1a1a,roughness:.8});
+  _addM(g,new THREE.BoxGeometry(.55,.75,.3),giMat,0,1.2,0);
+  _addM(g,new THREE.BoxGeometry(.58,.06,.32),beltMat,0,.85,0);
+  const head=new THREE.Mesh(new THREE.SphereGeometry(.2,10,8),skinMat);head.position.y=1.82;g.add(head);
+  const bandMat=new THREE.MeshStandardMaterial({color:0xcc0000,roughness:.5});
+  const band=new THREE.Mesh(new THREE.CylinderGeometry(.21,.21,.05,12),bandMat);band.position.y=1.88;g.add(band);
+  const hair=new THREE.Mesh(new THREE.SphereGeometry(.19,8,6),hairMat);hair.position.set(0,1.9,0);hair.scale.y=.6;g.add(hair);
+  for(let s=-1;s<=1;s+=2){const e=new THREE.Mesh(new THREE.SphereGeometry(.025,6,4),new THREE.MeshBasicMaterial({color:0x111111}));e.position.set(s*.07,1.83,.18);g.add(e)}
+  for(let s=-1;s<=1;s+=2){_addM(g,new THREE.BoxGeometry(.18,.55,.22),giMat,s*.14,.5,0)}
+  for(let s=-1;s<=1;s+=2){_addM(g,new THREE.BoxGeometry(.14,.5,.16),giMat,s*.38,1.15,0);_addM(g,new THREE.SphereGeometry(.06,5,4),skinMat,s*.38,.85,0)}
+  return g;
+}
+
+function buildTarzanModel(){
+  const g=new THREE.Group();
+  const skinMat=new THREE.MeshStandardMaterial({color:0xc49a6c,roughness:.5});
+  const loinMat=new THREE.MeshStandardMaterial({color:0x6a4a1a,roughness:.7});
+  const hairMat=new THREE.MeshStandardMaterial({color:0x4a3a1a,roughness:.8});
+  const torso=new THREE.Mesh(new THREE.BoxGeometry(.6,.8,.35),skinMat);torso.position.y=1.2;g.add(torso);
+  for(let s=-1;s<=1;s+=2){const m=new THREE.Mesh(new THREE.SphereGeometry(.15,6,5),skinMat);m.position.set(s*.12,1.35,.18);m.scale.z=.5;g.add(m)}
+  _addM(g,new THREE.BoxGeometry(.4,.25,.1),loinMat,0,.7,.1);
+  _addM(g,new THREE.BoxGeometry(.4,.25,.1),loinMat,0,.7,-.1);
+  const head=new THREE.Mesh(new THREE.SphereGeometry(.22,10,8),skinMat);head.position.y=1.85;g.add(head);
+  for(let i=0;i<8;i++){const h=new THREE.Mesh(new THREE.SphereGeometry(.08+Math.random()*.06,5,4),hairMat);h.position.set((Math.random()-.5)*.25,1.95+Math.random()*.15,(Math.random()-.5)*.2);g.add(h)}
+  for(let s=-1;s<=1;s+=2){_addM(g,new THREE.SphereGeometry(.025,6,4),new THREE.MeshBasicMaterial({color:0x111111}),s*.08,1.86,.2)}
+  for(let s=-1;s<=1;s+=2){_addM(g,new THREE.CylinderGeometry(.1,.08,.6,6),skinMat,s*.15,.4,0)}
+  for(let s=-1;s<=1;s+=2){_addM(g,new THREE.CylinderGeometry(.09,.07,.5,6),skinMat,s*.4,1.15,0)}
+  const vinePts=[new THREE.Vector3(.45,1.4,0),new THREE.Vector3(.7,1.8,.2),new THREE.Vector3(.5,2.2,.4)];
+  g.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(vinePts),8,.015,4,false),new THREE.MeshStandardMaterial({color:0x2a5a2a})));
+  return g;
+}
+
+function buildGorillaModel(){
+  const g=new THREE.Group();
+  const furMat=new THREE.MeshStandardMaterial({color:0x2a2a2a,roughness:.9});
+  const silverMat=new THREE.MeshStandardMaterial({color:0x5a5a5a,roughness:.8});
+  const faceMat=new THREE.MeshStandardMaterial({color:0x3a3a3a,roughness:.6});
+  const body=new THREE.Mesh(new THREE.SphereGeometry(.55,10,8),furMat);body.scale.set(1,1.2,1);body.position.y=1.1;g.add(body);
+  const back=new THREE.Mesh(new THREE.SphereGeometry(.45,8,6),silverMat);back.position.set(0,1.2,-.2);back.scale.set(1,1,.6);g.add(back);
+  const head=new THREE.Mesh(new THREE.SphereGeometry(.3,10,8),furMat);head.position.y=1.75;g.add(head);
+  const face=new THREE.Mesh(new THREE.SphereGeometry(.18,8,6),faceMat);face.position.set(0,1.7,.2);g.add(face);
+  const brow=new THREE.Mesh(new THREE.BoxGeometry(.35,.06,.15),furMat);brow.position.set(0,1.85,.18);g.add(brow);
+  for(let s=-1;s<=1;s+=2){_addM(g,new THREE.SphereGeometry(.03,4,4),new THREE.MeshBasicMaterial({color:0x1a1a1a}),s*.05,1.65,.32)}
+  for(let s=-1;s<=1;s+=2){
+    _addM(g,new THREE.SphereGeometry(.04,6,4),new THREE.MeshStandardMaterial({color:0xffffcc}),s*.1,1.78,.25);
+    _addM(g,new THREE.SphereGeometry(.02,5,3),new THREE.MeshBasicMaterial({color:0x111111}),s*.1,1.78,.28);
+  }
+  for(let s=-1;s<=1;s+=2){
+    const arm=new THREE.Mesh(new THREE.CylinderGeometry(.12,.1,.7,6),furMat);arm.position.set(s*.55,1,0);arm.rotation.z=s*.3;g.add(arm);
+    _addM(g,new THREE.SphereGeometry(.1,6,5),faceMat,s*.65,.55,0);
+  }
+  for(let s=-1;s<=1;s+=2){_addM(g,new THREE.CylinderGeometry(.12,.1,.4,6),furMat,s*.2,.35,0)}
+  return g;
+}
+
+function buildIncaModel(){
+  const g=new THREE.Group();
+  const skinMat=new THREE.MeshStandardMaterial({color:0xb07a4a,roughness:.6});
+  const clothMat=new THREE.MeshStandardMaterial({color:0xcc3333,roughness:.6});
+  const goldMat=new THREE.MeshStandardMaterial({color:0xddaa22,metalness:.8,roughness:.3});
+  _addM(g,new THREE.BoxGeometry(.55,.75,.3),clothMat,0,1.2,0);
+  _addM(g,new THREE.BoxGeometry(.35,.25,.02),goldMat,0,1.35,.16);
+  _addM(g,new THREE.CircleGeometry(.08,8),goldMat,0,1.38,.17);
+  _addM(g,new THREE.BoxGeometry(.58,.06,.32),goldMat,0,.85,0);
+  const head=new THREE.Mesh(new THREE.SphereGeometry(.2,10,8),skinMat);head.position.y=1.82;g.add(head);
+  const crown=new THREE.Mesh(new THREE.CylinderGeometry(.25,.22,.12,8),goldMat);crown.position.y=2.0;g.add(crown);
+  const fColors=[0x00aa44,0xff3333,0xffaa00,0x0066ff,0x00aa44];
+  for(let i=0;i<7;i++){
+    const f=new THREE.Mesh(new THREE.BoxGeometry(.04,.3+Math.random()*.2,.02),new THREE.MeshStandardMaterial({color:fColors[i%5],roughness:.5}));
+    const angle=(i/7)*Math.PI-Math.PI/2;
+    f.position.set(Math.sin(angle)*.2,2.2+Math.random()*.1,Math.cos(angle)*.1);
+    f.rotation.z=Math.sin(angle)*.3;g.add(f);
+  }
+  for(let s=-1;s<=1;s+=2){_addM(g,new THREE.BoxGeometry(.03,.08,.01),clothMat,s*.12,1.78,.2)}
+  for(let s=-1;s<=1;s+=2){_addM(g,new THREE.SphereGeometry(.025,6,4),new THREE.MeshBasicMaterial({color:0x111111}),s*.07,1.84,.18)}
+  _addM(g,new THREE.CylinderGeometry(.3,.35,.3,8),clothMat,0,.7,0);
+  for(let s=-1;s<=1;s+=2){_addM(g,new THREE.CylinderGeometry(.08,.07,.4,6),skinMat,s*.12,.35,0)}
+  for(let s=-1;s<=1;s+=2){_addM(g,new THREE.CylinderGeometry(.09,.09,.04,8),goldMat,s*.12,.18,0)}
+  for(let s=-1;s<=1;s+=2){
+    _addM(g,new THREE.CylinderGeometry(.08,.06,.45,6),skinMat,s*.38,1.15,0);
+    _addM(g,new THREE.CylinderGeometry(.07,.07,.04,8),goldMat,s*.38,.95,0);
+  }
+  const spear=new THREE.Mesh(new THREE.CylinderGeometry(.015,.015,1.8,4),new THREE.MeshStandardMaterial({color:0x5a3a1a}));
+  spear.position.set(.5,1.5,0);spear.rotation.z=-.15;g.add(spear);
+  const tip=new THREE.Mesh(new THREE.ConeGeometry(.04,.15,4),goldMat);tip.position.set(.45,2.38,0);g.add(tip);
+  return g;
+}
+
 // ========================================================
 // GECKO PLAYER FOR IN-GAME (with animated limbs)
 // ========================================================
@@ -1869,10 +2011,178 @@ JungleEngine.prototype._geckoPlayer=function(){
   g.position.set(0,0,3);this.player=g;this.scene.add(g);
 };
 
-// Override _player based on costume
+// ========================================================
+// KARATE KID PLAYER FOR IN-GAME (animated limbs)
+// ========================================================
+JungleEngine.prototype._karatePlayer=function(){
+  const g=new THREE.Group();
+  const skinMat=new THREE.MeshStandardMaterial({color:0xd4a574,roughness:.6});
+  const giMat=new THREE.MeshStandardMaterial({color:0xf0f0f0,roughness:.5});
+  const beltMat=new THREE.MeshStandardMaterial({color:0x111111,roughness:.4});
+  const hairMat=new THREE.MeshStandardMaterial({color:0x1a1a1a,roughness:.8});
+  // Torso
+  const torso=new THREE.Mesh(new THREE.BoxGeometry(.55,.75,.3),giMat);torso.position.y=1.2;g.add(torso);
+  // Belt
+  const belt=new THREE.Mesh(new THREE.BoxGeometry(.58,.06,.32),beltMat);belt.position.y=.85;g.add(belt);
+  // Head
+  const head=new THREE.Mesh(new THREE.SphereGeometry(.2,10,8),skinMat);head.position.y=1.82;g.add(head);
+  // Red headband
+  const bandMat=new THREE.MeshStandardMaterial({color:0xcc0000,roughness:.5});
+  const band=new THREE.Mesh(new THREE.CylinderGeometry(.21,.21,.05,12),bandMat);band.position.y=1.88;g.add(band);
+  // Headband tails (-Z, behind)
+  for(let s=-1;s<=1;s+=2){const tail=new THREE.Mesh(new THREE.BoxGeometry(.03,.02,.2),bandMat);tail.position.set(s*.18,1.88,-.15);g.add(tail)}
+  // Hair
+  const hair=new THREE.Mesh(new THREE.SphereGeometry(.19,8,6),hairMat);hair.position.set(0,1.9,0);hair.scale.y=.6;g.add(hair);
+  // Eyes (+Z toward camera)
+  for(let s=-1;s<=1;s+=2){const e=new THREE.Mesh(new THREE.SphereGeometry(.025,6,4),new THREE.MeshBasicMaterial({color:0x111111}));e.position.set(s*.07,1.83,.18);g.add(e)}
+  // Legs (animated)
+  for(let s=-1;s<=1;s+=2){
+    const leg=new THREE.Mesh(new THREE.BoxGeometry(.18,.55,.22),giMat);leg.position.set(s*.14,.5,0);g.add(leg);
+    const foot=new THREE.Mesh(new THREE.BoxGeometry(.16,.08,.22),skinMat);foot.position.set(0,-.3,0);leg.add(foot);
+    if(s===-1)this.leftLeg=leg;else this.rightLeg=leg;
+  }
+  // Arms (animated)
+  for(let s=-1;s<=1;s+=2){
+    const arm=new THREE.Mesh(new THREE.BoxGeometry(.14,.5,.16),giMat);arm.position.set(s*.38,1.15,0);g.add(arm);
+    const fist=new THREE.Mesh(new THREE.SphereGeometry(.06,5,4),skinMat);fist.position.set(0,-.28,0);arm.add(fist);
+    if(s===-1)this.leftArm=arm;else this.rightArm=arm;
+  }
+  g.position.set(0,0,3);this.player=g;this.scene.add(g);
+};
+
+// ========================================================
+// TARZAN PLAYER FOR IN-GAME (animated limbs)
+// ========================================================
+JungleEngine.prototype._tarzanPlayer=function(){
+  const g=new THREE.Group();
+  const skinMat=new THREE.MeshStandardMaterial({color:0xc49a6c,roughness:.5});
+  const loinMat=new THREE.MeshStandardMaterial({color:0x6a4a1a,roughness:.7});
+  const hairMat=new THREE.MeshStandardMaterial({color:0x4a3a1a,roughness:.8});
+  // Torso (muscular bare chest)
+  const torso=new THREE.Mesh(new THREE.BoxGeometry(.6,.8,.35),skinMat);torso.position.y=1.2;g.add(torso);
+  for(let s=-1;s<=1;s+=2){const m=new THREE.Mesh(new THREE.SphereGeometry(.15,6,5),skinMat);m.position.set(s*.12,1.35,.18);m.scale.z=.5;g.add(m)}
+  // Loincloth
+  const lf=new THREE.Mesh(new THREE.BoxGeometry(.4,.25,.1),loinMat);lf.position.set(0,.7,.1);g.add(lf);
+  const lb=new THREE.Mesh(new THREE.BoxGeometry(.4,.25,.1),loinMat);lb.position.set(0,.7,-.1);g.add(lb);
+  // Head
+  const head=new THREE.Mesh(new THREE.SphereGeometry(.22,10,8),skinMat);head.position.y=1.85;g.add(head);
+  // Wild hair
+  for(let i=0;i<8;i++){const h=new THREE.Mesh(new THREE.SphereGeometry(.08+Math.random()*.06,5,4),hairMat);h.position.set((Math.random()-.5)*.25,1.95+Math.random()*.15,(Math.random()-.5)*.2);g.add(h)}
+  // Eyes (+Z)
+  for(let s=-1;s<=1;s+=2){const e=new THREE.Mesh(new THREE.SphereGeometry(.025,6,4),new THREE.MeshBasicMaterial({color:0x111111}));e.position.set(s*.08,1.86,.2);g.add(e)}
+  // Legs (animated, muscular)
+  for(let s=-1;s<=1;s+=2){
+    const leg=new THREE.Mesh(new THREE.CylinderGeometry(.1,.08,.6,6),skinMat);leg.position.set(s*.15,.4,0);g.add(leg);
+    const foot=new THREE.Mesh(new THREE.SphereGeometry(.09,6,4),skinMat);foot.position.set(0,-.32,0);leg.add(foot);
+    if(s===-1)this.leftLeg=leg;else this.rightLeg=leg;
+  }
+  // Arms (animated, muscular)
+  for(let s=-1;s<=1;s+=2){
+    const arm=new THREE.Mesh(new THREE.CylinderGeometry(.09,.07,.5,6),skinMat);arm.position.set(s*.4,1.15,0);g.add(arm);
+    const hand=new THREE.Mesh(new THREE.SphereGeometry(.06,5,4),skinMat);hand.position.set(0,-.28,0);arm.add(hand);
+    if(s===-1)this.leftArm=arm;else this.rightArm=arm;
+  }
+  // Vine in right hand
+  const vinePts=[new THREE.Vector3(.45,1.4,0),new THREE.Vector3(.7,1.8,.2),new THREE.Vector3(.5,2.2,.4)];
+  g.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(vinePts),8,.015,4,false),new THREE.MeshStandardMaterial({color:0x2a5a2a})));
+  g.position.set(0,0,3);this.player=g;this.scene.add(g);
+};
+
+// ========================================================
+// GORILLA PLAYER FOR IN-GAME (animated limbs)
+// ========================================================
+JungleEngine.prototype._gorillaPlayer=function(){
+  const g=new THREE.Group();
+  const furMat=new THREE.MeshStandardMaterial({color:0x2a2a2a,roughness:.9});
+  const silverMat=new THREE.MeshStandardMaterial({color:0x5a5a5a,roughness:.8});
+  const faceMat=new THREE.MeshStandardMaterial({color:0x3a3a3a,roughness:.6});
+  // Massive body
+  const body=new THREE.Mesh(new THREE.SphereGeometry(.55,10,8),furMat);body.scale.set(1,1.2,1);body.position.y=1.1;g.add(body);
+  const back=new THREE.Mesh(new THREE.SphereGeometry(.45,8,6),silverMat);back.position.set(0,1.2,-.2);back.scale.set(1,1,.6);g.add(back);
+  // Head
+  const head=new THREE.Mesh(new THREE.SphereGeometry(.3,10,8),furMat);head.position.y=1.75;g.add(head);
+  const face=new THREE.Mesh(new THREE.SphereGeometry(.18,8,6),faceMat);face.position.set(0,1.7,.2);g.add(face);
+  const brow=new THREE.Mesh(new THREE.BoxGeometry(.35,.06,.15),furMat);brow.position.set(0,1.85,.18);g.add(brow);
+  // Nostrils, eyes
+  for(let s=-1;s<=1;s+=2){const n=new THREE.Mesh(new THREE.SphereGeometry(.03,4,4),new THREE.MeshBasicMaterial({color:0x1a1a1a}));n.position.set(s*.05,1.65,.32);g.add(n)}
+  for(let s=-1;s<=1;s+=2){
+    const ew=new THREE.Mesh(new THREE.SphereGeometry(.04,6,4),new THREE.MeshStandardMaterial({color:0xffffcc}));ew.position.set(s*.1,1.78,.25);g.add(ew);
+    const ep=new THREE.Mesh(new THREE.SphereGeometry(.02,5,3),new THREE.MeshBasicMaterial({color:0x111111}));ep.position.set(s*.1,1.78,.28);g.add(ep);
+  }
+  // Arms (animated, long and powerful)
+  for(let s=-1;s<=1;s+=2){
+    const arm=new THREE.Mesh(new THREE.CylinderGeometry(.12,.1,.7,6),furMat);arm.position.set(s*.55,1,0);arm.rotation.z=s*.3;g.add(arm);
+    const fist=new THREE.Mesh(new THREE.SphereGeometry(.1,6,5),faceMat);fist.position.set(0,-.4,0);arm.add(fist);
+    if(s===-1)this.leftArm=arm;else this.rightArm=arm;
+  }
+  // Legs (animated, short stocky)
+  for(let s=-1;s<=1;s+=2){
+    const leg=new THREE.Mesh(new THREE.CylinderGeometry(.12,.1,.4,6),furMat);leg.position.set(s*.2,.35,0);g.add(leg);
+    const foot=new THREE.Mesh(new THREE.SphereGeometry(.1,6,4),faceMat);foot.position.set(0,-.22,0);leg.add(foot);
+    if(s===-1)this.leftLeg=leg;else this.rightLeg=leg;
+  }
+  g.position.set(0,0,3);this.player=g;this.scene.add(g);
+};
+
+// ========================================================
+// INCA WARRIOR PLAYER FOR IN-GAME (animated limbs)
+// ========================================================
+JungleEngine.prototype._incaPlayer=function(){
+  const g=new THREE.Group();
+  const skinMat=new THREE.MeshStandardMaterial({color:0xb07a4a,roughness:.6});
+  const clothMat=new THREE.MeshStandardMaterial({color:0xcc3333,roughness:.6});
+  const goldMat=new THREE.MeshStandardMaterial({color:0xddaa22,metalness:.8,roughness:.3});
+  // Torso (tunic)
+  const torso=new THREE.Mesh(new THREE.BoxGeometry(.55,.75,.3),clothMat);torso.position.y=1.2;g.add(torso);
+  // Gold chest plate + sun symbol
+  const plate=new THREE.Mesh(new THREE.BoxGeometry(.35,.25,.02),goldMat);plate.position.set(0,1.35,.16);g.add(plate);
+  const sun=new THREE.Mesh(new THREE.CircleGeometry(.08,8),goldMat);sun.position.set(0,1.38,.17);g.add(sun);
+  // Gold belt
+  const belt=new THREE.Mesh(new THREE.BoxGeometry(.58,.06,.32),goldMat);belt.position.y=.85;g.add(belt);
+  // Head
+  const head=new THREE.Mesh(new THREE.SphereGeometry(.2,10,8),skinMat);head.position.y=1.82;g.add(head);
+  // Feathered headdress
+  const crown=new THREE.Mesh(new THREE.CylinderGeometry(.25,.22,.12,8),goldMat);crown.position.y=2.0;g.add(crown);
+  const fColors=[0x00aa44,0xff3333,0xffaa00,0x0066ff,0x00aa44];
+  for(let i=0;i<7;i++){
+    const f=new THREE.Mesh(new THREE.BoxGeometry(.04,.3+Math.random()*.2,.02),new THREE.MeshStandardMaterial({color:fColors[i%5],roughness:.5}));
+    const angle=(i/7)*Math.PI-Math.PI/2;
+    f.position.set(Math.sin(angle)*.2,2.2+Math.random()*.1,Math.cos(angle)*.1);
+    f.rotation.z=Math.sin(angle)*.3;g.add(f);
+  }
+  // Face paint + eyes
+  for(let s=-1;s<=1;s+=2){const p=new THREE.Mesh(new THREE.BoxGeometry(.03,.08,.01),clothMat);p.position.set(s*.12,1.78,.2);g.add(p)}
+  for(let s=-1;s<=1;s+=2){const e=new THREE.Mesh(new THREE.SphereGeometry(.025,6,4),new THREE.MeshBasicMaterial({color:0x111111}));e.position.set(s*.07,1.84,.18);g.add(e)}
+  // Skirt
+  const skirt=new THREE.Mesh(new THREE.CylinderGeometry(.3,.35,.3,8),clothMat);skirt.position.y=.7;g.add(skirt);
+  // Legs (animated)
+  for(let s=-1;s<=1;s+=2){
+    const leg=new THREE.Mesh(new THREE.CylinderGeometry(.08,.07,.4,6),skinMat);leg.position.set(s*.12,.35,0);g.add(leg);
+    const anklet=new THREE.Mesh(new THREE.CylinderGeometry(.09,.09,.04,8),goldMat);anklet.position.set(0,-.18,0);leg.add(anklet);
+    if(s===-1)this.leftLeg=leg;else this.rightLeg=leg;
+  }
+  // Arms (animated)
+  for(let s=-1;s<=1;s+=2){
+    const arm=new THREE.Mesh(new THREE.CylinderGeometry(.08,.06,.45,6),skinMat);arm.position.set(s*.38,1.15,0);g.add(arm);
+    const bracelet=new THREE.Mesh(new THREE.CylinderGeometry(.07,.07,.04,8),goldMat);bracelet.position.set(0,-.2,0);arm.add(bracelet);
+    if(s===-1)this.leftArm=arm;else this.rightArm=arm;
+  }
+  // Spear (right hand)
+  const spear=new THREE.Mesh(new THREE.CylinderGeometry(.015,.015,1.8,4),new THREE.MeshStandardMaterial({color:0x5a3a1a}));
+  spear.position.set(.5,1.5,0);spear.rotation.z=-.15;g.add(spear);
+  const tip=new THREE.Mesh(new THREE.ConeGeometry(.04,.15,4),goldMat);tip.position.set(.45,2.38,0);g.add(tip);
+  g.position.set(0,0,3);this.player=g;this.scene.add(g);
+};
+
+// Override _player based on equipped costume
 const _origPlayerFn=JungleEngine.prototype._player;
 JungleEngine.prototype._player=function(){
-  if(CoinBank.getEquipped()==='gecko')this._geckoPlayer();
+  const eq=CoinBank.getEquipped();
+  if(eq==='gecko')this._geckoPlayer();
+  else if(eq==='karate')this._karatePlayer();
+  else if(eq==='tarzan')this._tarzanPlayer();
+  else if(eq==='gorilla')this._gorillaPlayer();
+  else if(eq==='inca')this._incaPlayer();
   else _origPlayerFn.call(this);
 };
 
@@ -1971,8 +2281,8 @@ function refreshHero(){
   document.getElementById('hs-streak').textContent=(stats.bestStreak||0).toString();
 
   // Active hero info
-  const names={explorer:'EXPLORER',gecko:'JUNGLE GECKO 🦎'};
-  const descs={explorer:'The classic jungle adventurer. Fedora, whip, and courage.',gecko:'The fastest critter in the jungle! Cute, green, and unstoppable.'};
+  const names={explorer:'EXPLORER',gecko:'JUNGLE GECKO 🦎',karate:'KARATE KID 🥋',tarzan:'TARZAN 🌿',gorilla:'GORILLA 🦍',inca:'INCA WARRIOR ☀️'};
+  const descs={explorer:'The classic jungle adventurer. Fedora, whip, and courage.',gecko:'The fastest critter in the jungle! Cute, green, and unstoppable.',karate:'Disciplined martial artist with lightning-fast reflexes.',tarzan:'King of the jungle — swings through vines with raw power.',gorilla:'Mighty silverback. Nothing stands in this beast\'s way.',inca:'Ancient warrior of the sun empire, armed with a golden spear.'};
   document.getElementById('hero-active-name').textContent=names[equipped]||'EXPLORER';
   document.getElementById('hero-active-desc').textContent=descs[equipped]||'';
 
@@ -1993,18 +2303,19 @@ function refreshHero(){
   const floor=new THREE.Mesh(new THREE.CircleGeometry(1.5,24),new THREE.MeshBasicMaterial({color:0x112211,transparent:true,opacity:.5}));
   floor.rotation.x=-Math.PI/2;floor.position.y=0.01;scene.add(floor);
 
-  const model=equipped==='gecko'?buildGeckoModel():buildExplorerModel();
+  const _heroBuildMap={gecko:buildGeckoModel,karate:buildKarateModel,tarzan:buildTarzanModel,gorilla:buildGorillaModel,inca:buildIncaModel};
+  const model=(_heroBuildMap[equipped]||buildExplorerModel)();
   scene.add(model);
   heroPreview={scene,cam,renderer,model};
   let rot=0;
   function animHero(){if(!heroPreview)return;requestAnimationFrame(animHero);rot+=0.012;model.rotation.y=Math.PI+rot;model.position.y=Math.sin(rot*2)*.06;renderer.render(scene,cam)}
   animHero();
 
-  // Costume thumbnails
+  // Costume thumbnails — all 6 costumes
   const row=document.getElementById('hero-costume-row');row.innerHTML='';
-  const allCostumes=[{id:'explorer',name:'Explorer'},{id:'gecko',name:'Gecko 🦎'}];
-  allCostumes.forEach(c=>{
-    const isOwned=owned.includes(c.id);const isActive=equipped===c.id;
+  const allHeroCostumes=Object.entries(COSTUMES).map(([id,c])=>({id,name:c.name}));
+  allHeroCostumes.forEach(c=>{
+    const isOwned=owned.includes(c.id)||COSTUMES[c.id].price===0;const isActive=equipped===c.id;
     const item=document.createElement('div');
     item.className='hero-costume-item'+(isActive?' active':'')+((!isOwned)?' locked':'');
     item.innerHTML=`<div class="hero-costume-thumb" id="hero-thumb-${c.id}"></div><div class="hero-costume-label">${c.name}</div>`;
@@ -2021,7 +2332,7 @@ function refreshHero(){
       tc.appendChild(tr.domElement);
       ts.add(new THREE.AmbientLight(0xffffff,0.6));
       const tdl=new THREE.DirectionalLight(0xffffff,0.7);tdl.position.set(2,4,2);ts.add(tdl);
-      const tm=c.id==='gecko'?buildGeckoModel():buildExplorerModel();
+      const tm=(_heroBuildMap[c.id]||buildExplorerModel)();
       if(!isOwned){tm.traverse(ch=>{if(ch.isMesh){ch.material=ch.material.clone();ch.material.color.setHex(0x333333)}})}
       ts.add(tm);
       let trot=0;
@@ -2034,18 +2345,21 @@ function refreshHero(){
 // ========================================================
 // REDEEM CODES
 // ========================================================
-const REDEEM_CODES={'GECKO007':'gecko'};
+const REDEEM_CODES={'GECKO007':['gecko','karate','tarzan','gorilla','inca']};
 
 function redeemCode(){
   const input=document.getElementById('redeem-code');
   const msg=document.getElementById('redeem-msg');
   const code=input.value.trim().toUpperCase();
   if(!code){msg.style.display='block';msg.style.color='var(--danger)';msg.textContent='Enter a code first!';return}
-  const costumeId=REDEEM_CODES[code];
-  if(!costumeId){msg.style.display='block';msg.style.color='var(--danger)';msg.textContent='Invalid code. Try again!';return}
-  if(CoinBank.getOwned().includes(costumeId)){msg.style.display='block';msg.style.color='var(--oasis-glow)';msg.textContent='You already own this costume!';return}
-  CoinBank.own(costumeId);CoinBank.equip(costumeId);
-  input.value='';msg.style.display='block';msg.style.color='var(--jungle-glow)';msg.textContent='Unlocked! Jungle Gecko is now equipped!';
+  const reward=REDEEM_CODES[code];
+  if(!reward){msg.style.display='block';msg.style.color='var(--danger)';msg.textContent='Invalid code. Try again!';return}
+  const ids=Array.isArray(reward)?reward:[reward];
+  const owned=CoinBank.getOwned();
+  const newOnes=ids.filter(id=>!owned.includes(id));
+  if(newOnes.length===0){msg.style.display='block';msg.style.color='var(--oasis-glow)';msg.textContent='You already own all these costumes!';return}
+  newOnes.forEach(id=>CoinBank.own(id));CoinBank.equip(newOnes[0]);
+  input.value='';msg.style.display='block';msg.style.color='var(--jungle-glow)';msg.textContent='VIP Unlocked! '+newOnes.length+' costumes added!';
   setTimeout(()=>refreshShop(),1200);
 }
 

@@ -634,6 +634,26 @@ const Q_TEMPLATES={
     what_purpose:(subj)=>`What is the purpose of ${subj}?`,
     what_result:(event)=>`What was the result of ${event}?`,
     what_caused:(event)=>`What caused ${event}?`,
+    // Medical-specific templates
+    med_dose:(drug)=>`What is the recommended dose of ${drug}?`,
+    med_criteria:(name)=>`Which criteria are used to assess ${name}?`,
+    med_criteria_score:(name)=>`What does a specific score on ${name} indicate?`,
+    med_symptom:(condition)=>`Which of the following is a characteristic symptom of ${condition}?`,
+    med_diffdiag:(symptom)=>`Which condition should be considered in the differential diagnosis of ${symptom}?`,
+    med_diagnostic:(condition)=>`What is the primary diagnostic approach for ${condition}?`,
+    med_mechanism:(drug)=>`What is the mechanism of action of ${drug}?`,
+    med_indication:(drug)=>`What is the clinical indication for ${drug}?`,
+    med_physiology:(process)=>`Which physiological mechanism is responsible for ${process}?`,
+    med_histology:(tissue)=>`What cell type is characteristic of ${tissue}?`,
+    med_histo_location:(cell)=>`Where is ${cell} typically found?`,
+    med_histo_diagnosis:(cell)=>`Which diagnosis is associated with the presence of ${cell}?`,
+    med_anatomy_origin:(muscle)=>`What is the origin of ${muscle}?`,
+    med_anatomy_insertion:(muscle)=>`What is the insertion of ${muscle}?`,
+    med_biochem:(molecule)=>`What is the primary function of ${molecule}?`,
+    med_receptor:(drug)=>`Which receptor does ${drug} act on?`,
+    med_sideeffect:(drug)=>`Which of the following is a known side effect of ${drug}?`,
+    med_contraindication:(drug)=>`What is a contraindication for ${drug}?`,
+    med_management:(score)=>`What is the recommended management when ${score}?`,
   },
   sv:{
     what_is:(subj)=>`Vad är ${subj}?`,
@@ -647,6 +667,26 @@ const Q_TEMPLATES={
     which_not:(topic)=>`Vilket av följande stämmer INTE om ${topic}?`,
     what_purpose:(subj)=>`Vad är syftet med ${subj}?`,
     what_result:(event)=>`Vad blev resultatet av ${event}?`,
+    // Medical-specific templates (Swedish)
+    med_dose:(drug)=>`Vilken är rekommenderad dos för ${drug}?`,
+    med_criteria:(name)=>`Vilka kriterier används för att bedöma ${name}?`,
+    med_criteria_score:(name)=>`Vad indikerar en specifik poäng på ${name}?`,
+    med_symptom:(condition)=>`Vilket av följande är ett karaktäristiskt symptom vid ${condition}?`,
+    med_diffdiag:(symptom)=>`Vilken differentialdiagnos bör övervägas vid ${symptom}?`,
+    med_diagnostic:(condition)=>`Vilket är det primära diagnostiska tillvägagångssättet vid ${condition}?`,
+    med_mechanism:(drug)=>`Vilken är verkningsmekanismen för ${drug}?`,
+    med_indication:(drug)=>`Vad är den kliniska indikationen för ${drug}?`,
+    med_physiology:(process)=>`Vilken fysiologisk mekanism ansvarar för ${process}?`,
+    med_histology:(tissue)=>`Vilken celltyp är karaktäristisk för ${tissue}?`,
+    med_histo_location:(cell)=>`Var hittar man typiskt ${cell}?`,
+    med_histo_diagnosis:(cell)=>`Vilken diagnos är associerad med förekomst av ${cell}?`,
+    med_anatomy_origin:(muscle)=>`Vad är ursprunget (origin) för ${muscle}?`,
+    med_anatomy_insertion:(muscle)=>`Vad är fästet (insertion) för ${muscle}?`,
+    med_biochem:(molecule)=>`Vad är den primära funktionen för ${molecule}?`,
+    med_receptor:(drug)=>`Vilken receptor verkar ${drug} på?`,
+    med_sideeffect:(drug)=>`Vilken av följande är en känd biverkning av ${drug}?`,
+    med_contraindication:(drug)=>`Vad är en kontraindikation för ${drug}?`,
+    med_management:(score)=>`Vilken handläggning rekommenderas när ${score}?`,
     what_caused:(event)=>`Vad orsakade ${event}?`,
   },
   fr:{
@@ -662,6 +702,25 @@ const Q_TEMPLATES={
     what_purpose:(subj)=>`Quel est le but de ${subj} ?`,
     what_result:(event)=>`Quel a été le résultat de ${event} ?`,
     what_caused:(event)=>`Qu'est-ce qui a causé ${event} ?`,
+    med_dose:(drug)=>`Quelle est la dose recommandée de ${drug} ?`,
+    med_criteria:(name)=>`Quels critères sont utilisés pour évaluer ${name} ?`,
+    med_criteria_score:(name)=>`Qu'indique un score spécifique sur ${name} ?`,
+    med_symptom:(condition)=>`Quel symptôme est caractéristique de ${condition} ?`,
+    med_diffdiag:(symptom)=>`Quel diagnostic différentiel faut-il envisager pour ${symptom} ?`,
+    med_diagnostic:(condition)=>`Quelle est l'approche diagnostique primaire pour ${condition} ?`,
+    med_mechanism:(drug)=>`Quel est le mécanisme d'action de ${drug} ?`,
+    med_indication:(drug)=>`Quelle est l'indication clinique de ${drug} ?`,
+    med_physiology:(process)=>`Quel mécanisme physiologique est responsable de ${process} ?`,
+    med_histology:(tissue)=>`Quel type cellulaire est caractéristique de ${tissue} ?`,
+    med_histo_location:(cell)=>`Où trouve-t-on typiquement ${cell} ?`,
+    med_histo_diagnosis:(cell)=>`Quel diagnostic est associé à la présence de ${cell} ?`,
+    med_anatomy_origin:(muscle)=>`Quelle est l'origine de ${muscle} ?`,
+    med_anatomy_insertion:(muscle)=>`Quelle est l'insertion de ${muscle} ?`,
+    med_biochem:(molecule)=>`Quelle est la fonction primaire de ${molecule} ?`,
+    med_receptor:(drug)=>`Sur quel récepteur agit ${drug} ?`,
+    med_sideeffect:(drug)=>`Quel est un effet secondaire connu de ${drug} ?`,
+    med_contraindication:(drug)=>`Quelle est une contre-indication de ${drug} ?`,
+    med_management:(score)=>`Quelle prise en charge est recommandée lorsque ${score} ?`,
   },
   es:{
     what_is:(subj)=>`¿Qué es ${subj}?`,
@@ -676,6 +735,25 @@ const Q_TEMPLATES={
     what_purpose:(subj)=>`¿Cuál es el propósito de ${subj}?`,
     what_result:(event)=>`¿Cuál fue el resultado de ${event}?`,
     what_caused:(event)=>`¿Qué causó ${event}?`,
+    med_dose:(drug)=>`¿Cuál es la dosis recomendada de ${drug}?`,
+    med_criteria:(name)=>`¿Qué criterios se usan para evaluar ${name}?`,
+    med_criteria_score:(name)=>`¿Qué indica una puntuación específica en ${name}?`,
+    med_symptom:(condition)=>`¿Cuál es un síntoma característico de ${condition}?`,
+    med_diffdiag:(symptom)=>`¿Qué diagnóstico diferencial debe considerarse para ${symptom}?`,
+    med_diagnostic:(condition)=>`¿Cuál es el enfoque diagnóstico primario para ${condition}?`,
+    med_mechanism:(drug)=>`¿Cuál es el mecanismo de acción de ${drug}?`,
+    med_indication:(drug)=>`¿Cuál es la indicación clínica de ${drug}?`,
+    med_physiology:(process)=>`¿Qué mecanismo fisiológico es responsable de ${process}?`,
+    med_histology:(tissue)=>`¿Qué tipo celular es característico de ${tissue}?`,
+    med_histo_location:(cell)=>`¿Dónde se encuentra típicamente ${cell}?`,
+    med_histo_diagnosis:(cell)=>`¿Qué diagnóstico se asocia con la presencia de ${cell}?`,
+    med_anatomy_origin:(muscle)=>`¿Cuál es el origen de ${muscle}?`,
+    med_anatomy_insertion:(muscle)=>`¿Cuál es la inserción de ${muscle}?`,
+    med_biochem:(molecule)=>`¿Cuál es la función primaria de ${molecule}?`,
+    med_receptor:(drug)=>`¿Sobre qué receptor actúa ${drug}?`,
+    med_sideeffect:(drug)=>`¿Cuál es un efecto secundario conocido de ${drug}?`,
+    med_contraindication:(drug)=>`¿Cuál es una contraindicación de ${drug}?`,
+    med_management:(score)=>`¿Qué manejo se recomienda cuando ${score}?`,
   },
   de:{
     what_is:(subj)=>`Was ist ${subj}?`,
@@ -690,6 +768,25 @@ const Q_TEMPLATES={
     what_purpose:(subj)=>`Was ist der Zweck von ${subj}?`,
     what_result:(event)=>`Was war das Ergebnis von ${event}?`,
     what_caused:(event)=>`Was verursachte ${event}?`,
+    med_dose:(drug)=>`Was ist die empfohlene Dosis von ${drug}?`,
+    med_criteria:(name)=>`Welche Kriterien werden zur Beurteilung von ${name} verwendet?`,
+    med_criteria_score:(name)=>`Was zeigt ein bestimmter Score bei ${name} an?`,
+    med_symptom:(condition)=>`Welches Symptom ist charakteristisch für ${condition}?`,
+    med_diffdiag:(symptom)=>`Welche Differentialdiagnose sollte bei ${symptom} in Betracht gezogen werden?`,
+    med_diagnostic:(condition)=>`Welcher diagnostische Ansatz ist primär bei ${condition}?`,
+    med_mechanism:(drug)=>`Was ist der Wirkmechanismus von ${drug}?`,
+    med_indication:(drug)=>`Was ist die klinische Indikation für ${drug}?`,
+    med_physiology:(process)=>`Welcher physiologische Mechanismus ist verantwortlich für ${process}?`,
+    med_histology:(tissue)=>`Welcher Zelltyp ist charakteristisch für ${tissue}?`,
+    med_histo_location:(cell)=>`Wo findet man typischerweise ${cell}?`,
+    med_histo_diagnosis:(cell)=>`Welche Diagnose ist mit dem Vorhandensein von ${cell} assoziiert?`,
+    med_anatomy_origin:(muscle)=>`Was ist der Ursprung von ${muscle}?`,
+    med_anatomy_insertion:(muscle)=>`Was ist der Ansatz von ${muscle}?`,
+    med_biochem:(molecule)=>`Was ist die primäre Funktion von ${molecule}?`,
+    med_receptor:(drug)=>`An welchem Rezeptor wirkt ${drug}?`,
+    med_sideeffect:(drug)=>`Was ist eine bekannte Nebenwirkung von ${drug}?`,
+    med_contraindication:(drug)=>`Was ist eine Kontraindikation für ${drug}?`,
+    med_management:(score)=>`Welches Management wird empfohlen, wenn ${score}?`,
   }
 };
 
@@ -708,6 +805,11 @@ function generateMCQs(text){
     .split(/(?<=[.!?])\s+/).map(s=>s.trim())
     .filter(s=>s.length>20&&s.length<400&&/[a-zA-ZáàäåéèêëíîïóòöôúùüûñçæøÅÄÖ]{3}/i.test(s));
   if(sents.length<3)throw new Error(lang==='sv'?'Inte tillräckligt med innehåll — lägg till mer text!':'Not enough content — add more text!');
+
+  // ---- MEDICAL DOMAIN DETECTION ----
+  const medTerms=/(?:diagnos|symptom|syndrom|terapi|patient|klinisk|farmako|receptor|dos(?:er|ering)?|mg|µg|ml|g\/(?:dl|L)|mmol|mekanism|indikation|kontraindikation|biverkning|behandling|kirurgi|patologi|histologi|anatomi|fysiologi|biokemi|farmakologi|etiologi|prognos|differential|anamnes|status|remission|kriterier?|score|skala|grad(?:ering)?|stadium|klassifikation|cell(?:typ|er)?|vävnad|organ|muskel|nerv|artär|ven|lymf|insertion|origin|fäste|ursprung|receptor|agonist|antagonist|inhibitor|enzym|hormon|cytokin|antikropp|immun|inflamma|infektion|antibiotik|antiviral|analgetik|opioid|NSAID|ACE|ARB|betablockerare|diuretik|statin|antikoagul|trombocyt|leukocyt|erytrocyt|hemoglobin|albumin|kreatinin|bilirubin|troponin|CRP|SR|Hb|MCV|LDL|HDL|EKG|MRI|CT|röntgen|ultraljud|endoskopi|biopsi|laparoskopi|auskultation|palpation|perkussion|Glasgow|APACHE|SOFA|Wells|CURB|CHA2DS2|NIHSS|APGAR|TNM|FIGO|Mallampati|ASA|NYHA|Killip|Child.Pugh|MELD|Ranson|Alvarado|Ottawa|HEART|TIMI|drug|dose|dosage|receptor|agonist|antagonist|mechanism|indication|contraindication|side.effect|adverse|pharmacol|symptom|diagnosis|criteria|score|scale|grade|staging|classification|cell.type|tissue|muscle|nerve|artery|vein|lymph|insertion|origin|physiol|histol|biochem|pathol|etiology|prognosis|differential|auscultation|palpation|percussion)/i;
+  const medSentCount=sents.filter(s=>medTerms.test(s)).length;
+  const isMedical=medSentCount>=Math.max(2,sents.length*0.15);
 
   // Extract key concepts (named entities, technical terms, numbers, quoted terms)
   function extractConcepts(s){
@@ -731,6 +833,31 @@ function generateMCQs(text){
     if(/(?:rule|law|principle|theory|method|process|regel|lag|princip|teori|metod|process|Gesetz|Regel|Prinzip|loi|règle|ley|regla)/i.test(s))sc+=5;
     if(/(?:first|largest|most|least|important|main|primary|key|major|crucial|först|störst|viktigast|viktig|huvud)/i.test(s))sc+=3;
     if(s.length>40&&s.length<250)sc+=2;
+    // Medical domain scoring boosts
+    if(isMedical){
+      // Doses (extremely high value for pharmacology)
+      if(/\d+\s*(?:mg|µg|mcg|g|ml|mL|IE|U|mmol|µmol)(?:\s*\/\s*(?:kg|dag|day|dose|dos|dygn|timme|h|min|ml|dl|L))?/i.test(s))sc+=8;
+      // Criteria/scores (high value — names, cutoffs, interpretations)
+      if(/(?:kriterier?|criteria|score|skala|scale|poäng|points?|grad(?:ering)?|klassifikation|classification|stadium|stage|APACHE|SOFA|Glasgow|Wells|CURB|CHA2DS2|NIHSS|APGAR|TNM|FIGO|Mallampati|ASA|NYHA|Killip|Child.Pugh|MELD|Ranson|Alvarado|Ottawa|HEART|TIMI)/i.test(s))sc+=8;
+      // Symptoms
+      if(/(?:symptom|tecken|sign|presenterar|presents?\s+with|klinisk bild|clinical\s+(?:features?|presentation|picture)|manifestation)/i.test(s))sc+=7;
+      // Differential diagnosis
+      if(/(?:differentialdiagnos|differential\s+diagnosis|diff\.?\s*diag|uteslut|rule\s+out|överväg|consider)/i.test(s))sc+=7;
+      // Diagnostic approach/method
+      if(/(?:diagnostik|diagnostisk|diagnostic|utredning|work.?up|undersökning|examination|test(?:as|a|ing)?|provtagning|lab(?:oratori)?|blodprov|EKG|MRI|MRT|CT|röntgen|x.ray|ultraljud|ultrasound|endoskopi|endoscopy|biopsi|biopsy|auskultation|palpation|perkussion|spirometri|artärgas|ABG)/i.test(s))sc+=7;
+      // Pharmacology: mechanism, receptor, indication
+      if(/(?:mekanism|mechanism|verkar\s+(?:på|genom|via)|acts?\s+(?:on|via|by|through)|receptor|agonist|antagonist|inhibitor|inhiberar|blockerar|blocks?|stimulerar|stimulates?|hämmar|indikation|indication|kontraindikation|contraindication|biverkning|side\s*effect|adverse)/i.test(s))sc+=8;
+      // Physiology processes
+      if(/(?:fysiologi|physiol|homeostas|reglering|regulation|feedback|signalväg|pathway|transport|sekretion|secretion|absorption|metabolism|excretion|depolarise|repolarise|aktionspotential|action\s+potential)/i.test(s))sc+=6;
+      // Histology: cell types, appearance
+      if(/(?:histolog|celltyp|cell\s+type|epitel|endotel|fibroblast|makrofag|neutrofil|lymfocyt|trombocyt|erytrocyt|osteoblast|osteoclast|astrocyt|oligodendrocyt|Schwann|goblet|Clara|Kupffer|Langerhans|Reed.Sternberg|Auer|Howell.Jolly|Heinz|mikroskop|microscop|färgning|staining|H&E|PAS|immunhistokemi)/i.test(s))sc+=7;
+      // Anatomy: origin, insertion, innervation
+      if(/(?:anatomi|anatomy|origin|ursprung|insertion|fäste|innervation|innerveras|innervated|blodförsörjning|blood\s+supply|arteria|a\.\s*[a-z]|musculus|m\.\s*[a-z]|nervus|n\.\s*[a-z]|foramen|fossa|plexus|dermatom|myotom)/i.test(s))sc+=7;
+      // Biochemistry: enzymes, pathways, molecules
+      if(/(?:biokemi|biochem|enzym|enzyme|substrat|substrate|kofaktor|cofactor|ATP|ADP|NAD|FAD|CoA|glykolys|glycolysis|citronsyracykeln|Krebs|oxidativ\s+fosforylering|electron\s+transport|pentosfosfat|glukoneogenes|gluconeogenesis|beta.?oxidation|aminosyr|amino\s+acid|protein\s+syntes|translation|transkription)/i.test(s))sc+=7;
+      // Management at specific levels/scores
+      if(/(?:handläggning|management|behandla|treat|åtgärd|intervention|vid\s+(?:poäng|score|grad|stage)|when\s+(?:score|grade|stage)|insätt|initiate|ges|administer|ordinera|prescribe)/i.test(s))sc+=7;
+    }
     // Index concepts for distractor lookup
     concepts.forEach(c=>{const k=c.toLowerCase();if(!conceptIndex[k])conceptIndex[k]=[];conceptIndex[k].push(i)});
     return{s,sc,concepts,i};
@@ -784,6 +911,87 @@ function generateMCQs(text){
     {p:/(.{3,50}?)\s+(?:is|are|was|were|är|var)\s+(?:more|less|bigger|larger|smaller|faster|slower|större|mindre|snabbare|långsammare)\s+(?:than|än)\s+(.{3,})/i,
      q:(m)=>T.which_correct(m[1].trim()+' vs '+m[2].replace(/[.!?]$/,'').trim()),a:(m)=>m[0].replace(/[.!?]$/,'').trim(),type:'compare'},
   ];
+
+  // ---- MEDICAL-SPECIFIC PATTERNS (only active when medical domain detected) ----
+  if(isMedical){
+    patterns.push(
+      // DOSE patterns: "X dose/dos is/är Y mg..."
+      {p:/(.{3,50}?)\s+(?:dos(?:en|ering)?|dose|dosage)\s+(?:is|are|var|är)?\s*(\d+[\d.,\-–]*\s*(?:mg|µg|mcg|g|ml|mL|IE|U|mmol)(?:\s*\/\s*(?:kg|dag|day|dose|dos|dygn|h|timme|min))?[^.]*)/i,
+       q:(m)=>T.med_dose?T.med_dose(m[1].trim()):T.how_many(m[1].trim()+' dose'),
+       a:(m)=>m[2].replace(/[.!?]$/,'').trim(),type:'dose'},
+      // DOSE alt: "give/ges X mg of/av Y"
+      {p:/(?:ges|ge|give|administer|ordinera)\s+(\d+[\d.,\-–]*\s*(?:mg|µg|mcg|g|ml|mL|IE|U)(?:\s*\/\s*(?:kg|dag|day|dos|h))?)\s+(?:of|av)?\s*(.{3,50})/i,
+       q:(m)=>T.med_dose?T.med_dose(m[2].trim()):T.how_many(m[2].trim()+' dose'),
+       a:(m)=>m[1].replace(/[.!?]$/,'').trim(),type:'dose'},
+      // CRITERIA: "X criteria/kriterier include/inkluderar Y"
+      {p:/(.{3,50}?)\s*(?:kriterier(?:na)?|criteria|score|skala|scale)\s+(?:inkluderar|include|includes|consist|består av|innefattar|measures?|mäter)\s+(.{8,})/i,
+       q:(m)=>T.med_criteria?T.med_criteria(m[1].trim()):T.what_is(m[1].trim()+' criteria'),
+       a:(m)=>m[2].replace(/[.!?]$/,'').trim(),type:'criteria'},
+      // CRITERIA SCORE: "score of/poäng X indicates/innebär Y"
+      {p:/(?:score|poäng|grad|grade|stage|stadium)\s+(?:of|på|av)?\s*(\d+[\d\-–,]*)\s+(?:indicates?|innebär|tyder på|means?|motsvarar|corresponds?)\s+(.{5,})/i,
+       q:(m)=>T.med_criteria_score?T.med_criteria_score('poäng '+m[1]):T.what_means('score '+m[1]),
+       a:(m)=>m[2].replace(/[.!?]$/,'').trim(),type:'criteria_score'},
+      // MANAGEMENT at score: "vid/when/at score X, Y"
+      {p:/(?:vid|when|at|om|if)\s+(?:poäng|score|grad|grade|stage|stadium)\s*(?:≥|>=|>|över|above|of)?\s*(\d+[\d\-–]*),?\s+(?:ska|should|rekommenderas|recommend|ges|give|insätt|initiate|behandla|treat)\s+(.{5,})/i,
+       q:(m)=>T.med_management?T.med_management('poäng '+m[1]):T.what_purpose('score '+m[1]),
+       a:(m)=>m[2].replace(/[.!?]$/,'').trim(),type:'management'},
+      // SYMPTOMS: "X presents with/symptom include Y"
+      {p:/(.{3,50}?)\s+(?:presenterar\s+(?:sig\s+)?med|presents?\s+with|symptom(?:en)?\s+(?:inkluderar|include|är|are)|karaktäriseras av|characterized by|yttrar sig som|manifests as)\s+(.{8,})/i,
+       q:(m)=>T.med_symptom?T.med_symptom(m[1].trim()):T.which_correct(m[1].trim()+' symptom'),
+       a:(m)=>m[2].replace(/[.!?]$/,'').trim(),type:'symptom'},
+      // DIFFERENTIAL DIAGNOSIS
+      {p:/(?:differentialdiagnos|differential\s+diagnosis|diff\.?\s*diag)\s+(?:vid|for|till|to|inkluderar|includes?|är|are|comprises?)\s+(.{3,50}?)\s+(?:och|and|,|samt|or|eller)\s*(.{3,})/i,
+       q:(m)=>T.med_diffdiag?T.med_diffdiag(m[0].match(/(?:vid|for|till)\s+(.+?)(?:\s+inkluderar|\s+includes?)/)?.[1]||'detta tillstånd'):T.which_correct('differential diagnosis'),
+       a:(m)=>(m[1]+', '+m[2]).replace(/[.!?]$/,'').trim(),type:'diffdiag'},
+      // DIAGNOSTIC: "X diagnosed by/diagnostiseras med Y"
+      {p:/(.{3,50}?)\s+(?:diagnostiseras\s+(?:med|genom)|diagnosed\s+(?:by|with|using|through)|utreds\s+med|investigated\s+(?:with|using)|påvisas\s+(?:med|genom))\s+(.{5,})/i,
+       q:(m)=>T.med_diagnostic?T.med_diagnostic(m[1].trim()):T.what_purpose('diagnostik av '+m[1].trim()),
+       a:(m)=>m[2].replace(/[.!?]$/,'').trim(),type:'diagnostic'},
+      // MECHANISM OF ACTION: "X works by/verkar genom Y"
+      {p:/(.{3,50}?)\s+(?:verkar\s+(?:genom|via|på)|works?\s+(?:by|via|through)|mekanism(?:en)?\s+(?:är|is)|mechanism\s+(?:is|involves)|inhiberar|inhibits?|blockerar|blocks?|stimulerar|stimulates?|hämmar|aktiverar|activates?)\s+(.{5,})/i,
+       q:(m)=>T.med_mechanism?T.med_mechanism(m[1].trim()):T.what_purpose(m[1].trim()),
+       a:(m)=>m[2].replace(/[.!?]$/,'').trim(),type:'mechanism'},
+      // RECEPTOR: "X acts on/binds to receptor Y"
+      {p:/(.{3,50}?)\s+(?:binder\s+till|binds?\s+(?:to)?|verkar\s+på|acts?\s+on|agonist\s+(?:vid|at|for)|antagonist\s+(?:vid|at|for))\s+(.{3,50}?)\s*(?:receptor|receptorn)/i,
+       q:(m)=>T.med_receptor?T.med_receptor(m[1].trim()):T.what_is(m[1].trim()+' target receptor'),
+       a:(m)=>m[2].replace(/[.!?]$/,'').trim()+' receptor',type:'receptor'},
+      // INDICATION: "X indicated for/indicerad vid Y"
+      {p:/(.{3,50}?)\s+(?:(?:är\s+)?indicera[dt]\s+(?:vid|för)|indicated\s+(?:for|in)|används\s+vid|used\s+(?:for|in|to\s+treat))\s+(.{5,})/i,
+       q:(m)=>T.med_indication?T.med_indication(m[1].trim()):T.what_purpose(m[1].trim()),
+       a:(m)=>m[2].replace(/[.!?]$/,'').trim(),type:'indication'},
+      // SIDE EFFECTS: "side effects of X include Y"
+      {p:/(?:biverkningar?|side\s*effects?|adverse\s+(?:effects?|reactions?))\s+(?:av|of|vid|från|from|include|inkluderar|är|are)\s+(.{3,50}?)\s+(?:inkluderar|include|är|are|:\s*)(.{5,})/i,
+       q:(m)=>T.med_sideeffect?T.med_sideeffect(m[1].trim()):T.which_correct(m[1].trim()+' side effects'),
+       a:(m)=>m[2].replace(/[.!?]$/,'').trim(),type:'sideeffect'},
+      // CONTRAINDICATION
+      {p:/(.{3,50}?)\s+(?:kontraindicera[dt]|contraindicated)\s+(?:vid|in|hos|for|with)\s+(.{5,})/i,
+       q:(m)=>T.med_contraindication?T.med_contraindication(m[1].trim()):T.which_correct(m[1].trim()+' contraindication'),
+       a:(m)=>m[2].replace(/[.!?]$/,'').trim(),type:'contraindication'},
+      // PHYSIOLOGY PROCESS
+      {p:/(.{3,50}?)\s+(?:regleras\s+(?:av|genom)|regulated\s+by|medieras\s+av|mediated\s+by|styrs\s+av|controlled\s+by|upprätthålls\s+av|maintained\s+by)\s+(.{5,})/i,
+       q:(m)=>T.med_physiology?T.med_physiology(m[1].trim()):T.what_caused(m[1].trim()),
+       a:(m)=>m[2].replace(/[.!?]$/,'').trim(),type:'physiology'},
+      // HISTOLOGY: cell type / appearance
+      {p:/(.{3,50}?)\s+(?:karaktäriseras\s+(?:av|genom)|characterized\s+by|innehåller|contains?|består\s+av|consists?\s+of|ses\s+(?:vid|i)|(?:is\s+)?seen\s+(?:in|with)|typisk\s+för|typical\s+(?:of|for))\s+(.{5,})/i,
+       q:(m)=>T.med_histology?T.med_histology(m[1].trim()):T.which_correct(m[1].trim()),
+       a:(m)=>m[2].replace(/[.!?]$/,'').trim(),type:'histology'},
+      // HISTOLOGY: location of cell type
+      {p:/(.{3,40}?)\s+(?:finns\s+(?:i|vid)|found\s+(?:in|at)|lokaliseras?\s+(?:till|i)|located\s+(?:in|at)|förekommer\s+(?:i|vid)|present\s+in)\s+(.{5,})/i,
+       q:(m)=>T.med_histo_location?T.med_histo_location(m[1].trim()):T.which_correct(m[1].trim()+' location'),
+       a:(m)=>m[2].replace(/[.!?]$/,'').trim(),type:'histo_location'},
+      // ANATOMY: origin/insertion
+      {p:/(.{3,50}?)\s+(?:har\s+(?:sitt\s+)?ursprung|originates?\s+(?:from|at)|utgår\s+från|arises?\s+from)\s+(.{5,})/i,
+       q:(m)=>T.med_anatomy_origin?T.med_anatomy_origin(m[1].trim()):T.what_is(m[1].trim()+' origin'),
+       a:(m)=>m[2].replace(/[.!?]$/,'').trim(),type:'anatomy_origin'},
+      {p:/(.{3,50}?)\s+(?:fäster\s+(?:vid|på|i)|inserts?\s+(?:at|on|into)|insertion(?:en)?\s+(?:är|is)\s+(?:vid|at|on)?)\s+(.{5,})/i,
+       q:(m)=>T.med_anatomy_insertion?T.med_anatomy_insertion(m[1].trim()):T.what_is(m[1].trim()+' insertion'),
+       a:(m)=>m[2].replace(/[.!?]$/,'').trim(),type:'anatomy_insertion'},
+      // BIOCHEMISTRY: function/pathway
+      {p:/(.{3,50}?)\s+(?:katalyserar|catalyzes?|omvandlar|converts?|fosforylerar|phosphorylates?|defosforylerar|dephosphorylates?|bryter\s+ner|breaks?\s+down|syntetiserar|synthesizes?)\s+(.{5,})/i,
+       q:(m)=>T.med_biochem?T.med_biochem(m[1].trim()):T.what_purpose(m[1].trim()),
+       a:(m)=>m[2].replace(/[.!?]$/,'').trim(),type:'biochem'},
+    );
+  }
 
   function makeQuestion(x){
     for(const pat of patterns){
@@ -922,8 +1130,9 @@ function generateMCQs(text){
   // Track correct-answer positions to ensure even distribution (no clue from position)
   const posCount=[0,0,0,0];
 
+  const maxQs=isMedical?16:12;
   for(const x of scored){
-    if(qs.length>=12)break;
+    if(qs.length>=maxQs)break;
     if(used.has(x.i))continue;
     const r=makeQuestion(x);
     const ds=makeDistractors(r.a,r.src,x.i,r.type);

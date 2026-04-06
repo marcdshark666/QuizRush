@@ -1055,7 +1055,7 @@ function generateMCQs(text){
       if(m){
         const q=pat.q(m);
         let a=pat.a(m);
-        if(a.length>200)a=a.substring(0,200);
+        /* no truncation — show full text */
         if(q.length>10&&a.length>2)return{q,a,src:x.s,type:pat.type};
       }
     }
@@ -1080,7 +1080,7 @@ function generateMCQs(text){
     const answer=x.s.replace(/[.!?]$/,'');
     return{
       q:T.which_correct(topic),
-      a:answer.length>200?answer.substring(0,200):answer,
+      a:answer,
       src:x.s,
       type:'fact'
     };
@@ -1099,7 +1099,7 @@ function generateMCQs(text){
       const m=x.s.match(pat.p);
       if(m){
         let a=pat.a(m);
-        if(a.length>200)a=a.substring(0,200);
+        /* no truncation — show full text */
         if(a.length>2){
           if(!answerPool[pat.type])answerPool[pat.type]=[];
           answerPool[pat.type].push({answer:a,idx:x.i,sent:x.s});
@@ -1110,7 +1110,7 @@ function generateMCQs(text){
     // Also store full cleaned sentences as fallback 'fact' pool
     if(!answerPool['fact'])answerPool['fact']=[];
     const clean=x.s.replace(/[.!?]$/,'').trim();
-    if(clean.length>10&&clean.length<=200)answerPool['fact'].push({answer:clean,idx:x.i,sent:x.s});
+    if(clean.length>10)answerPool['fact'].push({answer:clean,idx:x.i,sent:x.s});
   });
 
   function makeDistractors(correctAnswer,sourceSent,usedIdx,qType){
@@ -1131,10 +1131,7 @@ function generateMCQs(text){
       return true;
     }
 
-    function truncate(s){
-      if(s.length>200)return s.substring(0,200);
-      return s;
-    }
+    function truncate(s){return s;}
 
     // Strategy 1: SAME-TYPE answers from other sentences (BEST for medical)
     // E.g., for a "dose" question, use doses from other drugs as distractors
@@ -1183,7 +1180,7 @@ function generateMCQs(text){
         for(const sib of siblings){
           if(distractors.length>=3)break;
           let d=correctAnswer.replace(cc,sib);
-          if(d.length>200)d=d.substring(0,200);
+          /* no truncation */
           if(isValid(d))distractors.push(d);
         }
       }
@@ -1198,7 +1195,7 @@ function generateMCQs(text){
           const m=other.s.match(pat.p);
           if(m){
             let d=pat.a(m);
-            if(d.length>200)d=d.substring(0,200);
+            /* no truncation */
             if(d.length>2&&isValid(d)){distractors.push(d);break}
           }
         }

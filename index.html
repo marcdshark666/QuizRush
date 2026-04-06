@@ -799,11 +799,46 @@ function generateMCQs(text){
   const lang=detectLanguage(text);
   const T=Q_TEMPLATES[lang]||Q_TEMPLATES.en;
 
-  // Split into sentences — preserve paragraph breaks for topic grouping
+  // Pre-clean text: protect common abbreviations from sentence splitting
+  // Swedish medical: t.ex. → t·ex·, bl.a. → bl·a·, dvs. → dvs·, etc.
+  let cleaned=text
+    .replace(/\.\.\./g,'…')  // normalize ellipsis to single char
+    .replace(/\bt\.ex\./gi,'t·ex·').replace(/\bbl\.a\./gi,'bl·a·')
+    .replace(/\bdvs\./gi,'dvs·').replace(/\bresp\./gi,'resp·')
+    .replace(/\bm\.fl\./gi,'m·fl·').replace(/\bs\.k\./gi,'s·k·')
+    .replace(/\bf\.d\./gi,'f·d·').replace(/\bo\.s\.v\./gi,'o·s·v·')
+    .replace(/\bp\.g\.a\./gi,'p·g·a·').replace(/\bfr\.o\.m\./gi,'fr·o·m·')
+    .replace(/\bt\.o\.m\./gi,'t·o·m·').replace(/\bev\./gi,'ev·')
+    .replace(/\bca\./gi,'ca·').replace(/\bkl\./gi,'kl·')
+    .replace(/\bnr\./gi,'nr·').replace(/\bst\./gi,'st·')
+    // English medical: e.g. → e·g·, i.e. → i·e·, etc.
+    .replace(/\be\.g\./gi,'e·g·').replace(/\bi\.e\./gi,'i·e·')
+    .replace(/\bvs\./gi,'vs·').replace(/\bet al\./gi,'et al·')
+    .replace(/\bDr\./gi,'Dr·').replace(/\bMr\./gi,'Mr·').replace(/\bMrs\./gi,'Mrs·')
+    .replace(/\bFig\./gi,'Fig·').replace(/\bTab\./gi,'Tab·')
+    // Protect decimal numbers: "2.5 mg" → "2·5 mg"
+    .replace(/(\d)\.(\d)/g,'$1·$2');
+
+  // Split into sentences
   const paragraphs=text.split(/\n\s*\n/).filter(p=>p.trim().length>10);
-  const sents=text.replace(/\n+/g,' ').replace(/\s+/g,' ')
-    .split(/(?<=[.!?])\s+/).map(s=>s.trim())
-    .filter(s=>s.length>20&&s.length<400&&/[a-zA-ZáàäåéèêëíîïóòöôúùüûñçæøÅÄÖ]{3}/i.test(s));
+  const rawSents=cleaned.replace(/\n+/g,' ').replace(/\s+/g,' ')
+    .split(/(?<=[.!?])\s+/)
+    .map(s=>s.replace(/·/g,'.').trim())  // restore dots
+    .filter(s=>s.length>20&&s.length<500&&/[a-zA-ZáàäåéèêëíîïóòöôúùüûñçæøÅÄÖ]{3}/i.test(s));
+
+  // Post-process: remove incomplete sentences (ending with ... or starting mid-sentence)
+  const sents=rawSents
+    .map(s=>s.replace(/…/g,'').replace(/\.\.\.$/,'').trim())  // strip trailing ellipsis
+    .filter(s=>{
+      if(s.length<20)return false;
+      // Skip sentences that look incomplete (no verb-like content, just fragments)
+      if(s.endsWith(','))return false;
+      if(s.endsWith(':'))return false;
+      // Skip raw headers/titles (all caps, very short)
+      if(s.length<40&&s===s.toUpperCase())return false;
+      return true;
+    });
+
   if(sents.length<3)throw new Error(lang==='sv'?'Inte tillräckligt med innehåll — lägg till mer text!':'Not enough content — add more text!');
 
   // ---- MEDICAL DOMAIN DETECTION ----
@@ -1049,13 +1084,21 @@ function generateMCQs(text){
     );
   }
 
+  // Clean any answer text: remove ellipsis, trailing junk, ensure completeness
+  function cleanAnswer(s){
+    return s
+      .replace(/…/g,'').replace(/\.\.\./g,'')  // remove all ellipsis
+      .replace(/[,;:\-–—]+$/,'')  // remove trailing punctuation fragments
+      .replace(/\s+$/,'').replace(/^\s+/,'')  // trim
+      .replace(/\s+/g,' ');  // normalize whitespace
+  }
+
   function makeQuestion(x){
     for(const pat of patterns){
       const m=x.s.match(pat.p);
       if(m){
         const q=pat.q(m);
-        let a=pat.a(m);
-        /* no truncation — show full text */
+        let a=cleanAnswer(pat.a(m));
         if(q.length>10&&a.length>2)return{q,a,src:x.s,type:pat.type};
       }
     }
@@ -1077,7 +1120,7 @@ function generateMCQs(text){
       topic=cleaned.split(/[,\-–—:;]/)[0].trim();
       if(topic.length>50)topic=topic.substring(0,50);
     }
-    const answer=x.s.replace(/[.!?]$/,'');
+    const answer=cleanAnswer(x.s.replace(/[.!?]$/,''));
     return{
       q:T.which_correct(topic),
       a:answer,
@@ -1098,18 +1141,16 @@ function generateMCQs(text){
     for(const pat of patterns){
       const m=x.s.match(pat.p);
       if(m){
-        let a=pat.a(m);
-        /* no truncation — show full text */
+        let a=cleanAnswer(pat.a(m));
         if(a.length>2){
           if(!answerPool[pat.type])answerPool[pat.type]=[];
           answerPool[pat.type].push({answer:a,idx:x.i,sent:x.s});
         }
-        break; // only first matching pattern per sentence
+        break;
       }
     }
-    // Also store full cleaned sentences as fallback 'fact' pool
     if(!answerPool['fact'])answerPool['fact']=[];
-    const clean=x.s.replace(/[.!?]$/,'').trim();
+    const clean=cleanAnswer(x.s.replace(/[.!?]$/,''));
     if(clean.length>10)answerPool['fact'].push({answer:clean,idx:x.i,sent:x.s});
   });
 
@@ -1131,7 +1172,7 @@ function generateMCQs(text){
       return true;
     }
 
-    function truncate(s){return s;}
+    function cleanD(s){return cleanAnswer(s);}
 
     // Strategy 1: SAME-TYPE answers from other sentences (BEST for medical)
     // E.g., for a "dose" question, use doses from other drugs as distractors
@@ -1139,7 +1180,7 @@ function generateMCQs(text){
     const sameType=pool.filter(x=>x.idx!==usedIdx).sort(()=>Math.random()-.5);
     for(const item of sameType){
       if(distractors.length>=3)break;
-      let d=truncate(item.answer);
+      let d=cleanD(item.answer);
       if(isValid(d))distractors.push(d);
     }
 
@@ -1164,7 +1205,7 @@ function generateMCQs(text){
         const rPool=(answerPool[rt]||[]).filter(x=>x.idx!==usedIdx).sort(()=>Math.random()-.5);
         for(const item of rPool){
           if(distractors.length>=3)break;
-          let d=truncate(item.answer);
+          let d=cleanD(item.answer);
           if(isValid(d))distractors.push(d);
         }
       }
@@ -1179,8 +1220,7 @@ function generateMCQs(text){
         const siblings=(categoryMap[catKey]||[]).filter(x=>x!==cc);
         for(const sib of siblings){
           if(distractors.length>=3)break;
-          let d=correctAnswer.replace(cc,sib);
-          /* no truncation */
+          let d=cleanD(correctAnswer.replace(cc,sib));
           if(isValid(d))distractors.push(d);
         }
       }
@@ -1194,8 +1234,7 @@ function generateMCQs(text){
         for(const pat of patterns){
           const m=other.s.match(pat.p);
           if(m){
-            let d=pat.a(m);
-            /* no truncation */
+            let d=cleanD(pat.a(m));
             if(d.length>2&&isValid(d)){distractors.push(d);break}
           }
         }
@@ -1207,7 +1246,7 @@ function generateMCQs(text){
       const factPool=(answerPool['fact']||[]).filter(x=>x.idx!==usedIdx).sort(()=>Math.random()-.5);
       for(const item of factPool){
         if(distractors.length>=3)break;
-        let d=truncate(item.answer);
+        let d=cleanD(item.answer);
         if(isValid(d))distractors.push(d);
       }
     }
@@ -1236,7 +1275,8 @@ function generateMCQs(text){
 
     const opts=[];const L=['A','B','C','D'];let di=0;
     for(let i=0;i<4;i++){
-      const text=i===ci?r.a:ds[di++];
+      const raw=i===ci?r.a:ds[di++];
+      const text=cleanAnswer(raw);
       opts.push(`${L[i]}) ${text}`);
     }
 

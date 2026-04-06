@@ -811,13 +811,53 @@ function generateMCQs(text){
   const medSentCount=sents.filter(s=>medTerms.test(s)).length;
   const isMedical=medSentCount>=Math.max(2,sents.length*0.15);
 
+  // Stop words — common words that appear capitalized at sentence start but are NOT concepts
+  const STOP_CAPS=new Set([
+    // Swedish
+    'Vid','Den','Det','De','En','Ett','Hos','Med','För','Till','Från','Eller','Och','Men','Att','Som',
+    'Kan','Ska','Har','Hade','Var','Är','Blev','Där','Här','Alla','Andra','Denna','Detta','Dessa',
+    'Dock','Även','Ofta','Ibland','Sedan','Efter','Under','Över','Mellan','Inom','Genom','Utan',
+    'Samt','Bara','Inte','Inget','Några','Samma','Annat','Enligt','Bland','Dels','Dels','Både',
+    'Om','Vad','Hur','Var','När','Vilken','Vilket','Vilka','Redan','Också','Sådan','Sådant',
+    'Man','Han','Hon','Dem','Sig','Sin','Sitt','Sina','Före','Sedan','Mot','Kring','Ovan','Nedan',
+    // English
+    'The','This','That','These','Those','They','Their','There','Then','Than','Thus','Such',
+    'When','Where','Which','While','What','With','Without','Within','Would','Will','Were','Was',
+    'Have','Has','Had','How','Here','However','Hence','His','Her','Its','Our','Your',
+    'Some','Most','Many','Much','More','Less','Each','Every','Both','Either','Neither',
+    'Also','Only','Just','Still','Even','Very','Too','But','And','For','Not','All','Any',
+    'After','Before','During','Since','Until','About','Into','From','Over','Under',
+    'Being','Been','Other','Another','Because','Although','Though','Unless','Whether',
+    // French
+    'Les','Des','Une','Dans','Pour','Avec','Sur','Cette','Mais','Ses','Aux','Tout',
+    // German
+    'Der','Die','Das','Ein','Eine','Von','Und','Ist','Auf','Dem','Nicht','Auch','Noch',
+    // Spanish
+    'Los','Las','Una','Del','Por','Con','Para','Esta','Como','Pero','Sus','Entre',
+  ]);
+
   // Extract key concepts (named entities, technical terms, numbers, quoted terms)
   function extractConcepts(s){
     const concepts=[];
-    (s.match(/(?:^|\s)([A-ZÁÀÄÅÉÈÊËÍÎÏÓÒÖÔÚÙÜÛÑÇÆØ][a-záàäåéèêëíîïóòöôúùüûñçæø]+(?:\s+[A-ZÁÀÄÅÉÈÊËÍÎÏÓÒÖÔÚÙÜÛÑÇÆØ][a-záàäåéèêëíîïóòöôúùüûñçæø]+)*)/g)||[]).forEach(x=>concepts.push(x.trim()));
-    (s.match(/\d[\d,.]*\s*(?:%|percent|procent|million|miljon|billion|miljard|km|miles|mil|years?|år|BC|AD|CE|BCE|century|hundra|sekund|minut|timm)/gi)||[]).forEach(x=>concepts.push(x.trim()));
+    // Named entities — but skip stop words that just happen to be capitalized at sentence start
+    (s.match(/(?:^|\s)([A-ZÁÀÄÅÉÈÊËÍÎÏÓÒÖÔÚÙÜÛÑÇÆØ][a-záàäåéèêëíîïóòöôúùüûñçæø]+(?:\s+[A-ZÁÀÄÅÉÈÊËÍÎÏÓÒÖÔÚÙÜÛÑÇÆØ][a-záàäåéèêëíîïóòöôúùüûñçæø]+)*)/g)||[]).forEach(x=>{
+      const t=x.trim();
+      // Skip single-word stop words
+      if(STOP_CAPS.has(t))return;
+      // Skip if it's at position 0 and is a common word (could just be sentence start)
+      if(s.indexOf(t)===0&&t.length<5&&!isMedical)return;
+      concepts.push(t);
+    });
+    (s.match(/\d[\d,.]*\s*(?:%|percent|procent|million|miljon|billion|miljard|km|miles|mil|years?|år|BC|AD|CE|BCE|century|hundra|sekund|minut|timm|mg|µg|mcg|g|ml|mL|IE|U|mmol)/gi)||[]).forEach(x=>concepts.push(x.trim()));
     (s.match(/[""\u201c]([^""\u201d]+)[""\u201d]/g)||[]).forEach(x=>concepts.push(x.replace(/[""\u201c\u201d]/g,'')));
-    (s.match(/\b[A-Z]{2,}\b/g)||[]).forEach(x=>concepts.push(x));
+    // Abbreviations (2+ uppercase chars) — very valuable in medical text
+    (s.match(/\b[A-Z]{2,}[0-9]*\b/g)||[]).forEach(x=>{if(!STOP_CAPS.has(x))concepts.push(x)});
+    // Medical multi-word terms (e.g., "dual antiplatelet therapy", "acetylsalicylsyra")
+    if(isMedical){
+      (s.match(/(?:trombocythämmande|antikoagul\w+|antitrombotisk\w*|acetylsalicylsyra|klopidogrel|clopidogrel|warfarin|apixaban|rivaroxaban|dabigatran|ticagrelor|prasugrel|heparin|enoxaparin|fondaparinux|metformin|insulin|paracetamol|ibuprofen|kortison|prednisolon|omeprazol|pantoprazol|adrenalin|noradrenalin|dopamin|dobutamin|atropin|amiodaron|adenosin|nitroglycerin|morfin|fentanyl|ketamin|propofol|midazolam|diazepam|flumazenil|naloxon|ondansetron|dexamethason|ciprofloxacin|amoxicillin|penicillin|gentamicin|vancomycin|meropenem|piperacillin)\b/gi)||[]).forEach(x=>concepts.push(x.trim()));
+      // Medical compound terms
+      (s.match(/(?:dubbel\s+trombocythämmande|oral\s+antikoagulation|dual\s+antiplatelet|trippelbehandling|triple\s+therapy|monoterapi|kombinationsterapi)\b/gi)||[]).forEach(x=>concepts.push(x.trim()));
+    }
     return[...new Set(concepts)].filter(x=>x.length>1&&x.length<60);
   }
 
@@ -990,6 +1030,22 @@ function generateMCQs(text){
       {p:/(.{3,50}?)\s+(?:katalyserar|catalyzes?|omvandlar|converts?|fosforylerar|phosphorylates?|defosforylerar|dephosphorylates?|bryter\s+ner|breaks?\s+down|syntetiserar|synthesizes?)\s+(.{5,})/i,
        q:(m)=>T.med_biochem?T.med_biochem(m[1].trim()):T.what_purpose(m[1].trim()),
        a:(m)=>m[2].replace(/[.!?]$/,'').trim(),type:'biochem'},
+      // Swedish "Vid X ges/rekommenderas/ska Y" (extremely common pattern)
+      {p:/^Vid\s+(.{5,50}?)\s+(?:ges|rekommenderas|ska|bör|skall|ordineras|insätts|sätts in|behandlas med|ger man|gives?)\s+(.{5,})/i,
+       q:(m)=>T.med_management?T.med_management(m[1].trim()):T.what_purpose(m[1].trim()),
+       a:(m)=>m[2].replace(/[.!?]$/,'').trim(),type:'management'},
+      // Swedish "Vid X kan man överväga Y"
+      {p:/^Vid\s+(.{5,50}?)\s+(?:kan\s+man|bör\s+man|ska\s+man|kan)\s+(?:överväga|ge|använda|välja|consider)\s+(.{5,})/i,
+       q:(m)=>T.med_management?T.med_management(m[1].trim()):T.which_correct(m[1].trim()),
+       a:(m)=>m[2].replace(/[.!?]$/,'').trim(),type:'management'},
+      // "Behandling av X är/inkluderar Y"
+      {p:/(?:Behandling|Treatment|Terapi|Therapy)\s+(?:av|of|vid|för|for)\s+(.{3,50}?)\s+(?:är|is|inkluderar|includes?|består av|consists of|innebär|involves)\s+(.{5,})/i,
+       q:(m)=>T.med_management?T.med_management(m[1].trim()):T.what_purpose('behandling av '+m[1].trim()),
+       a:(m)=>m[2].replace(/[.!?]$/,'').trim(),type:'management'},
+      // "X (e.g. ASA, clopidogrel) är/is Y" — drug class identification
+      {p:/(.{3,50}?)\s+(?:\((?:t\.?\s*ex\.?|e\.?g\.?|exempelvis|such as)\s+([^)]+)\))\s+(.{5,})/i,
+       q:(m)=>T.which_correct(m[1].trim()),
+       a:(m)=>m[1].trim()+' ('+m[2].trim()+') '+m[3].replace(/[.!?]$/,'').trim(),type:'drug_class'},
     );
   }
 
@@ -1003,8 +1059,24 @@ function generateMCQs(text){
         if(q.length>10&&a.length>2)return{q,a,src:x.s,type:pat.type};
       }
     }
-    // Fallback: atomic fact question about the key concept
-    const topic=x.concepts[0]||x.s.split(/\s+/).slice(0,4).join(' ');
+    // Fallback: find the most meaningful concept (skip stop words, prefer multi-word or long terms)
+    const validConcepts=x.concepts
+      .filter(c=>!STOP_CAPS.has(c)&&c.length>2)
+      .sort((a,b)=>{
+        // Prefer: multi-word > abbreviations > longer single words
+        const aScore=(a.includes(' ')?10:0)+(a===a.toUpperCase()?5:0)+a.length;
+        const bScore=(b.includes(' ')?10:0)+(b===b.toUpperCase()?5:0)+b.length;
+        return bScore-aScore;
+      });
+    // Extract a meaningful topic from the sentence — not just a preposition
+    let topic=validConcepts[0];
+    if(!topic||topic.length<3){
+      // Last resort: extract the core subject by removing leading prepositions/articles
+      const cleaned=x.s.replace(/^(?:Vid|Den|Det|De|En|Ett|I|Om|Hos|Med|För|Till|Från|Dock|Även|Ofta|Man|The|This|In|At|For|With|When|If|A|An)\s+/i,'');
+      // Take first meaningful chunk (up to comma or dash)
+      topic=cleaned.split(/[,\-–—:;]/)[0].trim();
+      if(topic.length>50)topic=topic.substring(0,50);
+    }
     const answer=x.s.replace(/[.!?]$/,'');
     return{
       q:T.which_correct(topic),
@@ -1015,111 +1087,132 @@ function generateMCQs(text){
   }
 
   // ---- DIAGNOSTIC DISTRACTOR ENGINE ----
-  // Principle: Distractors represent plausible misconceptions,
-  // same category/length as correct answer. Never absurd.
+  // Principle: Distractors = plausible misconceptions from same domain.
+  // For medical: use answers from OTHER questions of SAME type.
+  // For general: use related sentences with concept substitution.
+  // NEVER use random text chunks as distractors.
+
+  // Pre-extract all pattern-based answers from ALL sentences (for distractor pool)
+  const answerPool={};
+  scored.forEach(x=>{
+    for(const pat of patterns){
+      const m=x.s.match(pat.p);
+      if(m){
+        let a=pat.a(m);
+        if(a.length>100)a=a.substring(0,97)+'...';
+        if(a.length>2){
+          if(!answerPool[pat.type])answerPool[pat.type]=[];
+          answerPool[pat.type].push({answer:a,idx:x.i,sent:x.s});
+        }
+        break; // only first matching pattern per sentence
+      }
+    }
+    // Also store full cleaned sentences as fallback 'fact' pool
+    if(!answerPool['fact'])answerPool['fact']=[];
+    const clean=x.s.replace(/[.!?]$/,'').trim();
+    if(clean.length>10&&clean.length<=100)answerPool['fact'].push({answer:clean,idx:x.i,sent:x.s});
+  });
+
   function makeDistractors(correctAnswer,sourceSent,usedIdx,qType){
     const distractors=[];
     const correctLower=correctAnswer.toLowerCase();
     const correctWords=new Set(correctLower.split(/\s+/).filter(w=>w.length>3));
     const targetWordCount=correctAnswer.split(/\s+/).length;
+    const targetLen=correctAnswer.length;
 
-    // Helper: normalize length to match correct answer (+/- 40%)
-    function normLen(phrase){
-      const words=phrase.split(/\s+/);
-      const minW=Math.max(1,Math.floor(targetWordCount*0.6));
-      const maxW=Math.ceil(targetWordCount*1.4)+1;
-      if(words.length>maxW)return words.slice(0,maxW).join(' ');
-      if(words.length<minW)return null;
-      return phrase;
-    }
-
-    // Helper: check if distractor is valid (not duplicate, not too similar)
     function isValid(d){
       if(!d||d.length<3)return false;
-      const dl=d.toLowerCase();
+      const dl=d.toLowerCase().trim();
       if(dl===correctLower)return false;
       if(distractors.some(x=>x.toLowerCase()===dl))return false;
-      // Check overlap — distractors should share <50% words with correct (avoid giving away answer)
       const dWords=new Set(dl.split(/\s+/).filter(w=>w.length>3));
       const overlap=[...dWords].filter(w=>correctWords.has(w)).length;
       if(correctWords.size>0&&overlap>=correctWords.size*0.5)return false;
       return true;
     }
 
-    // Strategy 1: Related concepts from same-category sentences (most diagnostic)
-    // Find sentences discussing similar topics but with different facts
-    const relatedSents=scored.filter(x=>{
-      if(x.i===usedIdx)return false;
-      // Check if shares at least 1 concept with source
-      return x.concepts.some(c=>sourceSent.toLowerCase().includes(c.toLowerCase()));
-    }).sort((a,b)=>b.sc-a.sc);
+    function truncate(s){
+      if(s.length>100)return s.substring(0,97)+'...';
+      return s;
+    }
 
-    for(const rel of relatedSents){
+    // Strategy 1: SAME-TYPE answers from other sentences (BEST for medical)
+    // E.g., for a "dose" question, use doses from other drugs as distractors
+    const pool=answerPool[qType]||[];
+    const sameType=pool.filter(x=>x.idx!==usedIdx).sort(()=>Math.random()-.5);
+    for(const item of sameType){
       if(distractors.length>=3)break;
-      // Extract a phrase of similar structure from this related sentence
-      for(const pat of patterns){
-        const m=rel.s.match(pat.p);
-        if(m&&pat.type===qType){
-          let d=pat.a(m);
-          if(d.length>100)d=d.substring(0,97)+'...';
-          d=normLen(d);
-          if(d&&isValid(d)){distractors.push(d);break}
+      let d=truncate(item.answer);
+      if(isValid(d))distractors.push(d);
+    }
+
+    // Strategy 2: Related-type answers (e.g., for 'mechanism' use 'indication' answers)
+    if(distractors.length<3){
+      const relatedTypes={
+        dose:['mechanism','indication'],mechanism:['indication','dose'],indication:['mechanism','sideeffect'],
+        symptom:['diffdiag','diagnostic'],diffdiag:['symptom','diagnostic'],diagnostic:['symptom','diffdiag'],
+        criteria:['criteria_score','management'],criteria_score:['criteria','management'],management:['criteria_score','indication'],
+        sideeffect:['contraindication','indication'],contraindication:['sideeffect','indication'],
+        physiology:['mechanism','biochem'],histology:['histo_location','anatomy_origin'],
+        anatomy_origin:['anatomy_insertion','histology'],anatomy_insertion:['anatomy_origin','histology'],
+        biochem:['physiology','mechanism'],receptor:['mechanism','indication'],
+        def:['fact','term'],fact:['def','term'],term:['def','fact'],
+        cause:['result','fact'],result:['cause','fact'],purpose:['mechanism','fact'],
+        drug_class:['indication','mechanism'],compare:['fact','def'],
+        histo_location:['histology','anatomy_origin'],
+      };
+      const related=relatedTypes[qType]||['fact','def'];
+      for(const rt of related){
+        if(distractors.length>=3)break;
+        const rPool=(answerPool[rt]||[]).filter(x=>x.idx!==usedIdx).sort(()=>Math.random()-.5);
+        for(const item of rPool){
+          if(distractors.length>=3)break;
+          let d=truncate(item.answer);
+          if(isValid(d))distractors.push(d);
         }
-      }
-      // If no pattern match, extract a comparable chunk
-      if(distractors.length<3){
-        const words=rel.s.split(/\s+/);
-        const start=Math.max(0,Math.floor(Math.random()*Math.max(1,words.length-targetWordCount)));
-        let chunk=words.slice(start,start+targetWordCount).join(' ').replace(/[.!?,;:]+$/,'');
-        chunk=normLen(chunk);
-        if(chunk&&isValid(chunk))distractors.push(chunk);
       }
     }
 
-    // Strategy 2: Concept substitution — swap key term in correct answer with related concept
+    // Strategy 3: Concept substitution — swap key term with a related concept from text
     if(distractors.length<3){
-      const correctConcepts=extractConcepts(correctAnswer);
+      const correctConcepts=extractConcepts(correctAnswer).filter(c=>!STOP_CAPS.has(c));
       for(const cc of correctConcepts){
         if(distractors.length>=3)break;
-        // Find alternative concepts from the same category
         const catKey=cc.split(/\s+/)[0].toLowerCase().substring(0,5);
         const siblings=(categoryMap[catKey]||[]).filter(x=>x!==cc);
         for(const sib of siblings){
           if(distractors.length>=3)break;
           let d=correctAnswer.replace(cc,sib);
-          d=normLen(d);
-          if(d&&isValid(d))distractors.push(d);
+          if(d.length>100)d=d.substring(0,97)+'...';
+          if(isValid(d))distractors.push(d);
         }
       }
     }
 
-    // Strategy 3: Phrases from other high-scoring sentences (same approximate length)
+    // Strategy 4: Extract clean answers from unrelated sentences using patterns
     if(distractors.length<3){
       const others=scored.filter(x=>x.i!==usedIdx).sort(()=>Math.random()-.5);
       for(const other of others){
         if(distractors.length>=3)break;
-        const words=other.s.split(/\s+/);
-        // Try multiple positions for length-matched phrases
-        for(let attempt=0;attempt<3&&distractors.length<3;attempt++){
-          const start=Math.floor(Math.random()*Math.max(1,words.length-targetWordCount));
-          let phrase=words.slice(start,start+Math.max(2,targetWordCount)).join(' ').replace(/[.!?,;:]+$/,'');
-          phrase=normLen(phrase);
-          if(phrase&&isValid(phrase))distractors.push(phrase);
+        for(const pat of patterns){
+          const m=other.s.match(pat.p);
+          if(m){
+            let d=pat.a(m);
+            if(d.length>100)d=d.substring(0,97)+'...';
+            if(d.length>2&&isValid(d)){distractors.push(d);break}
+          }
         }
       }
     }
 
-    // Strategy 4: Emergency — generate from all concepts, ensuring same category feel
-    let emergency=0;
-    while(distractors.length<3&&emergency<50){
-      emergency++;
-      const rIdx=Math.floor(Math.random()*sents.length);
-      if(rIdx===usedIdx)continue;
-      const words=sents[rIdx].split(/\s+/);
-      const start=Math.floor(Math.random()*Math.max(1,words.length-2));
-      let phrase=words.slice(start,start+Math.max(2,targetWordCount)).join(' ').replace(/[.!?,;:]+$/,'');
-      if(phrase.length>100)phrase=phrase.substring(0,97)+'...';
-      if(phrase&&phrase.length>3&&isValid(phrase))distractors.push(phrase);
+    // Strategy 5: Last resort — use complete clean sentences (NOT random chunks)
+    if(distractors.length<3){
+      const factPool=(answerPool['fact']||[]).filter(x=>x.idx!==usedIdx).sort(()=>Math.random()-.5);
+      for(const item of factPool){
+        if(distractors.length>=3)break;
+        let d=truncate(item.answer);
+        if(isValid(d))distractors.push(d);
+      }
     }
 
     return distractors.slice(0,3);

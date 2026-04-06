@@ -111,7 +111,7 @@ html,body{width:100%;height:100%;overflow:hidden;font-family:'Be Vietnam Pro',sa
 .q-opt:hover{background:rgba(255,158,22,.09);border-color:rgba(255,158,22,.32)}
 .q-opt:active{transform:scale(.97)}
 .q-opt .ol{width:30px;height:30px;border-radius:8px;background:rgba(255,255,255,.06);display:flex;align-items:center;justify-content:center;font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:14px;color:#9aa7b8;flex-shrink:0}
-.q-opt .ot{flex:1;line-height:1.25;font-size:11px;font-weight:600;word-break:break-word}
+.q-opt .ot{flex:1;line-height:1.3;font-size:12px;font-weight:600;word-break:break-word}
 .q-opt.correct{background:rgba(0,230,118,0.15);border-color:var(--success)}.q-opt.correct .ol{background:var(--success);color:#000}
 .q-opt.wrong{background:rgba(255,45,85,0.15);border-color:var(--danger)}.q-opt.wrong .ol{background:var(--danger);color:#fff}
 .q-opt.disabled{pointer-events:none;opacity:.4}
@@ -338,6 +338,23 @@ html,body{width:100%;height:100%;overflow:hidden;font-family:'Be Vietnam Pro',sa
         </button>
         <button class="diff-btn" data-diff="insane" onclick="setDifficulty('insane')">
           <span class="diff-icon">💀</span><span class="diff-name">Insane</span><span class="diff-hearts">❤️×1</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="upload-card jungle">
+      <div class="card-header"><div class="card-icon jungle">📊</div><span class="pill-badge green">QUIZ</span></div>
+      <h3>QUESTIONS</h3>
+      <p class="card-desc">How many questions to generate?</p>
+      <div id="qcount-selector" style="display:flex;gap:8px;margin-top:8px">
+        <button class="diff-btn active" data-qcount="10" onclick="setQCount(10)">
+          <span class="diff-icon">⚡</span><span class="diff-name">10</span><span class="diff-hearts">Quick</span>
+        </button>
+        <button class="diff-btn" data-qcount="25" onclick="setQCount(25)">
+          <span class="diff-icon">📚</span><span class="diff-name">25</span><span class="diff-hearts">Standard</span>
+        </button>
+        <button class="diff-btn" data-qcount="50" onclick="setQCount(50)">
+          <span class="diff-icon">🏆</span><span class="diff-name">50</span><span class="diff-hearts">Marathon</span>
         </button>
       </div>
     </div>
@@ -579,6 +596,11 @@ async function extractURL(url){
 // DIFFICULTY SYSTEM
 // ========================================================
 let selectedDifficulty='easy';
+let selectedQCount=10;
+function setQCount(n){
+  selectedQCount=n;
+  document.querySelectorAll('#qcount-selector .diff-btn').forEach(b=>{b.classList.toggle('active',parseInt(b.dataset.qcount)===n)});
+}
 const DIFFICULTY={
   beginner:{hearts:10,label:'Beginner',timer:90, scoreMulti:0.5, timePenalty:2, boulderHit:4, boulderReward:10},
   easy:    {hearts:5, label:'Easy',    timer:60, scoreMulti:1.0, timePenalty:3, boulderHit:6, boulderReward:8},
@@ -1084,13 +1106,21 @@ function generateMCQs(text){
     );
   }
 
-  // Clean any answer text: remove ellipsis, trailing junk, ensure completeness
+  // Clean answer text: remove ellipsis, trim to concise phrase (max ~80 chars)
   function cleanAnswer(s){
-    return s
+    let c=s
       .replace(/…/g,'').replace(/\.\.\./g,'')  // remove all ellipsis
       .replace(/[,;:\-–—]+$/,'')  // remove trailing punctuation fragments
-      .replace(/\s+$/,'').replace(/^\s+/,'')  // trim
-      .replace(/\s+/g,' ');  // normalize whitespace
+      .replace(/\s+/g,' ').trim();  // normalize whitespace
+    // If too long, cut at a natural boundary (comma, semicolon, dash) within ~80 chars
+    if(c.length>80){
+      // Try cutting at last comma/semicolon/dash before 80
+      const cut=c.substring(0,80);
+      const lastBreak=Math.max(cut.lastIndexOf(','),cut.lastIndexOf(';'),cut.lastIndexOf(' – '),cut.lastIndexOf(' - '));
+      if(lastBreak>20)c=c.substring(0,lastBreak).trim();
+      else c=c.substring(0,80).replace(/\s+\S*$/,'').trim(); // cut at last whole word
+    }
+    return c.replace(/[,;:\-–—]+$/,'').trim(); // clean trailing junk again
   }
 
   function makeQuestion(x){
@@ -1256,14 +1286,20 @@ function generateMCQs(text){
 
   // Build final question set with randomized correct-answer positions
   const qs=[];const used=new Set();
+  const usedQuestions=new Set(); // prevent duplicate question text
+  const usedAnswers=new Set();  // prevent duplicate correct answers
   // Track correct-answer positions to ensure even distribution (no clue from position)
   const posCount=[0,0,0,0];
 
-  const maxQs=isMedical?16:12;
+  const maxQs=selectedQCount||10;
   for(const x of scored){
     if(qs.length>=maxQs)break;
     if(used.has(x.i))continue;
     const r=makeQuestion(x);
+    // Skip duplicate questions or duplicate correct answers
+    const qKey=r.q.toLowerCase().trim();
+    const aKey=r.a.toLowerCase().trim();
+    if(usedQuestions.has(qKey)||usedAnswers.has(aKey))continue;
     const ds=makeDistractors(r.a,r.src,x.i,r.type);
     if(ds.length<3)continue;
 
@@ -1285,6 +1321,8 @@ function generateMCQs(text){
 
     qs.push({question:r.q,options:opts,correct:ci,explanation});
     used.add(x.i);
+    usedQuestions.add(qKey);
+    usedAnswers.add(aKey);
   }
   if(qs.length<3)throw new Error(lang==='sv'?'Kunde inte generera tillräckligt med frågor — prova med längre eller mer detaljerad text.':'Could not generate enough questions — try longer or more detailed text.');
   return qs;
@@ -1804,9 +1842,9 @@ class JungleEngine{
 class QuizGame{
   constructor(qs){
     const diff=DIFFICULTY[selectedDifficulty]||DIFFICULTY.easy;
-    this.qs=qs.slice(0,12);this.cur=0;this.score=0;this.streak=0;this.best=0;
+    this.qs=qs;this.cur=0;this.score=0;this.streak=0;this.best=0;
     this.correct=0;this.total=diff.timer;this.left=diff.timer;this.hearts=diff.hearts;
-    this.timer=null;this.engine=null;this.answering=false;this.results=[];this.target=10;
+    this.timer=null;this.engine=null;this.answering=false;this.results=[];this.target=qs.length;
     this.difficulty=selectedDifficulty;
   }
   start(){

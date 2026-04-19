@@ -1065,9 +1065,16 @@ const Q_TEMPLATES={
 // Principer: Atomicitet, Aktivt Återkallande, Kontextuell
 // Tydlighet, Diagnostiska Distraktorer, Ingen Ledtråd
 // ========================================================
+// Regex: metadata patterns that should NEVER become quiz questions
+const _META_LINE_RE=/^\s*(?:last\s+(?:updated?|modified|reviewed|edited)|updat(?:ed?|ing)|uploaded?|published?|posted|modified|revised|senast\s+(?:uppdaterad|ändrad|granskad)|uppdaterad?|laddad?\s+upp|publicerad?|skapad?|sidan?\s+uppdaterad?|datum|date|created|©|copyright|\(c\)|all\s+rights|version\s+\d|rev\s*\.?\s*\d|\bv\d+\.\d+)[\s:–—-]*.{0,80}$/i;
+const _META_SENT_RE=/(?:last\s+(?:updated?|modified|reviewed|edited)|(?:was\s+)?uploaded?\s+(?:on|at)|published\s+(?:on|at|in)|(?:page|site|content|article)\s+(?:was\s+)?(?:updated?|modified|published)|senast\s+uppdaterad?|uppdaterades?\s+(?:den|senast)?|sidan?\s+(?:skapades?|uppdaterades?|publicerades?)|laddades?\s+upp\s+(?:den|på))\s*(?:\d{1,2}[./-]\d{1,2}[./-]\d{2,4}|\d{4}[./-]\d{1,2}[./-]\d{1,2}|(?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:tember)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?|januari|februari|mars|april|maj|juni|juli|augusti|september|oktober|november|december)\s+\d{1,2}[,.]?\s*\d{4}|\d{4})/i;
+
 function generateMCQs(text){
   const lang=detectLanguage(text);
   const T=Q_TEMPLATES[lang]||Q_TEMPLATES.en;
+
+  // ── STRIP METADATA LINES (upload/update dates, copyright, version tags) ──
+  text=text.split('\n').filter(line=>!_META_LINE_RE.test(line)).join('\n');
 
   // Pre-clean text: protect common abbreviations from sentence splitting
   // Swedish medical: t.ex. → t·ex·, bl.a. → bl·a·, dvs. → dvs·, etc.
@@ -1096,7 +1103,7 @@ function generateMCQs(text){
     .map(s=>s.replace(/·/g,'.').trim())  // restore dots
     .filter(s=>s.length>20&&s.length<500&&/[a-zA-ZáàäåéèêëíîïóòöôúùüûñçæøÅÄÖ]{3}/i.test(s));
 
-  // Post-process: remove incomplete sentences (ending with ... or starting mid-sentence)
+  // Post-process: remove incomplete sentences + metadata sentences
   const sents=rawSents
     .map(s=>s.replace(/…/g,'').replace(/\.\.\.$/,'').trim())  // strip trailing ellipsis
     .filter(s=>{
@@ -1106,6 +1113,12 @@ function generateMCQs(text){
       if(s.endsWith(':'))return false;
       // Skip raw headers/titles (all caps, very short)
       if(s.length<40&&s===s.toUpperCase())return false;
+      // ── Skip upload/update/publish date sentences ──
+      if(_META_SENT_RE.test(s))return false;
+      // Skip pure date lines: starts with a date pattern or "Updated:" style prefix
+      if(/^(?:updated?|modified|published?|uploaded?|created|senast|uppdaterad?|publicerad?|laddad?)[\s:–—-]/i.test(s))return false;
+      // Skip sentences whose only content is a URL + date (e.g. "www.site.com – 2024-01-15")
+      if(/^https?:\/\/\S+\s*[-–—]\s*\d{4}/.test(s))return false;
       return true;
     });
 

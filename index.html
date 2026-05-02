@@ -1680,7 +1680,7 @@ class JungleEngine{
   constructor(worldId){
     this.worldId=worldId||'jungle';
     this.scene=null;this.camera=null;this.renderer=null;this.clock=new THREE.Clock();
-    this.running=false;this.boulderDist=45;this.minBoulder=5;this.bob=0;this.bRot=0;this.shake=0;
+    this.running=false;this.boulderDist=45;this.minBoulder=5;this.bob=0;this.bRot=0;this.shake=0;this.devourMode=false;this.devourT=0;
     this.player=null;this.boulder=null;this.enemy=null;this.torches=[];this.animals=[];
     this.leftLeg=null;this.rightLeg=null;this.leftArm=null;this.rightArm=null;
     this.playerLight=null;this.boulderLight=null;this.dustRing=null;
@@ -2968,6 +2968,7 @@ class JungleEngine{
 
   // === GAME ACTIONS ===
   stumble(){this.stumbling=true;this.stumbleTimer=1.5}
+  triggerDevour(){this.devourMode=true;this.devourT=0;this.boulderDist=2;this.shake=1.5}
   boost(){this.speedBoost=true;this.speedTimer=1.5}
   moveBoulderCloser(a){this.boulderDist=Math.max(this.minBoulder,this.boulderDist-a)}
   pushBoulderBack(a){this.boulderDist=Math.min(50,this.boulderDist+a)}
@@ -3234,7 +3235,57 @@ class JungleEngine{
       }
     }
 
-    // Animals (scroll + animate)
+    // ── DEVOUR SEQUENCE (last heart lost → enemy charges + eats player) ──
+    if(this.devourMode&&this.enemy&&this.player){
+      this.devourT+=dt;
+      const dt2=this.devourT;
+      // Enemy charges toward player position
+      const px=this.player.position.x,py=this.player.position.y,pz=this.player.position.z;
+      const ex=this.enemy.position.x,ey=this.enemy.position.y,ez=this.enemy.position.z;
+      // Look at player — face mouth toward them
+      const dx=px-ex,dy=py-ey,dz=pz-ez;
+      const targetYaw=Math.atan2(dx,dz);
+      const targetPitch=-Math.atan2(dy,Math.sqrt(dx*dx+dz*dz));
+      this.enemy.rotation.y+=(targetYaw-this.enemy.rotation.y)*.18;
+      this.enemy.rotation.x+=(targetPitch-this.enemy.rotation.x)*.1;
+      // Charge forward — rush toward player
+      const rushSpeed=Math.min(dt2*dt2*4,18);
+      const dist=Math.sqrt(dx*dx+dy*dy+dz*dz);
+      if(dist>0.5){
+        this.enemy.position.x+=dx/dist*rushSpeed*dt;
+        this.enemy.position.y+=dy/dist*rushSpeed*dt*0.5;
+        this.enemy.position.z+=dz/dist*rushSpeed*dt;
+      }
+      // Jaws WIDE open (all enemy types)
+      if(this.enemyParts){
+        const maxGape=Math.min(dt2*2,1);
+        // Snake-style jaws
+        if(this.enemyParts.snakeUpperJaw)this.enemyParts.snakeUpperJaw.rotation.x=-maxGape*.55;
+        if(this.enemyParts.snakeLowerJaw)this.enemyParts.snakeLowerJaw.rotation.x= maxGape*.55;
+        // Shark-style jaws
+        if(this.enemyParts.upperJaw)this.enemyParts.upperJaw.rotation.x= maxGape*.45;
+        if(this.enemyParts.lowerJaw)this.enemyParts.lowerJaw.rotation.x=-maxGape*.65;
+        // Vulture/drake beak
+        if(this.enemyParts.drakeJaw)this.enemyParts.drakeJaw.rotation.x= maxGape*.85;
+        // Polar bear + city enemy
+        if(this.enemyParts.jawLower)this.enemyParts.jawLower.rotation.x= maxGape*.55;
+        if(this.enemyParts.lowerJawG)this.enemyParts.lowerJawG.rotation.x= maxGape*.55;
+        // Wings spread wide (vulture/dragon)
+        if(this.enemyParts.lWing){
+          this.enemyParts.lWing.rotation.z+= (.9-this.enemyParts.lWing.rotation.z)*.12;
+          this.enemyParts.rWing.rotation.z+=(-0.9-this.enemyParts.rWing.rotation.z)*.12;
+        }
+        // Fire light max intensity during devour
+        if(this.enemyParts.fireLight)this.enemyParts.fireLight.intensity=8+Math.sin(dt2*15)*4;
+      }
+      // Camera shake escalates
+      this.shake=Math.min(this.shake+dt*.8,2.5);
+      // Player shrinks as enemy engulfs (if close enough)
+      if(dist<1.8){this.player.scale.setScalar(Math.max(0.01,this.player.scale.x-dt*.7))}
+      this.enemy.scale.setScalar(1.5+dt2*.4);
+    }
+
+        // Animals (scroll + animate)
     for(const a of this.animals){
       a.mesh.position.z-=scroll;
       if(a.mesh.position.z<this.FAR)a.mesh.position.z+=80;
@@ -3413,7 +3464,7 @@ class QuizGame{
       this.left=Math.max(0,this.left-diff.timePenalty);
       if(this.engine)this.engine._playSound('hurt');
       this._fb(false,'WRONG! -'+diff.timePenalty+'s');
-      if(this.hearts<=0){setTimeout(()=>this._end(false),1500);return}
+      if(this.hearts<=0){if(this.engine)this.engine.triggerDevour();setTimeout(()=>this._end(false),2200);return}
     }
     this._hud();
     setTimeout(()=>{

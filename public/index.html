@@ -2478,158 +2478,90 @@ class JungleEngine{
 
   // ─── DRAKE / DRAGON (Dragon Lair) — Cinematic rebuild ───────────────
   _buildDrakeEnemy(){
+    // VULTURE — demonic carrion bird (dragon lair enemy)
     const g=new THREE.Group();
     this.enemyParts={};
-    // Rich dark-red scales with emissive heat
-    const scaleMat=new THREE.MeshStandardMaterial({color:0x3d0c04,roughness:.42,metalness:.28,emissive:0x1a0402,emissiveIntensity:.35});
-    const scaleHot=new THREE.MeshStandardMaterial({color:0x6a1408,roughness:.38,metalness:.32,emissive:0x3a0a04,emissiveIntensity:.55});
-    const bellyMat=new THREE.MeshStandardMaterial({color:0x7a2a12,roughness:.5,emissive:0x2a0a04,emissiveIntensity:.3});
-    const hornMat=new THREE.MeshStandardMaterial({color:0x120808,roughness:.35,metalness:.45});
-    const eyeM=new THREE.MeshBasicMaterial({color:0xffaa00});
-    const eyeGlow=new THREE.MeshStandardMaterial({color:0xff6600,emissive:0xff4400,emissiveIntensity:3});
-    const wingMat=new THREE.MeshStandardMaterial({color:0x180404,roughness:.55,side:THREE.DoubleSide,transparent:true,opacity:.92,emissive:0x0a0202,emissiveIntensity:.4});
-    const wingVein=new THREE.MeshStandardMaterial({color:0x500a08,roughness:.5,emissive:0x2a0404,emissiveIntensity:.6});
-    const fireM=new THREE.MeshStandardMaterial({color:0xff5500,emissive:0xff3300,emissiveIntensity:3.5,transparent:true,opacity:.9});
-    const toothMat=new THREE.MeshStandardMaterial({color:0xddd8aa,roughness:.2});
-
-    // ── BODY ──────────────────────────────────────────────────────────────
+    const featherMat=new THREE.MeshStandardMaterial({color:0x0d0d10,roughness:.78,metalness:.05,emissive:0x060608,emissiveIntensity:.18});
+    const featherSheen=new THREE.MeshStandardMaterial({color:0x18101a,roughness:.55,metalness:.18,emissive:0x0e0810,emissiveIntensity:.35});
+    const skinMat=new THREE.MeshStandardMaterial({color:0xb02a14,roughness:.88});
+    const wattleMat=new THREE.MeshStandardMaterial({color:0xdd2200,roughness:.9,emissive:0x660800,emissiveIntensity:.5});
+    const beakMat=new THREE.MeshStandardMaterial({color:0x8a7835,roughness:.42,metalness:.12});
+    const eyeM=new THREE.MeshBasicMaterial({color:0xffcc00});
+    const eyeGlow=new THREE.MeshStandardMaterial({color:0xff8800,emissive:0xff5500,emissiveIntensity:2.8});
+    const scaleM=new THREE.MeshStandardMaterial({color:0x3a2a18,roughness:.72});
+    const clawM=new THREE.MeshStandardMaterial({color:0x1a1208,roughness:.32,metalness:.28});
+    const wingM=new THREE.MeshStandardMaterial({color:0x080810,roughness:.82,side:THREE.DoubleSide});
+    const tipM=new THREE.MeshStandardMaterial({color:0x04040a,roughness:.85,side:THREE.DoubleSide});
+    // ── BODY (hunched compact silhouette) ──────────────────────────────
     const bodyG=new THREE.Group();
-    const torso=new THREE.Mesh(new THREE.SphereGeometry(1,14,10),scaleMat);torso.scale.set(1.28,.98,1.72);bodyG.add(torso);
-    // Belly plates (lighter segmented)
-    const bellyM=new THREE.Mesh(new THREE.SphereGeometry(.82,12,8),bellyMat);bellyM.scale.set(.95,.62,1.5);bellyM.position.set(0,-.34,0);bodyG.add(bellyM);
-    // Belly plate segments
-    for(let i=0;i<5;i++){const pl=new THREE.Mesh(new THREE.BoxGeometry(.85,.12,.1),bellyMat);pl.position.set(0,-.4+i*.05,-.6+i*.3);pl.rotation.x=.15;bodyG.add(pl)}
-    // Spine ridge spikes (large + varied)
-    for(let i=0;i<8;i++){
-      const h=.28+Math.sin(i*.7)*.18;
-      const sk=new THREE.Mesh(new THREE.ConeGeometry(.055+Math.sin(i*.9)*.02,h,4),hornMat);
-      sk.position.set(0,.9+i*.02,-.65+i*.26);sk.rotation.z=.06;bodyG.add(sk);
-    }
-    // Scale bump texture
-    for(let i=0;i<22;i++){
-      const sc=new THREE.Mesh(new THREE.SphereGeometry(.08+Math.random()*.05,4,3),scaleHot);
-      sc.scale.set(1,.3,1);sc.position.set((Math.random()-.5)*.9,.55+Math.random()*.5,(Math.random()-.5)*1.4);bodyG.add(sc);
-    }
+    const torso=new THREE.Mesh(new THREE.SphereGeometry(1,14,10),featherMat);torso.scale.set(1.08,.88,1.32);bodyG.add(torso);
+    const hump=new THREE.Mesh(new THREE.SphereGeometry(.6,10,8),featherMat);hump.scale.set(1.3,.72,1.18);hump.position.set(0,.7,-.28);bodyG.add(hump);
+    for(let i=0;i<10;i++){const fb=new THREE.Mesh(new THREE.SphereGeometry(.16+Math.random()*.07,5,4),featherSheen);fb.scale.set(1.2,.32,1.1);fb.position.set((Math.random()-.5)*.72,-.05+Math.random()*.5,-.25+Math.random()*.45);bodyG.add(fb)}
+    const tailG=new THREE.Group();
+    for(let i=0;i<8;i++){const ang=-.52+i*.15;const tf=new THREE.Mesh(new THREE.BoxGeometry(.08,.03,.62),featherMat);tf.position.set(Math.sin(ang)*.22,.02+Math.cos(ang)*.1,.65+i*.01);tf.rotation.z=ang*.38;tailG.add(tf)}
+    bodyG.add(tailG);this.enemyParts.tailG=tailG;
     g.add(bodyG);this.enemyParts.body=bodyG;
-
-    // ── NECK (articulated, thick) ─────────────────────────────────────────
+    // ── NECK (bald red skin — most distinctive vulture feature) ─────────
     const neckG=new THREE.Group();
-    // Two-segment neck for articulation
-    const nk1=new THREE.Mesh(new THREE.CylinderGeometry(.42,.62,0.9,8),scaleMat);nk1.rotation.x=.6;nk1.position.set(0,.8,-.95);neckG.add(nk1);
-    const nk2=new THREE.Mesh(new THREE.CylinderGeometry(.34,.44,0.72,8),scaleMat);nk2.rotation.x=.35;nk2.position.set(0,1.28,-1.52);neckG.add(nk2);
-    // Neck spines
-    for(let i=0;i<4;i++){const ns=new THREE.Mesh(new THREE.ConeGeometry(.04,.2,4),hornMat);ns.position.set(0,0.88+i*.12,-.92-i*.2);ns.rotation.z=.1;neckG.add(ns)}
-
-    // ── HEAD (fully rebuilt — angular dragon skull) ───────────────────────
+    const nk1=new THREE.Mesh(new THREE.CylinderGeometry(.22,.36,.72,8),skinMat);nk1.rotation.x=.48;nk1.position.set(0,.78,-.44);neckG.add(nk1);
+    const nk2=new THREE.Mesh(new THREE.CylinderGeometry(.18,.24,.52,8),skinMat);nk2.rotation.x=.28;nk2.position.set(0,1.3,-.84);neckG.add(nk2);
+    for(let i=0;i<5;i++){const w=new THREE.Mesh(new THREE.SphereGeometry(.1,5,4),wattleMat);w.scale.set(.6+Math.random()*.4,.28,.55);w.position.set((Math.random()-.5)*.14,.8+i*.14,-.46-i*.1);neckG.add(w)}
+    for(let i=0;i<14;i++){const ang=(i/14)*Math.PI*2;const rf=new THREE.Mesh(new THREE.BoxGeometry(.09,.24,.09),featherMat);rf.position.set(Math.sin(ang)*.44,.68,-.26+Math.cos(ang)*.14);rf.rotation.set(.3,ang,.2+Math.sin(ang)*.3);neckG.add(rf)}
+    // ── HEAD (bald angular skull with flat top) ─────────────────────────
     const headG=new THREE.Group();
-    // Angular skull top — flat boxy cranium, very un-round
-    const skull=new THREE.Mesh(new THREE.BoxGeometry(.78,.46,.88),scaleMat);skull.position.set(0,.14,-.32);headG.add(skull);
-    // Skull dome — slight arch over cranium
-    const skullDome=new THREE.Mesh(new THREE.SphereGeometry(.4,10,7),scaleMat);skullDome.scale.set(1.1,.62,1.18);skullDome.position.set(0,.3,-.3);headG.add(skullDome);
-    // Cheekbones — angular bony bumps
-    for(let s=-1;s<=1;s+=2){const ck=new THREE.Mesh(new THREE.BoxGeometry(.2,.18,.44),scaleHot);ck.position.set(s*.38,.06,-.38);ck.rotation.z=s*.14;headG.add(ck)}
-    // Brow ridges — heavy overhanging brows above eyes
-    for(let s=-1;s<=1;s+=2){const br=new THREE.Mesh(new THREE.BoxGeometry(.26,.1,.32),hornMat);br.position.set(s*.26,.26,-.56);br.rotation.z=s*.12;headG.add(br)}
-    // Long angular snout
-    const snout=new THREE.Mesh(new THREE.BoxGeometry(.56,.3,1.12),scaleMat);snout.position.set(0,-.02,-1.0);headG.add(snout);
-    // Snout ridge (dorsal stripe along top of snout)
-    const snoutRidge=new THREE.Mesh(new THREE.BoxGeometry(.22,.1,.92),scaleHot);snoutRidge.position.set(0,.1,-.96);headG.add(snoutRidge);
-    // Snout tip — slightly rounded point
-    const snoutTip=new THREE.Mesh(new THREE.SphereGeometry(.2,8,6),scaleMat);snoutTip.scale.set(.88,.52,1);snoutTip.position.set(0,-.06,-1.56);headG.add(snoutTip);
-    // Nostrils — raised flared holes
-    for(let s=-1;s<=1;s+=2){const nos=new THREE.Mesh(new THREE.CylinderGeometry(.06,.075,.14,6),hornMat);nos.position.set(s*.15,.04,-1.54);nos.rotation.x=-.38;headG.add(nos)}
-    // Upper teeth — varied sizes, 2 large fangs flanking center
-    for(let i=0;i<9;i++){
-      const isFang=i===2||i===6;
-      const h=isFang?.34:.12+Math.sin(i*.9)*.06;
-      const r=isFang?.062:.038;
-      const t=new THREE.Mesh(new THREE.ConeGeometry(r,h,4),toothMat);
-      t.rotation.z=Math.PI;t.position.set(-.3+i*.075,-.18,-1.12+(isFang?.04:0));headG.add(t);
-    }
-    // Lower jaw (separate group for jaw-open animation)
-    const lowerJawG=new THREE.Group();
-    const ljBox=new THREE.Mesh(new THREE.BoxGeometry(.6,.24,.9),scaleMat);lowerJawG.add(ljBox);
-    const ljBelly=new THREE.Mesh(new THREE.BoxGeometry(.52,.15,.82),bellyMat);ljBelly.position.y=-.06;lowerJawG.add(ljBelly);
-    for(let i=0;i<8;i++){const h=.1+Math.sin(i*.85)*.05;const t=new THREE.Mesh(new THREE.ConeGeometry(.036,h,4),toothMat);t.position.set(-.26+i*.076,.16,-.26);lowerJawG.add(t)}
-    lowerJawG.position.set(0,-.3,-.9);headG.add(lowerJawG);this.enemyParts.drakeJaw=lowerJawG;
-    // Fire orb — glowing inside mouth
-    const fOrb=new THREE.Mesh(new THREE.SphereGeometry(.2,10,8),fireM);fOrb.position.set(0,-.08,-1.48);headG.add(fOrb);this.enemyParts.fireOrb=fOrb;
-    // Eyes — deep-set glowing slitted pupils
+    const skull=new THREE.Mesh(new THREE.SphereGeometry(.36,12,9),skinMat);skull.scale.set(.96,.84,1.08);headG.add(skull);
+    const skullTop=new THREE.Mesh(new THREE.BoxGeometry(.48,.18,.52),skinMat);skullTop.position.set(0,.18,0);headG.add(skullTop);
+    for(let i=0;i<3;i++){const wr=new THREE.Mesh(new THREE.BoxGeometry(.28,.04,.06),wattleMat);wr.position.set(0,.18+i*.07,-.2);headG.add(wr)}
+    for(let s=-1;s<=1;s+=2){const ear=new THREE.Mesh(new THREE.CylinderGeometry(.04,.04,.04,5),new THREE.MeshBasicMaterial({color:0x0a0000}));ear.rotation.z=Math.PI/2;ear.position.set(s*.36,.08,-.1);headG.add(ear)}
     for(let s=-1;s<=1;s+=2){
-      const eyeSocket=new THREE.Mesh(new THREE.SphereGeometry(.15,8,7),new THREE.MeshStandardMaterial({color:0x050000,roughness:.15}));eyeSocket.position.set(s*.3,.2,-.62);headG.add(eyeSocket);
-      const ey=new THREE.Mesh(new THREE.SphereGeometry(.11,8,6),eyeM);ey.position.set(s*.3,.2,-.7);headG.add(ey);
-      const pupil=new THREE.Mesh(new THREE.SphereGeometry(.055,5,4),new THREE.MeshBasicMaterial({color:0x1a0000}));pupil.scale.set(.22,1,.28);pupil.position.set(s*.3,.2,-.78);headG.add(pupil);
-      const eyeGl=new THREE.Mesh(new THREE.SphereGeometry(.048,5,4),eyeGlow);eyeGl.position.set(s*.3,.2,-.77);headG.add(eyeGl);
-      const eyeLight=new THREE.PointLight(0xff6600,1.4,2.8);eyeLight.position.set(s*.3,.2,-.8);headG.add(eyeLight);
+      const sock=new THREE.Mesh(new THREE.SphereGeometry(.09,7,6),new THREE.MeshStandardMaterial({color:0x080400}));sock.position.set(s*.2,.06,-.3);headG.add(sock);
+      const ey=new THREE.Mesh(new THREE.SphereGeometry(.072,7,6),eyeM);ey.position.set(s*.2,.06,-.36);headG.add(ey);
+      const gl=new THREE.Mesh(new THREE.SphereGeometry(.042,5,4),eyeGlow);gl.position.set(s*.2,.06,-.4);headG.add(gl);
+      const eL=new THREE.PointLight(0xff8800,.9,2.2);eL.position.set(s*.2,.06,-.42);headG.add(eL);
     }
-    // Large swept-back main horns (the defining dragon feature)
-    // Center crown spike
-    const crownH=new THREE.Mesh(new THREE.ConeGeometry(.07,.78,5),hornMat);crownH.position.set(0,.52,-.12);crownH.rotation.x=-.38;headG.add(crownH);
-    // Two massive main horns sweeping upward and back
-    for(let s=-1;s<=1;s+=2){
-      const mh=new THREE.Mesh(new THREE.ConeGeometry(.072,.88,5),hornMat);mh.position.set(s*.28,.48,-.08);mh.rotation.set(-.32,0,s*.42);headG.add(mh);
-      // Secondary curve horn
-      const sh=new THREE.Mesh(new THREE.ConeGeometry(.05,.58,4),hornMat);sh.position.set(s*.44,.36,.04);sh.rotation.set(-.12,0,s*.68);headG.add(sh);
-      // Ear fin (bat wing fin on each side)
-      const fin=new THREE.Mesh(new THREE.ConeGeometry(.18,.48,3),wingMat);fin.position.set(s*.44,.22,-.24);fin.rotation.set(-.18,0,s*1.15);headG.add(fin);
-    }
-    // Frill spines down jaw sides
-    for(let i=0;i<5;i++){for(let s=-1;s<=1;s+=2){const fr=new THREE.Mesh(new THREE.ConeGeometry(.026,.16,3),hornMat);fr.position.set(s*(.22+i*.05),.02-.03*i,-.18-i*.22);fr.rotation.z=s*.58;headG.add(fr)}}
-    headG.position.set(0,.55,-2.05);neckG.add(headG);
+    // ── BEAK (hooked, curved sharply downward) ──────────────────────────
+    const beakG=new THREE.Group();
+    const cere=new THREE.Mesh(new THREE.SphereGeometry(.13,7,5),wattleMat);cere.scale.set(1.1,.62,.95);cere.position.set(0,.04,-.34);beakG.add(cere);
+    const ubBase=new THREE.Mesh(new THREE.BoxGeometry(.24,.16,.55),beakMat);ubBase.position.set(0,-.04,-.64);beakG.add(ubBase);
+    const hook1=new THREE.Mesh(new THREE.ConeGeometry(.08,.26,5),beakMat);hook1.rotation.x=.75;hook1.position.set(0,-.15,-.92);beakG.add(hook1);
+    const hook2=new THREE.Mesh(new THREE.SphereGeometry(.08,6,5),beakMat);hook2.scale.set(.7,.55,1);hook2.position.set(0,-.22,-.98);beakG.add(hook2);
+    const beakRidge=new THREE.Mesh(new THREE.BoxGeometry(.08,.08,.5),beakMat);beakRidge.position.set(0,.04,-.62);beakG.add(beakRidge);
+    for(let s=-1;s<=1;s+=2){const ns=new THREE.Mesh(new THREE.BoxGeometry(.04,.04,.1),new THREE.MeshBasicMaterial({color:0x050200}));ns.position.set(s*.07,0,-.46);beakG.add(ns)}
+    const lowerBeakG=new THREE.Group();
+    const lb=new THREE.Mesh(new THREE.BoxGeometry(.2,.12,.5),beakMat);lb.position.set(0,0,-.18);lowerBeakG.add(lb);
+    const lbTip=new THREE.Mesh(new THREE.ConeGeometry(.07,.18,4),beakMat);lbTip.rotation.x=-.3;lbTip.position.set(0,.06,-.46);lowerBeakG.add(lbTip);
+    lowerBeakG.position.set(0,-.15,-.52);
+    beakG.add(lowerBeakG);
+    headG.add(beakG);
+    this.enemyParts.drakeJaw=lowerBeakG;
+    this.enemyParts.fireOrb=null;this.enemyParts.fireStreams=[];
+    headG.position.set(0,.28,.65);
+    neckG.add(headG);
     g.add(neckG);this.enemyParts.neckG=neckG;this.enemyParts.headG=headG;
-
-    // ── WINGS — large, membrane + vein ribs ──────────────────────────────
+    // ── WINGS (large spread with primary feather fingers) ───────────────
     for(let s=-1;s<=1;s+=2){
       const wg=new THREE.Group();
-      // Main membrane — custom shape (triangulated)
-      const mem=new THREE.Mesh(new THREE.PlaneGeometry(3.2,2.2,3,2),wingMat);mem.rotation.x=-.15;wg.add(mem);
-      // Inner membrane tint (darker)
-      const mem2=new THREE.Mesh(new THREE.PlaneGeometry(2.4,1.5,2,2),new THREE.MeshStandardMaterial({color:0x3a0404,roughness:.55,side:THREE.DoubleSide,transparent:true,opacity:.6,emissive:0x1a0202,emissiveIntensity:.5}));mem2.position.set(s*.18,-.2,.04);mem2.rotation.x=-.15;wg.add(mem2);
-      // Primary bone (humerus)
-      const hum=new THREE.Mesh(new THREE.CylinderGeometry(.038,.028,1.35,5),hornMat);hum.rotation.z=s*.38;hum.position.set(s*.55,.42,0);wg.add(hum);
-      // Wing finger ribs (4 splayed)
-      for(let f=0;f<4;f++){
-        const angle=-.6+f*.38;
-        const rib=new THREE.Mesh(new THREE.CylinderGeometry(.022,.012,1.15-(f*.1),4),wingVein);
-        rib.rotation.z=s*(angle);rib.position.set(s*(.45+f*.18),.18-(f*.08),0);wg.add(rib);
-      }
-      wg.position.set(s*1.2,.62,.22);wg.rotation.y=s*.22;
+      const mem=new THREE.Mesh(new THREE.PlaneGeometry(2.6,1.6,3,2),wingM);mem.rotation.x=-.12;wg.add(mem);
+      const hum=new THREE.Mesh(new THREE.CylinderGeometry(.045,.032,1.15,5),featherMat);hum.rotation.z=s*.32;hum.position.set(s*.42,.28,0);wg.add(hum);
+      for(let f=0;f<8;f++){const fLen=.62-f*.04;const pf=new THREE.Mesh(new THREE.BoxGeometry(.055,.018,fLen),tipM);pf.position.set(s*(1.05+f*.05),-.08-f*.03,-.32+f*.06);pf.rotation.z=s*(-.18+f*.12);pf.rotation.y=s*f*.03;wg.add(pf)}
+      for(let f=0;f<6;f++){const sf=new THREE.Mesh(new THREE.BoxGeometry(.07,.018,.44),featherMat);sf.position.set(s*(.3+f*.18),-.04,-.22);sf.rotation.z=s*.04;wg.add(sf)}
+      for(let f=0;f<4;f++){const cv=new THREE.Mesh(new THREE.BoxGeometry(.12,.022,.28),featherSheen);cv.position.set(s*(.2+f*.22),.04,-.06);cv.rotation.z=s*.06;wg.add(cv)}
+      wg.position.set(s*1.08,.52,.08);wg.rotation.y=s*.2;
       g.add(wg);if(s===-1)this.enemyParts.lWing=wg;else this.enemyParts.rWing=wg;
     }
-
-    // ── LEGS (quad, clawed) ───────────────────────────────────────────────
-    const legCfg=[{x:-.58,z:.58},{x:.58,z:.58},{x:-.58,z:-.42},{x:.58,z:-.42}];
-    legCfg.forEach(lc=>{
+    // ── LEGS with talons ────────────────────────────────────────────────
+    for(let s=-1;s<=1;s+=2){
       const lg=new THREE.Group();
-      const up=new THREE.Mesh(new THREE.CylinderGeometry(.2,.15,.6,7),scaleMat);up.position.y=-.3;lg.add(up);
-      const lo=new THREE.Mesh(new THREE.CylinderGeometry(.14,.1,.54,6),scaleMat);lo.position.y=-.9;lg.add(lo);
-      const paw=new THREE.Mesh(new THREE.SphereGeometry(.18,7,5),scaleMat);paw.scale.set(1.2,.45,1.5);paw.position.y=-1.2;lg.add(paw);
-      for(let ci=0;ci<4;ci++){const cl=new THREE.Mesh(new THREE.ConeGeometry(.035,.2,3),hornMat);cl.position.set(-.06+ci*.04,-1.3,-.26);cl.rotation.x=-.3;lg.add(cl)}
-      lg.position.set(lc.x,.9,lc.z);g.add(lg);
-    });
-
-    // ── TAIL — multi-segment, spiky ──────────────────────────────────────
-    const tPts=[new THREE.Vector3(0,.28,.88),new THREE.Vector3(.22,.22,1.55),new THREE.Vector3(.48,.38,2.15),new THREE.Vector3(.72,.18,2.85),new THREE.Vector3(.85,.05,3.45)];
-    const tailMesh=new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(tPts),14,.24,7),scaleMat);
-    const tailG=new THREE.Group();tailG.add(tailMesh);
-    tPts.forEach((p,i)=>{const sk=new THREE.Mesh(new THREE.ConeGeometry(.06-.01*i,.28-.04*i,3),hornMat);sk.position.set(p.x,p.y+.15+i*.02,p.z);sk.rotation.z=.15;tailG.add(sk)});
-    // Tail tip spike
-    const tailTip=new THREE.Mesh(new THREE.ConeGeometry(.04,.35,3),hornMat);tailTip.position.set(.88,.05,3.55);tailG.add(tailTip);
-    g.add(tailG);this.enemyParts.tailG=tailG;
-
-    // ── FIRE STREAM ──────────────────────────────────────────────────────
-    this.enemyParts.fireStreams=[];
-    for(let i=0;i<12;i++){
-      const fr=new THREE.Mesh(new THREE.SphereGeometry(.08+Math.random()*.1,5,4),
-        new THREE.MeshStandardMaterial({color:i<6?0xff4400:0xff8800,emissive:i<6?0xff2200:0xff5500,emissiveIntensity:2.5,transparent:true,opacity:.55+Math.random()*.35}));
-      fr.position.set((Math.random()-.5)*.2,-.1+Math.random()*.15,-1.2-i*.25);headG.add(fr);
-      this.enemyParts.fireStreams.push(fr);
+      const up=new THREE.Mesh(new THREE.CylinderGeometry(.12,.09,.48,7),scaleM);up.position.y=-.24;lg.add(up);
+      const lo=new THREE.Mesh(new THREE.CylinderGeometry(.08,.07,.4,6),scaleM);lo.position.y=-.56;lg.add(lo);
+      const pad=new THREE.Mesh(new THREE.SphereGeometry(.12,6,5),scaleM);pad.scale.set(1.3,.4,1.5);pad.position.y=-.78;lg.add(pad);
+      [[-.15,-.05,.18,0],[.0,-.05,.2,.04],[.15,-.05,.18,0],[0,-.04,-.18,.25]].forEach(function(c){const cl=new THREE.Mesh(new THREE.ConeGeometry(.032,.22,3),clawM);cl.rotation.x=.55;cl.rotation.y=c[3];cl.position.set(c[0],c[1]-.78,c[2]);lg.add(cl)});
+      lg.position.set(s*.34,.84,.18);g.add(lg);
     }
-
-    // ── FIRE LIGHT ───────────────────────────────────────────────────────
-    const fl=new THREE.PointLight(0xff5500,5,14);fl.position.set(0,.4,-3.5);g.add(fl);this.enemyParts.fireLight=fl;
-    const fl2=new THREE.PointLight(0xff2200,2.5,6);fl2.position.set(0,.5,-2.2);g.add(fl2); // mouth glow
-    g.scale.setScalar(.58);
+    // Ominous red under-glow (dragon lair)
+    const bl=new THREE.PointLight(0xff3300,2.2,10);bl.position.set(0,.5,.5);g.add(bl);this.enemyParts.fireLight=bl;
+    const bl2=new THREE.PointLight(0xff6600,1.2,4);bl2.position.set(0,1.2,.5);g.add(bl2);
+    g.scale.setScalar(.62);
     return g;
   }
 

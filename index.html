@@ -3267,7 +3267,17 @@ class JungleEngine{
         if(this.enemyParts.lowerJaw)this.enemyParts.lowerJaw.rotation.x=-maxGape*.65;
         // Vulture/drake beak
         if(this.enemyParts.drakeJaw)this.enemyParts.drakeJaw.rotation.x= maxGape*.85;
-        // Polar bear + city enemy
+        // Polar bear — head lunges forward + mouth snaps open/shut repeatedly
+        if(this.enemyParts.bearMouth){
+          const snap=Math.abs(Math.sin(this.devourT*7));
+          this.enemyParts.bearMouth.scale.set(1.5+snap*.6,1.3+snap*.7,1.5+snap*.6);
+        }
+        if(this.enemyParts.bearHead){
+          const lunge=Math.sin(this.devourT*7)*.4;
+          this.enemyParts.bearHead.rotation.x=-0.4+lunge;
+          this.enemyParts.bearHead.rotation.y+=(this.enemy.rotation.y-this.enemyParts.bearHead.rotation.y)*.22;
+        }
+        // Other jaw types
         if(this.enemyParts.jawLower)this.enemyParts.jawLower.rotation.x= maxGape*.55;
         if(this.enemyParts.lowerJawG)this.enemyParts.lowerJawG.rotation.x= maxGape*.55;
         // Wings spread wide (vulture/dragon)

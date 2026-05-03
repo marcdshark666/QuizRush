@@ -1381,7 +1381,10 @@ function generateMCQs(text){
       if(lastBreak>20)c=c.substring(0,lastBreak).trim();
       else c=c.substring(0,80).replace(/\s+\S*$/,'').trim(); // cut at last whole word
     }
-    return c.replace(/[,;:\-–—]+$/,'').trim(); // clean trailing junk again
+    return c.replace(/[,;:\-–—]+$/,'').trim();
+    // Cap to max 4 words per answer
+    const ws=c.split(/s+/);if(ws.length>4)c=ws.slice(0,4).join(' ');
+    return c.replace(/[,;:-–—]+$/,'').trim();
   }
 
   function makeQuestion(x){
@@ -1585,7 +1588,8 @@ function generateMCQs(text){
     usedQuestions.add(qKey);
     usedAnswers.add(aKey);
   }
-  if(qs.length<3)throw new Error(lang==='sv'?'Kunde inte generera tillräckligt med frågor — prova med längre eller mer detaljerad text.':'Could not generate enough questions — try longer or more detailed text.');
+  // Never give up — return however many questions were generated
+  if(qs.length<1)throw new Error(lang==='sv'?'Inget innehåll att extrahera — lägg till mer text.':'No extractable content found.');
   return qs;
 }
 
@@ -1663,7 +1667,7 @@ startBtn.addEventListener('click',async()=>{
     // Use setTimeout to let the UI update before heavy processing
     await new Promise(r=>setTimeout(r,100));
     const q=generateMCQs(text);
-    if(!q||q.length<5)throw new Error('Not enough questions generated — try longer or more detailed text.');
+    if(!q||q.length<1)throw new Error('Could not extract any questions — please provide more detailed content.');
     loadingMsg.style.display='none';
     launchGame(q);
   }catch(e){
@@ -2249,6 +2253,7 @@ class JungleEngine{
       b.userData.bPhase=Math.random()*Math.PI*2;
       g.add(b);this.enemyParts.bubbles.push(b);
     }
+    g.rotation.y=-Math.PI/2;
     g.scale.setScalar(1.05);
     return g;
   }
@@ -2790,6 +2795,7 @@ class JungleEngine{
     try{
       const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;
       this.audioCtx=new AC();const ctx=this.audioCtx;
+      ctx.resume().catch(()=>{});// ensure not suspended
       // Master gain
       const master=ctx.createGain();master.gain.value=.13;master.connect(ctx.destination);
       this._masterGain=master;
@@ -2917,6 +2923,7 @@ class JungleEngine{
   _playSound(type){
     try{
       const ctx=this.audioCtx;if(!ctx)return;
+      if(ctx.state==='suspended')ctx.resume();
       const out=this._masterGain||ctx.destination;
       const now=ctx.currentTime;
       if(type==='jump'){
@@ -2962,6 +2969,17 @@ class JungleEngine{
           g.gain.setValueAtTime(.22,now+i*.07);g.gain.exponentialRampToValueAtTime(.001,now+i*.07+.12);
           o.connect(g);g.connect(out);o.start(now+i*.07);o.stop(now+i*.07+.15);
         });
+      }else if(type==='gameover'){
+        [392,349,311,277,247,220,196,175].forEach((f,i)=>{
+          const o=ctx.createOscillator();const g=ctx.createGain();
+          o.type='sawtooth';o.frequency.setValueAtTime(f,now+i*.11);
+          g.gain.setValueAtTime(.22,now+i*.11);g.gain.exponentialRampToValueAtTime(.001,now+i*.11+.18);
+          o.connect(g);g.connect(out);o.start(now+i*.11);o.stop(now+i*.11+.22);
+        });
+        const b=ctx.createOscillator();const bg=ctx.createGain();
+        b.type='sine';b.frequency.setValueAtTime(80,now+.55);b.frequency.exponentialRampToValueAtTime(30,now+1.2);
+        bg.gain.setValueAtTime(.4,now+.55);bg.gain.exponentialRampToValueAtTime(.001,now+1.4);
+        b.connect(bg);bg.connect(out);b.start(now+.55);b.stop(now+1.5);
       }
     }catch(e){}
   }
@@ -3565,7 +3583,8 @@ class QuizGame{
     }catch(e){}
   }
   _end(won){
-    clearInterval(this.timer);if(this.engine)this.engine.running=false;
+    clearInterval(this.timer);
+    if(this.engine){if(!won)this.engine._playSound('gameover');this.engine.running=false;}
     document.getElementById('q-strip').classList.add('hidden');
     setTimeout(()=>{
       document.getElementById('game-screen').classList.remove('active');

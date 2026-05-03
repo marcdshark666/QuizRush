@@ -1625,6 +1625,8 @@ fileInput.addEventListener('change',()=>{if(fileInput.files.length){selectedFile
 
 startBtn.addEventListener('click',async()=>{
   errorBanner.style.display='none';
+  // Unlock AudioContext synchronously on click (before any await breaks user gesture chain)
+  try{const AC=window.AudioContext||window.webkitAudioContext;if(AC&&!window._sharedAudioCtx){window._sharedAudioCtx=new AC();window._sharedAudioCtx.resume().catch(()=>{})}}catch(e){}
   let text='';
   startBtn.disabled=true;
   try{
@@ -1675,7 +1677,7 @@ startBtn.addEventListener('click',async()=>{
     loadingMsg.style.display='none';
   }finally{startBtn.disabled=false}
 });
-document.getElementById('demo-btn').addEventListener('click',()=>launchGame(DEMO_QUESTIONS));
+document.getElementById('demo-btn').addEventListener('click',()=>{try{const AC=window.AudioContext||window.webkitAudioContext;if(AC&&!window._sharedAudioCtx){window._sharedAudioCtx=new AC();window._sharedAudioCtx.resume().catch(()=>{})}}catch(e){}launchGame(DEMO_QUESTIONS)});
 
 // ========================================================
 // 3D JUNGLE ENGINE - SCROLLING WORLD
@@ -2170,93 +2172,172 @@ class JungleEngine{
     this.boulderLight=new THREE.PointLight(0xff2200,2,30);this.scene.add(this.boulderLight);
   }
   _buildSharkEnemy(){
-    // Full articulated shark with animated jaw, tail, and fins
+    // Great White Shark — built natively along Z-axis
+    // Snout points toward -Z (toward player/camera), tail at +Z
     const g=new THREE.Group();
     this.enemyParts={};
-    const smat=new THREE.MeshStandardMaterial({color:0x4a6a8a,roughness:.3,metalness:.25});
-    const smatDark=new THREE.MeshStandardMaterial({color:0x2a4a6a,roughness:.3,metalness:.2});
-    const bellyMat=new THREE.MeshStandardMaterial({color:0xe8e4d8,roughness:.5});
-    const toothMat=new THREE.MeshStandardMaterial({color:0xfffff0,roughness:.15,metalness:.05});
+    const smat=new THREE.MeshStandardMaterial({color:0x4a7090,roughness:.28,metalness:.28});
+    const smatDark=new THREE.MeshStandardMaterial({color:0x283a50,roughness:.32,metalness:.2});
+    const bellyMat=new THREE.MeshStandardMaterial({color:0xeeeadc,roughness:.5});
+    const toothMat=new THREE.MeshStandardMaterial({color:0xfffff8,roughness:.12,metalness:.05});
     const gumMat=new THREE.MeshStandardMaterial({color:0xcc2233,roughness:.6});
     const eyeMatI=new THREE.MeshBasicMaterial({color:0x000000});
     const eyeGlowMat=new THREE.MeshBasicMaterial({color:0x111133});
-    // FRONT section (head + jaw)
-    const frontG=new THREE.Group();
-    // Main body taper
-    const bodyFront=new THREE.Mesh(new THREE.CylinderGeometry(.42,.3,1.6,10),smat);bodyFront.rotation.z=Math.PI/2;bodyFront.position.x=.5;frontG.add(bodyFront);
-    const bodyBelly=new THREE.Mesh(new THREE.CylinderGeometry(.38,.26,1.6,8),bellyMat);bodyBelly.rotation.z=Math.PI/2;bodyBelly.position.set(.5,-.06,.15);bodyBelly.scale.z=.55;frontG.add(bodyBelly);
-    // Snout cone
-    const snout=new THREE.Mesh(new THREE.ConeGeometry(.22,.9,10),smat);snout.rotation.z=-Math.PI/2;snout.position.x=1.65;frontG.add(snout);
-    // Eyes (glowing)
-    for(let s=-1;s<=1;s+=2){
-      const eSocket=new THREE.Mesh(new THREE.SphereGeometry(.09,8,6),eyeGlowMat);eSocket.position.set(1.1,.1,s*.38);frontG.add(eSocket);
-      const eye=new THREE.Mesh(new THREE.SphereGeometry(.065,8,6),eyeMatI);eye.position.set(1.1,.1,s*.42);frontG.add(eye);
-      const eyeGlow=new THREE.PointLight(0x88aaff,.6,1.5);eyeGlow.position.set(1.1,.12,s*.44);frontG.add(eyeGlow);
-    }
-    // UPPER JAW group
-    const upperJaw=new THREE.Group();
-    const ujBase=new THREE.Mesh(new THREE.BoxGeometry(.72,.18,.58),smat);upperJaw.add(ujBase);
-    const upperGum=new THREE.Mesh(new THREE.BoxGeometry(.68,.06,.52),gumMat);upperGum.position.y=-.1;upperJaw.add(upperGum);
-    for(let i=0;i<8;i++){const t=new THREE.Mesh(new THREE.ConeGeometry(.038,.22,4),toothMat);t.rotation.z=Math.PI;t.position.set(-.3+i*.088,-.19+Math.sin(i*.5)*.03,0);upperJaw.add(t)}
-    upperJaw.position.set(1.55,.12,0);
-    frontG.add(upperJaw);this.enemyParts.upperJaw=upperJaw;
-    // LOWER JAW group
-    const lowerJaw=new THREE.Group();
-    const ljBase=new THREE.Mesh(new THREE.BoxGeometry(.7,.14,.55),bellyMat);lowerJaw.add(ljBase);
-    const lowerGum=new THREE.Mesh(new THREE.BoxGeometry(.65,.05,.5),gumMat);lowerGum.position.y=.08;lowerJaw.add(lowerGum);
-    for(let i=0;i<7;i++){const t=new THREE.Mesh(new THREE.ConeGeometry(.033,.18,4),toothMat);t.position.set(-.28+i*.095,.17+Math.sin(i*.5)*.02,0);lowerJaw.add(t)}
-    lowerJaw.position.set(1.55,-.1,0);
-    frontG.add(lowerJaw);this.enemyParts.lowerJaw=lowerJaw;
-    g.add(frontG);this.enemyParts.frontG=frontG;
+    const skinLine=new THREE.MeshStandardMaterial({color:0x2a4a60,roughness:.4});
 
-    // MID body
-    const midG=new THREE.Group();
-    const midBody=new THREE.Mesh(new THREE.CylinderGeometry(.38,.42,1.4,10),smat);midBody.rotation.z=Math.PI/2;midG.add(midBody);
-    const midBelly=new THREE.Mesh(new THREE.CylinderGeometry(.34,.38,1.4,8),bellyMat);midBelly.rotation.z=Math.PI/2;midBelly.position.set(0,-.06,.16);midBelly.scale.z=.55;midG.add(midBelly);
-    // Dorsal fin (big, menacing)
+    // ── HEAD GROUP (wide face-on great white) ──────────────────────────
+    const headG=new THREE.Group();
+    // Main head — wide, slightly flattened sphere
+    const skull=new THREE.Mesh(new THREE.SphereGeometry(.78,16,12),smat);
+    skull.scale.set(1.12,.72,1.02);skull.position.z=-.18;headG.add(skull);
+    // Belly underside of head (white)
+    const headBelly=new THREE.Mesh(new THREE.SphereGeometry(.72,14,10),bellyMat);
+    headBelly.scale.set(1.0,.42,.88);headBelly.position.set(0,-.22,-.18);headG.add(headBelly);
+    // Blunt snout — offset cone
+    const snout=new THREE.Mesh(new THREE.ConeGeometry(.36,.72,10),smat);
+    snout.rotation.x=-Math.PI/2;snout.position.set(0,-.06,-.88);headG.add(snout);
+    // Snout belly (white tip)
+    const snoutBelly=new THREE.Mesh(new THREE.ConeGeometry(.28,.6,8),bellyMat);
+    snoutBelly.rotation.x=-Math.PI/2;snoutBelly.position.set(0,-.14,-.86);headG.add(snoutBelly);
+    // Lateral line stripe
+    for(let s=-1;s<=1;s+=2){
+      const stripe=new THREE.Mesh(new THREE.BoxGeometry(.04,.06,1.2),skinLine);
+      stripe.position.set(s*.62,0,-.08);stripe.rotation.z=s*.18;headG.add(stripe);
+    }
+    // Eyes — wide set, face-on visible
+    for(let s=-1;s<=1;s+=2){
+      const eSocket=new THREE.Mesh(new THREE.SphereGeometry(.12,10,8),eyeGlowMat);
+      eSocket.position.set(s*.52,.08,-.42);headG.add(eSocket);
+      const eye=new THREE.Mesh(new THREE.SphereGeometry(.09,10,8),eyeMatI);
+      eye.position.set(s*.55,.08,-.5);headG.add(eye);
+      const eShine=new THREE.Mesh(new THREE.SphereGeometry(.03,5,4),new THREE.MeshBasicMaterial({color:0x223355}));
+      eShine.position.set(s*.56,.1,-.56);headG.add(eShine);
+      const eyeGl=new THREE.PointLight(0x8899cc,.5,1.8);
+      eyeGl.position.set(s*.55,.08,-.52);headG.add(eyeGl);
+    }
+    // Gill slits
+    for(let s=-1;s<=1;s+=2){
+      for(let g2=0;g2<5;g2++){
+        const gill=new THREE.Mesh(new THREE.BoxGeometry(.03,.18,.04),skinLine);
+        gill.position.set(s*.66+s*.02*g2,-.05+g2*.03,.1+g2*.1);gill.rotation.z=s*.15;
+        headG.add(gill);
+      }
+    }
+
+    // ── UPPER JAW (pivot at hinge, teeth hang down) ────────────────────
+    const upperJaw=new THREE.Group();
+    const ujBase=new THREE.Mesh(new THREE.BoxGeometry(.78,.14,.52),smat);upperJaw.add(ujBase);
+    const upperGum=new THREE.Mesh(new THREE.BoxGeometry(.72,.06,.46),gumMat);
+    upperGum.position.y=-.08;upperJaw.add(upperGum);
+    // Two rows of teeth — front row larger
+    for(let i=0;i<9;i++){
+      const t=new THREE.Mesh(new THREE.ConeGeometry(.04,.26,4),toothMat);
+      t.rotation.z=Math.PI;t.position.set(-.32+i*.08,-.2+Math.sin(i*.6)*.02,0);upperJaw.add(t);
+    }
+    for(let i=0;i<7;i++){
+      const t2=new THREE.Mesh(new THREE.ConeGeometry(.028,.16,4),toothMat);
+      t2.rotation.z=Math.PI;t2.position.set(-.24+i*.08,-.12,-.06);upperJaw.add(t2);
+    }
+    upperJaw.position.set(0,.1,-.68);
+    headG.add(upperJaw);this.enemyParts.upperJaw=upperJaw;
+
+    // ── LOWER JAW (pivot at hinge, teeth point up) ─────────────────────
+    const lowerJaw=new THREE.Group();
+    const ljBase=new THREE.Mesh(new THREE.BoxGeometry(.76,.12,.5),bellyMat);lowerJaw.add(ljBase);
+    const lowerGum=new THREE.Mesh(new THREE.BoxGeometry(.70,.05,.44),gumMat);
+    lowerGum.position.y=.07;lowerJaw.add(lowerGum);
+    for(let i=0;i<8;i++){
+      const t=new THREE.Mesh(new THREE.ConeGeometry(.036,.22,4),toothMat);
+      t.position.set(-.28+i*.08,.18+Math.sin(i*.6)*.02,0);lowerJaw.add(t);
+    }
+    for(let i=0;i<6;i++){
+      const t2=new THREE.Mesh(new THREE.ConeGeometry(.024,.14,4),toothMat);
+      t2.position.set(-.2+i*.08,.1,.06);lowerJaw.add(t2);
+    }
+    lowerJaw.position.set(0,-.12,-.68);
+    headG.add(lowerJaw);this.enemyParts.lowerJaw=lowerJaw;
+
+    g.add(headG);this.enemyParts.headG=headG;
+
+    // ── BODY (along Z-axis, CylinderGeometry rotated x=PI/2) ──────────
+    // Front torso section
+    const torsoF=new THREE.Mesh(new THREE.CylinderGeometry(.52,.62,1.5,12),smat);
+    torsoF.rotation.x=Math.PI/2;torsoF.position.z=.85;g.add(torsoF);
+    const torsoFBelly=new THREE.Mesh(new THREE.CylinderGeometry(.46,.56,1.5,10),bellyMat);
+    torsoFBelly.rotation.x=Math.PI/2;torsoFBelly.position.set(0,-.08,.85);torsoFBelly.scale.x=.55;g.add(torsoFBelly);
+    // Rear taper
+    const torsoR=new THREE.Mesh(new THREE.CylinderGeometry(.38,.18,1.8,10),smat);
+    torsoR.rotation.x=Math.PI/2;torsoR.position.z=2.45;g.add(torsoR);
+
+    // ── DORSAL FIN (tall, iconic) ──────────────────────────────────────
     const dorsalFin=new THREE.Group();
-    const df1=new THREE.Mesh(new THREE.ConeGeometry(.09,.8,4),smatDark);df1.position.y=.45;dorsalFin.add(df1);
-    const df2=new THREE.Mesh(new THREE.ConeGeometry(.06,.4,3),smatDark);df2.position.set(.15,.28,0);df2.rotation.z=-.3;dorsalFin.add(df2);
-    midG.add(dorsalFin);this.enemyParts.dorsalFin=dorsalFin;
-    // Pectoral fins (paired, animated)
+    const df1=new THREE.Mesh(new THREE.ConeGeometry(.1,.95,4),smatDark);df1.position.y=.5;dorsalFin.add(df1);
+    const df2=new THREE.Mesh(new THREE.BoxGeometry(.06,.55,.38),smatDark);df2.position.set(.08,.24,.1);df2.rotation.z=-.28;dorsalFin.add(df2);
+    dorsalFin.position.set(0,.52,.7);g.add(dorsalFin);this.enemyParts.dorsalFin=dorsalFin;
+
+    // Second dorsal (small)
+    const df3=new THREE.Mesh(new THREE.ConeGeometry(.05,.3,4),smatDark);
+    df3.position.set(0,.38,2.1);g.add(df3);
+
+    // Anal fin (belly side)
+    const af=new THREE.Mesh(new THREE.ConeGeometry(.06,.3,4),smat);
+    af.rotation.x=Math.PI;af.position.set(0,-.48,1.9);g.add(af);
+
+    // ── PECTORAL FINS (large, swept back) ─────────────────────────────
     for(let s=-1;s<=1;s+=2){
       const pfG=new THREE.Group();
-      const pf1=new THREE.Mesh(new THREE.ConeGeometry(.07,.65,4),smat);pf1.position.y=-.32;pfG.add(pf1);
-      const pf2=new THREE.Mesh(new THREE.ConeGeometry(.04,.35,3),smat);pf2.rotation.x=.3;pf2.position.set(.06,-.4,-.15);pfG.add(pf2);
-      pfG.position.set(0,0,s*.42);pfG.rotation.x=s*.7;
-      midG.add(pfG);
+      // Main fin blade
+      const pf1=new THREE.Mesh(new THREE.ConeGeometry(.1,.88,4),smat);
+      pf1.rotation.z=s*.55;pf1.rotation.x=.3;pfG.add(pf1);
+      const pf2=new THREE.Mesh(new THREE.ConeGeometry(.05,.45,3),smat);
+      pf2.rotation.z=s*.3;pf2.rotation.x=.5;pf2.position.set(s*.12,-.1,.15);pfG.add(pf2);
+      pfG.position.set(s*.58,-.12,.55);pfG.rotation.y=s*.25;
+      g.add(pfG);
       if(s===-1)this.enemyParts.lPFin=pfG;else this.enemyParts.rPFin=pfG;
     }
-    midG.position.x=-1.0;
-    g.add(midG);this.enemyParts.midG=midG;
 
-    // TAIL section (animated)
+    // Pelvic fins (small, mid-body)
+    for(let s=-1;s<=1;s+=2){
+      const pvf=new THREE.Mesh(new THREE.ConeGeometry(.06,.32,4),smat);
+      pvf.rotation.z=s*.6;pvf.position.set(s*.3,-.28,1.6);g.add(pvf);
+    }
+
+    // ── TAIL (caudal fin, crescent shape) ──────────────────────────────
     const tailG=new THREE.Group();
-    const tailBody=new THREE.Mesh(new THREE.CylinderGeometry(.28,.08,1.8,8),smat);tailBody.rotation.z=Math.PI/2;tailG.add(tailBody);
-    // Caudal (tail) fins — crescent shape
+    const tailPed=new THREE.Mesh(new THREE.CylinderGeometry(.1,.06,.7,6),smat);
+    tailPed.rotation.x=Math.PI/2;tailPed.position.z=.22;tailG.add(tailPed);
     for(let s=-1;s<=1;s+=2){
       const tfG=new THREE.Group();
-      const tf1=new THREE.Mesh(new THREE.ConeGeometry(.1,.7,4),smat);tfG.add(tf1);
-      const tf2=new THREE.Mesh(new THREE.ConeGeometry(.06,.4,3),smat);tf2.position.y=.15;tf2.rotation.z=s*.5;tfG.add(tf2);
-      tfG.rotation.z=s*.6+Math.PI/2;tfG.position.set(-.92,s*.28,0);
+      const tf1=new THREE.Mesh(new THREE.ConeGeometry(.12,.75,5),smat);tfG.add(tf1);
+      const tf2=new THREE.Mesh(new THREE.ConeGeometry(.07,.42,4),smat);
+      tf2.position.y=.18;tf2.rotation.z=s*.52;tfG.add(tf2);
+      tfG.rotation.z=s*.58+Math.PI/2;tfG.position.set(s*.35,0,.48);
       tailG.add(tfG);
       if(s===-1)this.enemyParts.tailFinLo=tfG;else this.enemyParts.tailFinHi=tfG;
     }
-    tailG.position.x=-2.1;
+    tailG.position.z=3.35;
     g.add(tailG);this.enemyParts.tailG=tailG;
 
-    // Underwater bubble trail
+    // Under-water ambience light
+    const uwLight=new THREE.PointLight(0x4488cc,.8,8);uwLight.position.set(0,.5,0);g.add(uwLight);
+
+    // Bubble trail at tail end
     this.enemyParts.bubbles=[];
-    for(let i=0;i<10;i++){
-      const b=new THREE.Mesh(new THREE.SphereGeometry(.03+Math.random()*.05,5,4),new THREE.MeshBasicMaterial({color:0x80d8ff,transparent:true,opacity:.55}));
-      b.position.set(-3.2-i*.25,Math.random()*.5-.25,Math.random()*.3-.15);
+    for(let i=0;i<12;i++){
+      const b=new THREE.Mesh(
+        new THREE.SphereGeometry(.03+Math.random()*.05,5,4),
+        new THREE.MeshBasicMaterial({color:0x90d8ff,transparent:true,opacity:.5})
+      );
+      b.position.set((Math.random()-.5)*.35,(Math.random()-.5)*.35,3.6+i*.28);
       b.userData.bPhase=Math.random()*Math.PI*2;
       g.add(b);this.enemyParts.bubbles.push(b);
     }
-    g.rotation.y=-Math.PI/2;
+
+    // No rotation.y needed — shark already faces -Z (toward player)
     g.scale.setScalar(1.05);
     return g;
   }
+
   _buildPoliceEnemy(){
     const g=new THREE.Group();
     this.enemyParts={};
@@ -2794,8 +2875,9 @@ class JungleEngine{
   _startMusic(){
     try{
       const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;
-      this.audioCtx=new AC();const ctx=this.audioCtx;
-      ctx.resume().catch(()=>{});// ensure not suspended
+      // Reuse pre-unlocked context if available (avoids auto-suspend from async chain)
+      this.audioCtx=window._sharedAudioCtx||new AC();const ctx=this.audioCtx;
+      if(ctx.state==='suspended')ctx.resume().catch(()=>{});
       // Master gain
       const master=ctx.createGain();master.gain.value=.13;master.connect(ctx.destination);
       this._masterGain=master;
@@ -3143,10 +3225,11 @@ class JungleEngine{
         this.enemy.rotation.z=Math.sin(t*.55)*.04; // gentle roll
         if(this.enemyParts){
           // Jaw gaping — snaps open, slams shut
-          const jawCycle=Math.max(0,Math.sin(t*2.6));
-          const jawOpen=jawCycle*jawCycle*.7;
-          if(this.enemyParts.upperJaw)this.enemyParts.upperJaw.rotation.x= jawOpen*.32;
-          if(this.enemyParts.lowerJaw)this.enemyParts.lowerJaw.rotation.x=-jawOpen*.48;
+          // 1Hz chomp — exactly one open+close per second
+          const jawCycle=Math.max(0,Math.sin(t*Math.PI*2));
+          const jawOpen=jawCycle*jawCycle*.85;
+          if(this.enemyParts.upperJaw)this.enemyParts.upperJaw.rotation.x= jawOpen*.38;
+          if(this.enemyParts.lowerJaw)this.enemyParts.lowerJaw.rotation.x=-jawOpen*.52;
           // Tail thrash (fast, realistic)
           if(this.enemyParts.tailG)this.enemyParts.tailG.rotation.y=Math.sin(t*3.8)*.62+Math.sin(t*7)*.12;
           // Dorsal fin cut

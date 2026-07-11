@@ -2016,13 +2016,13 @@ class JungleEngine{
         const x=side*(3+Math.random()*2.5);
         const h=4+Math.random()*5;
         // Trunk
-        const trunk=new THREE.Mesh(new THREE.CylinderGeometry(.12+Math.random()*.1,.2+Math.random()*.1,h,6),treeMat);
+        const trunk=new THREE.Mesh(new THREE.CylinderGeometry(.12+Math.random()*.1,.22+Math.random()*.12,h,8),treeMat);
         trunk.position.set(x,h/2,z+Math.random()*3);trunk.castShadow=true;this.scene.add(trunk);
         this.scrollObjects.push({mesh:trunk,baseZ:trunk.position.z});
         // Canopy
         for(let j=0;j<2+Math.floor(Math.random()*2);j++){
           const r=1+Math.random()*1.8;
-          const leaf=new THREE.Mesh(new THREE.SphereGeometry(r,6,5),leafMats[Math.floor(Math.random()*3)]);
+          const leaf=new THREE.Mesh(new THREE.SphereGeometry(r,8,6),leafMats[Math.floor(Math.random()*3)]);
           leaf.position.set(x+(Math.random()-.5)*1.8,h+Math.random()*1.5-.5,z+Math.random()*3);
           leaf.scale.y=.5+Math.random()*.2;leaf.castShadow=true;this.scene.add(leaf);
           this.scrollObjects.push({mesh:leaf,baseZ:leaf.position.z});
@@ -2048,6 +2048,66 @@ class JungleEngine{
         r.position.set((Math.random()-.5)*7,.1,z+Math.random()*3);
         r.rotation.set(Math.random()*Math.PI,Math.random()*Math.PI,0);this.scene.add(r);
         this.scrollObjects.push({mesh:r,baseZ:r.position.z});
+      }
+      // Grass tufts along the path edges (Temple Run framing)
+      for(let s=-1;s<=1;s+=2){
+        if(Math.random()>.4){
+          const gx=s*(2.1+Math.random()*.5),gz=z+Math.random()*4;
+          for(let b=0;b<3;b++){
+            const blade=new THREE.Mesh(new THREE.ConeGeometry(.03,.3+Math.random()*.25,4),leafMats[b%3]);
+            blade.position.set(gx+(Math.random()-.5)*.2,.15,gz+(Math.random()-.5)*.2);
+            blade.rotation.z=(Math.random()-.5)*.4;this.scene.add(blade);
+            this.scrollObjects.push({mesh:blade,baseZ:gz});
+          }
+        }
+      }
+      // Jungle flowers — small color pops
+      if(Math.random()>.6){
+        const fCol=[0xff4488,0xffcc22,0xff6633,0xcc55ff][Math.floor(Math.random()*4)];
+        const fx=(Math.random()>.5?1:-1)*(2.2+Math.random()*2),fz=z+Math.random()*4;
+        const stem=new THREE.Mesh(new THREE.CylinderGeometry(.015,.02,.35,4),vineMat);
+        stem.position.set(fx,.18,fz);this.scene.add(stem);
+        this.scrollObjects.push({mesh:stem,baseZ:fz});
+        const bloom=new THREE.Mesh(new THREE.SphereGeometry(.09,6,5),new THREE.MeshStandardMaterial({color:fCol,roughness:.5,emissive:fCol,emissiveIntensity:.15}));
+        bloom.scale.y=.6;bloom.position.set(fx,.4,fz);this.scene.add(bloom);
+        this.scrollObjects.push({mesh:bloom,baseZ:fz});
+      }
+    }
+    // ── TEMPLE RUN SIGNATURE: weathered stone blocks lining the path ──
+    const pathStoneMat=new THREE.MeshStandardMaterial({color:0x8a8a76,roughness:.85});
+    const mossStoneMat=new THREE.MeshStandardMaterial({color:0x6a7a5a,roughness:.9});
+    for(let z=startZ;z>startZ-this.CHUNK;z-=4){
+      for(let s=-1;s<=1;s+=2){
+        const st=new THREE.Mesh(
+          new THREE.BoxGeometry(.5+Math.random()*.2,.28+Math.random()*.14,3.4),
+          Math.random()>.35?pathStoneMat:mossStoneMat);
+        st.position.set(s*2.0,.12,z-1.5+Math.random()*.4);
+        st.rotation.y=(Math.random()-.5)*.06;st.rotation.z=(Math.random()-.5)*.05;
+        st.castShadow=true;this.scene.add(st);
+        this.scrollObjects.push({mesh:st,baseZ:st.position.z});
+      }
+    }
+    // Ancient ruined pillars (1-2 per chunk, off to the sides)
+    const nPillars=1+Math.floor(Math.random()*2);
+    for(let i=0;i<nPillars;i++){
+      const px=(Math.random()>.5?1:-1)*(4.5+Math.random()*2.5);
+      const pz=startZ-8-Math.random()*(this.CHUNK-16);
+      const ph=1.6+Math.random()*2.4;
+      const pil=new THREE.Mesh(new THREE.CylinderGeometry(.34,.42,ph,8),Math.random()>.5?pathStoneMat:mossStoneMat);
+      pil.position.set(px,ph/2,pz);pil.rotation.z=(Math.random()-.5)*.12;
+      pil.castShadow=true;this.scene.add(pil);
+      this.scrollObjects.push({mesh:pil,baseZ:pz});
+      // Broken capital on top or fallen chunk beside
+      if(Math.random()>.4){
+        const cap=new THREE.Mesh(new THREE.BoxGeometry(.9,.22,.9),pathStoneMat);
+        cap.position.set(px,ph+.11,pz);cap.rotation.y=Math.random()*.5;
+        cap.castShadow=true;this.scene.add(cap);
+        this.scrollObjects.push({mesh:cap,baseZ:pz});
+      }else{
+        const frag=new THREE.Mesh(new THREE.CylinderGeometry(.3,.34,.8,8),mossStoneMat);
+        frag.position.set(px+.9,.17,pz+.7);frag.rotation.z=Math.PI/2;frag.rotation.y=Math.random();
+        frag.castShadow=true;this.scene.add(frag);
+        this.scrollObjects.push({mesh:frag,baseZ:pz+.7});
       }
     }
     // RIVER crossing (1 per chunk)

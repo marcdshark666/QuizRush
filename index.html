@@ -3082,60 +3082,95 @@ class JungleEngine{
   }
 
   _player(){
+    // Adventurer — rounded realistic body, facial features, gear.
+    // Animation pivots (leftArm/rightArm/leftLeg/rightLeg) unchanged.
     const g=new THREE.Group();
-    // Skin
-    const skinMat=new THREE.MeshStandardMaterial({color:0xc49a6c,roughness:.6});
-    // Torso (jacket)
-    const jacketMat=new THREE.MeshStandardMaterial({color:0x6a4a1a,roughness:.7});
-    const torso=new THREE.Mesh(new THREE.BoxGeometry(.55,.75,.3),jacketMat);torso.position.y=1.2;torso.castShadow=true;g.add(torso);
-    // Belt
-    const beltMat=new THREE.MeshStandardMaterial({color:0x3a2210,roughness:.5});
-    const belt=new THREE.Mesh(new THREE.BoxGeometry(.58,.08,.32),beltMat);belt.position.y=.85;g.add(belt);
-    // Belt buckle
-    const buckle=new THREE.Mesh(new THREE.BoxGeometry(.08,.06,.02),new THREE.MeshStandardMaterial({color:0xccaa44,metalness:.8,roughness:.3}));
-    buckle.position.set(0,.85,.17);g.add(buckle);
-    // Head
-    const head=new THREE.Mesh(new THREE.SphereGeometry(.2,10,8),skinMat);head.position.y=1.82;head.castShadow=true;g.add(head);
-    // Hair
-    const hairMat=new THREE.MeshStandardMaterial({color:0x3a2a1a,roughness:.8});
-    const hair=new THREE.Mesh(new THREE.SphereGeometry(.21,8,6),hairMat);
-    hair.position.y=1.86;hair.scale.set(1,.7,1);g.add(hair);
-    // Fedora (detailed)
+    const skinMat=new THREE.MeshStandardMaterial({color:0xc49a6c,roughness:.55});
+    const jacketMat=new THREE.MeshStandardMaterial({color:0x6a4a1a,roughness:.65});
+    const shirtMat=new THREE.MeshStandardMaterial({color:0xd8cfb8,roughness:.7});
+    const pantsMat=new THREE.MeshStandardMaterial({color:0x5a4a30,roughness:.75});
+    const bootMat=new THREE.MeshStandardMaterial({color:0x2a1a0a,roughness:.55});
+    const hairMat=new THREE.MeshStandardMaterial({color:0x3a2a1a,roughness:.85});
     const hatMat=new THREE.MeshStandardMaterial({color:0x3a2210,roughness:.7});
-    const brim=new THREE.Mesh(new THREE.CylinderGeometry(.38,.4,.04,16),hatMat);brim.position.y=2.0;g.add(brim);
-    const crown=new THREE.Mesh(new THREE.CylinderGeometry(.16,.22,.22,12),hatMat);crown.position.y=2.13;g.add(crown);
-    // Hat band
-    const band=new THREE.Mesh(new THREE.CylinderGeometry(.225,.225,.04,12),new THREE.MeshStandardMaterial({color:0x8a6a3a,roughness:.5}));
-    band.position.y=2.04;g.add(band);
-    // Eyes (toward camera = +Z)
-    const eyeMat=new THREE.MeshBasicMaterial({color:0x111111});
-    for(let s=-1;s<=1;s+=2){const e=new THREE.Mesh(new THREE.SphereGeometry(.025,6,4),eyeMat);e.position.set(s*.08,1.84,.19);g.add(e)}
-    // Legs (pants)
-    const pantsMat=new THREE.MeshStandardMaterial({color:0x5a4a30,roughness:.8});
+
+    // ── TORSO: rounded jacket, shirt, shoulders, collar ──
+    const torso=new THREE.Mesh(new THREE.CylinderGeometry(.24,.28,.72,14),jacketMat);
+    torso.position.y=1.2;torso.castShadow=true;g.add(torso);
+    const chest=new THREE.Mesh(new THREE.BoxGeometry(.16,.4,.06),shirtMat);
+    chest.position.set(0,1.3,.22);g.add(chest);
     for(let s=-1;s<=1;s+=2){
-      const thigh=new THREE.Mesh(new THREE.BoxGeometry(.18,.35,.22),pantsMat);thigh.position.set(s*.14,.62,0);g.add(thigh);
-      const shin=new THREE.Mesh(new THREE.BoxGeometry(.16,.35,.2),pantsMat);shin.position.set(0,-.35,0);thigh.add(shin);
-      // Boot
-      const boot=new THREE.Mesh(new THREE.BoxGeometry(.18,.12,.26),new THREE.MeshStandardMaterial({color:0x2a1a0a,roughness:.6}));
-      boot.position.set(0,-.22,.02);shin.add(boot);
+      const sh=new THREE.Mesh(new THREE.SphereGeometry(.12,10,8),jacketMat);
+      sh.position.set(s*.28,1.5,0);sh.castShadow=true;g.add(sh);
+      const col=new THREE.Mesh(new THREE.BoxGeometry(.12,.14,.03),jacketMat);
+      col.position.set(s*.1,1.5,.2);col.rotation.z=s*.4;g.add(col);
+    }
+    const belt=new THREE.Mesh(new THREE.CylinderGeometry(.27,.27,.08,14),new THREE.MeshStandardMaterial({color:0x3a2210,roughness:.5}));
+    belt.position.y=.84;g.add(belt);
+    const buckle=new THREE.Mesh(new THREE.BoxGeometry(.09,.07,.03),new THREE.MeshStandardMaterial({color:0xccaa44,metalness:.85,roughness:.25}));
+    buckle.position.set(0,.84,.26);g.add(buckle);
+
+    // ── HEAD: hi-res sphere + neck, ears, nose, eyes, brows, mouth, jaw ──
+    const head=new THREE.Mesh(new THREE.SphereGeometry(.2,18,14),skinMat);
+    head.position.y=1.84;head.scale.set(.94,1.04,.9);head.castShadow=true;g.add(head);
+    const neck=new THREE.Mesh(new THREE.CylinderGeometry(.08,.1,.14,10),skinMat);
+    neck.position.y=1.6;g.add(neck);
+    for(let s=-1;s<=1;s+=2){
+      const ear=new THREE.Mesh(new THREE.SphereGeometry(.045,8,6),skinMat);
+      ear.scale.set(.5,1,.7);ear.position.set(s*.185,1.84,.01);g.add(ear);
+      const white=new THREE.Mesh(new THREE.SphereGeometry(.035,8,6),new THREE.MeshBasicMaterial({color:0xf4f0ea}));
+      white.scale.set(1,.75,.5);white.position.set(s*.075,1.87,.16);g.add(white);
+      const iris=new THREE.Mesh(new THREE.SphereGeometry(.018,8,6),new THREE.MeshBasicMaterial({color:0x3a2812}));
+      iris.position.set(s*.075,1.87,.178);g.add(iris);
+      const brow=new THREE.Mesh(new THREE.BoxGeometry(.07,.016,.02),hairMat);
+      brow.position.set(s*.075,1.92,.17);brow.rotation.z=s*-.12;g.add(brow);
+    }
+    const nose=new THREE.Mesh(new THREE.ConeGeometry(.035,.09,8),skinMat);
+    nose.rotation.x=Math.PI/2;nose.position.set(0,1.82,.2);g.add(nose);
+    const mouth=new THREE.Mesh(new THREE.BoxGeometry(.07,.014,.02),new THREE.MeshStandardMaterial({color:0x8a5a4a,roughness:.6}));
+    mouth.position.set(0,1.75,.168);g.add(mouth);
+    // Stubble shading on jaw
+    const jaw=new THREE.Mesh(new THREE.SphereGeometry(.19,12,8),new THREE.MeshStandardMaterial({color:0xa8825c,roughness:.8}));
+    jaw.scale.set(.88,.5,.82);jaw.position.set(0,1.72,.01);g.add(jaw);
+    const hair=new THREE.Mesh(new THREE.SphereGeometry(.205,14,10),hairMat);
+    hair.position.y=1.88;hair.scale.set(.96,.7,.92);g.add(hair);
+
+    // ── FEDORA with domed crown ──
+    const brim=new THREE.Mesh(new THREE.CylinderGeometry(.38,.4,.035,20),hatMat);brim.position.y=2.0;brim.castShadow=true;g.add(brim);
+    const crown=new THREE.Mesh(new THREE.CylinderGeometry(.15,.21,.22,16),hatMat);crown.position.y=2.13;crown.castShadow=true;g.add(crown);
+    const crownTop=new THREE.Mesh(new THREE.SphereGeometry(.15,12,8),hatMat);crownTop.scale.y=.5;crownTop.position.y=2.24;g.add(crownTop);
+    const band=new THREE.Mesh(new THREE.CylinderGeometry(.215,.215,.045,16),new THREE.MeshStandardMaterial({color:0x8a6a3a,roughness:.5}));
+    band.position.y=2.04;g.add(band);
+
+    // ── LEGS: rounded, knees, boots with toe caps (same pivots) ──
+    for(let s=-1;s<=1;s+=2){
+      const thigh=new THREE.Mesh(new THREE.CylinderGeometry(.085,.075,.35,10),pantsMat);
+      thigh.position.set(s*.14,.62,0);thigh.castShadow=true;g.add(thigh);
+      const knee=new THREE.Mesh(new THREE.SphereGeometry(.075,8,6),pantsMat);knee.position.set(0,-.18,0);thigh.add(knee);
+      const shin=new THREE.Mesh(new THREE.CylinderGeometry(.07,.06,.35,10),pantsMat);shin.position.set(0,-.35,0);shin.castShadow=true;thigh.add(shin);
+      const boot=new THREE.Mesh(new THREE.BoxGeometry(.15,.11,.24),bootMat);boot.position.set(0,-.22,.03);shin.add(boot);
+      const toe=new THREE.Mesh(new THREE.SphereGeometry(.075,8,6),bootMat);toe.scale.set(1,.7,1);toe.position.set(0,-.24,.15);shin.add(toe);
       if(s===-1)this.leftLeg=thigh;else this.rightLeg=thigh;
     }
-    // Arms (jacket sleeves)
+
+    // ── ARMS: rounded sleeves, elbows, skin forearms, hands w/ thumbs ──
     for(let s=-1;s<=1;s+=2){
-      const upper=new THREE.Mesh(new THREE.BoxGeometry(.14,.4,.16),jacketMat);upper.position.set(s*.38,1.25,0);g.add(upper);
-      // Forearm (skin)
-      const fore=new THREE.Mesh(new THREE.BoxGeometry(.12,.3,.14),skinMat);fore.position.set(0,-.35,0);upper.add(fore);
-      // Hand
-      const hand=new THREE.Mesh(new THREE.SphereGeometry(.06,5,4),skinMat);hand.position.set(0,-.18,0);fore.add(hand);
+      const upper=new THREE.Mesh(new THREE.CylinderGeometry(.07,.06,.4,10),jacketMat);
+      upper.position.set(s*.36,1.25,0);upper.castShadow=true;g.add(upper);
+      const elbow=new THREE.Mesh(new THREE.SphereGeometry(.06,8,6),jacketMat);elbow.position.set(0,-.2,0);upper.add(elbow);
+      const fore=new THREE.Mesh(new THREE.CylinderGeometry(.055,.048,.3,10),skinMat);fore.position.set(0,-.35,0);upper.add(fore);
+      const hand=new THREE.Mesh(new THREE.SphereGeometry(.06,8,6),skinMat);hand.scale.set(.85,1.1,.6);hand.position.set(0,-.19,0);fore.add(hand);
+      const thumb=new THREE.Mesh(new THREE.SphereGeometry(.025,6,5),skinMat);thumb.position.set(s*-.05,-.16,.03);fore.add(thumb);
       if(s===-1)this.leftArm=upper;else this.rightArm=upper;
     }
-    // Whip (behind player = -Z)
+
+    // ── GEAR: whip + satchel with diagonal strap ──
     const whipMat=new THREE.MeshStandardMaterial({color:0x2a1506,roughness:.5});
-    const wc=new THREE.CatmullRomCurve3([new THREE.Vector3(.35,1,0),new THREE.Vector3(.6,.9,-.3),new THREE.Vector3(.7,.7,-.8),new THREE.Vector3(.5,.5,-1.5)]);
-    g.add(new THREE.Mesh(new THREE.TubeGeometry(wc,10,.018,4,false),whipMat));
-    // Satchel (behind = -Z)
-    const satchel=new THREE.Mesh(new THREE.BoxGeometry(.2,.2,.1),new THREE.MeshStandardMaterial({color:0x5a3a1a,roughness:.6}));
-    satchel.position.set(-.32,.95,-.1);g.add(satchel);
+    const wcv=new THREE.CatmullRomCurve3([new THREE.Vector3(.35,1,0),new THREE.Vector3(.6,.9,-.3),new THREE.Vector3(.7,.7,-.8),new THREE.Vector3(.5,.5,-1.5)]);
+    g.add(new THREE.Mesh(new THREE.TubeGeometry(wcv,12,.018,5,false),whipMat));
+    const satchel=new THREE.Mesh(new THREE.BoxGeometry(.2,.22,.09),new THREE.MeshStandardMaterial({color:0x5a3a1a,roughness:.6}));
+    satchel.position.set(-.32,.95,-.12);satchel.rotation.z=.1;g.add(satchel);
+    const strap=new THREE.Mesh(new THREE.BoxGeometry(.05,.78,.02),new THREE.MeshStandardMaterial({color:0x3a2210,roughness:.55}));
+    strap.position.set(-.08,1.25,.25);strap.rotation.z=.45;g.add(strap);
 
     g.position.set(0,0,3);this.player=g;this.scene.add(g);
   }

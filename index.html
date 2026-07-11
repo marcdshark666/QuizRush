@@ -1754,25 +1754,27 @@ class JungleEngine{
     window.addEventListener('resize',()=>this._resize());this.running=true;this._animate();
   }
   // ── IMAGE-BASED LIGHTING ──────────────────────────────────────────────
-  // Procedural sky→ground gradient rendered through PMREM and set as
-  // scene.environment: every MeshStandardMaterial gets real reflections.
+  // Procedural canvas cubemap (sky→horizon gradient + ground) set as
+  // scene.environment: every MeshStandardMaterial gets sky reflections.
+  // NOTE: r128 PMREMGenerator.fromScene poisoned lit materials to black —
+  // a plain CubeTexture is stable and keeps the scene bright.
   _envMap(wc){
     try{
-      const pm=new THREE.PMREMGenerator(this.renderer);
-      const es=new THREE.Scene();
-      const dome=new THREE.Mesh(
-        new THREE.SphereGeometry(50,32,16),
-        new THREE.ShaderMaterial({side:THREE.BackSide,
-          uniforms:{sky:{value:new THREE.Color(wc.bgColor)},gnd:{value:new THREE.Color(wc.groundColor)}},
-          vertexShader:'varying vec3 vP;void main(){vP=position;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}',
-          fragmentShader:'uniform vec3 sky;uniform vec3 gnd;varying vec3 vP;void main(){float h=normalize(vP).y*.5+.5;gl_FragColor=vec4(mix(gnd,sky,smoothstep(.32,.68,h))*1.25,1.);}'
-        }));
-      es.add(dome);
-      // Bright sun blob → natural specular hotspot in reflections
-      const sun=new THREE.Mesh(new THREE.SphereGeometry(4,8,8),new THREE.MeshBasicMaterial({color:0xffffff}));
-      sun.position.set(15,25,-20);es.add(sun);
-      this.scene.environment=pm.fromScene(es).texture;
-      pm.dispose();
+      const sky='#'+new THREE.Color(wc.bgColor).getHexString();
+      const gnd='#'+new THREE.Color(wc.groundColor).getHexString();
+      const mid='#'+new THREE.Color(wc.fogColor).getHexString();
+      const face=(top,bottom)=>{
+        const cv=document.createElement('canvas');cv.width=cv.height=64;
+        const ctx=cv.getContext('2d');
+        const gr=ctx.createLinearGradient(0,0,0,64);
+        gr.addColorStop(0,top);gr.addColorStop(1,bottom);
+        ctx.fillStyle=gr;ctx.fillRect(0,0,64,64);
+        return cv;
+      };
+      // Order: +x -x +y(up=sky) -y(down=ground) +z -z
+      const cube=new THREE.CubeTexture([face(sky,mid),face(sky,mid),face(sky,sky),face(gnd,gnd),face(sky,mid),face(sky,mid)]);
+      cube.needsUpdate=true;
+      this.scene.environment=cube;
     }catch(e){}
   }
   // Procedural noise texture (color + bump) — organic surface detail
@@ -2957,8 +2959,6 @@ class JungleEngine{
     for(let i=0;i<6;i++){const m=new THREE.Mesh(new THREE.SphereGeometry(.2+Math.random()*.3,5,4),new THREE.MeshStandardMaterial({color:0x3a6a3a,roughness:1}));
       const a=Math.random()*Math.PI*2,e=Math.random()*Math.PI;
       m.position.set(Math.sin(e)*Math.cos(a)*2.3,Math.sin(e)*Math.sin(a)*2.3,Math.cos(e)*2.3);g.add(m)}
-    const ring=new THREE.Mesh(new THREE.RingGeometry(2.5,4,16),new THREE.MeshBasicMaterial({color:0x8a7560,transparent:true,opacity:.25,side:THREE.DoubleSide}));
-    ring.rotation.x=-Math.PI/2;ring.position.y=-2;g.add(ring);this.dustRing=ring;
     g.position.set(0,2.5,3-this.boulderDist);this.boulder=g;this.scene.add(g);
   }
   _animals(){
@@ -3853,10 +3853,10 @@ class QuizGame{
 // ========================================================
 const WORLDS={
   jungle:{name:'Jungle',emoji:'🌿',price:0,desc:'Classic jungle escape. Boulder chases you!',
-    bgColor:0x081808,fogColor:0x081808,fogDensity:.018,
-    groundColor:0x1a3a12,pathColor:0x3a3020,
-    ambientColor:0x1a3a1a,ambientIntensity:.6,
-    sunColor:0xfff4cc,enemy:'boulder'},
+    bgColor:0x9fd8f0,fogColor:0xb9dcc4,fogDensity:.009,
+    groundColor:0x2e6b1f,pathColor:0x7a6845,
+    ambientColor:0xa8cfa0,ambientIntensity:1.0,
+    sunColor:0xfff8e0,enemy:'boulder'},
   underwater:{name:'Underwater',emoji:'🌊',price:80000,desc:'Swim from a hungry shark in the deep blue!',
     bgColor:0x001828,fogColor:0x002840,fogDensity:.022,
     groundColor:0x1a3050,pathColor:0x263850,

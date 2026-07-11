@@ -3176,15 +3176,30 @@ class JungleEngine{
   }
   _boulder(){
     const g=new THREE.Group();
-    const geo=new THREE.IcosahedronGeometry(2.5,2);
+    // Hi-res rock: subdivision 3 + two-octave displacement for craggy silhouette
+    const geo=new THREE.IcosahedronGeometry(2.5,3);
     const p=geo.attributes.position;
-    for(let i=0;i<p.count;i++){const x=p.getX(i),y=p.getY(i),z=p.getZ(i);const n=1+(Math.sin(x*3)*Math.cos(y*2)*Math.sin(z*4))*.18;p.setXYZ(i,x*n,y*n,z*n)}
+    for(let i=0;i<p.count;i++){
+      const x=p.getX(i),y=p.getY(i),z=p.getZ(i);
+      const n=1+(Math.sin(x*3)*Math.cos(y*2)*Math.sin(z*4))*.16+(Math.sin(x*9+1)*Math.cos(z*7))*.05;
+      p.setXYZ(i,x*n,y*n,z*n);
+    }
     geo.computeVertexNormals();
-    const b=new THREE.Mesh(geo,new THREE.MeshStandardMaterial({color:0x5a5a5a,roughness:.8,metalness:.2}));
+    // Rocky noise surface (color + bump)
+    const rockTex=this._noiseTexture(0x5f5b54,1,64);rockTex.repeat.set(3,3);
+    const b=new THREE.Mesh(geo,new THREE.MeshStandardMaterial({map:rockTex,bumpMap:rockTex,bumpScale:.12,roughness:.85,metalness:.08}));
     b.castShadow=true;g.add(b);
-    for(let i=0;i<6;i++){const m=new THREE.Mesh(new THREE.SphereGeometry(.2+Math.random()*.3,5,4),new THREE.MeshStandardMaterial({color:0x3a6a3a,roughness:1}));
-      const a=Math.random()*Math.PI*2,e=Math.random()*Math.PI;
-      m.position.set(Math.sin(e)*Math.cos(a)*2.3,Math.sin(e)*Math.sin(a)*2.3,Math.cos(e)*2.3);g.add(m)}
+    // Moss patches flattened against the surface
+    const up=new THREE.Vector3(0,1,0);
+    for(let i=0;i<9;i++){
+      const m=new THREE.Mesh(new THREE.SphereGeometry(.25+Math.random()*.35,7,5),new THREE.MeshStandardMaterial({color:i%2?0x3a6a3a:0x2e5c2e,roughness:1}));
+      const a=Math.random()*Math.PI*2,e2=Math.random()*Math.PI;
+      const dir=new THREE.Vector3(Math.sin(e2)*Math.cos(a),Math.sin(e2)*Math.sin(a),Math.cos(e2)).normalize();
+      m.position.copy(dir.clone().multiplyScalar(2.42));
+      m.quaternion.setFromUnitVectors(up,dir); // local Y points outward
+      m.scale.set(1,.32,1);                    // …so this flattens onto the rock
+      g.add(m);
+    }
     g.position.set(0,2.5,3-this.boulderDist);this.boulder=g;this.scene.add(g);
   }
   _animals(){

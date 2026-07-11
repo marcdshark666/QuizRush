@@ -2416,6 +2416,31 @@ class JungleEngine{
         }
       }
     }
+    // Path edging for remaining worlds (Temple Run framing).
+    // City and arctic build their own curbs/ice blocks above.
+    const EDGE={
+      underwater:{c1:0x8a7a5a,c2:0x6a5a42,r:.6,step:3.5},
+      snakepit:{c1:0x9a7a4a,c2:0x7a5c34,r:.95,step:3.2},
+      ocean:{c1:0x24344a,c2:0x1a2637,r:.85,step:3.5},
+      dragon:{c1:0x14100e,c2:0x241a14,r:.9,step:3.2}
+    }[this.worldId];
+    if(EDGE){
+      const em1=new THREE.MeshStandardMaterial({color:EDGE.c1,roughness:EDGE.r});
+      const em2=new THREE.MeshStandardMaterial({color:EDGE.c2,roughness:EDGE.r});
+      for(let z=startZ;z>startZ-this.CHUNK;z-=EDGE.step){
+        for(let s=-1;s<=1;s+=2){
+          const blk=new THREE.Mesh(new THREE.BoxGeometry(.42+Math.random()*.16,.24+Math.random()*.12,2.8),Math.random()>.4?em1:em2);
+          blk.position.set(s*2.0,.1,z-1.4);blk.rotation.y=(Math.random()-.5)*.06;blk.castShadow=true;
+          this.scene.add(blk);this.scrollObjects.push({mesh:blk,baseZ:blk.position.z});
+        }
+        // Dragon lair: occasional glowing lava seam on top of a block
+        if(this.worldId==='dragon'&&Math.random()>.65){
+          const seam=new THREE.Mesh(new THREE.BoxGeometry(.1,.03,1.4),new THREE.MeshStandardMaterial({color:0xff3300,emissive:0xff2200,emissiveIntensity:1.6}));
+          seam.position.set((Math.random()>.5?1:-1)*2.0,.25,z-1.4);
+          this.scene.add(seam);this.scrollObjects.push({mesh:seam,baseZ:seam.position.z});
+        }
+      }
+    }
     // Torches for all worlds (or equivalent lights)
     for(let z2=startZ;z2>startZ-this.CHUNK;z2-=20){
       for(let s=-1;s<=1;s+=2){

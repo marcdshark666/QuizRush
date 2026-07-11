@@ -1726,6 +1726,7 @@ class JungleEngine{
     this.scene=new THREE.Scene();
     this.scene.background=new THREE.Color(wc.bgColor);
     this.scene.fog=new THREE.FogExp2(wc.fogColor,wc.fogDensity);
+    this._initVideoBG(wc); // per-world video background (or animated canvas fallback)
     this.camera=new THREE.PerspectiveCamera(70,window.innerWidth/window.innerHeight,.1,200);
     this.camera.position.set(0,4.15,9.6);this.camera.lookAt(0,1.05,-18);
     this.renderer=new THREE.WebGLRenderer({antialias:true});
@@ -1752,6 +1753,136 @@ class JungleEngine{
     const _badge=document.getElementById('hud-world-badge');
     if(_badge){const _wBadgeColors={jungle:'#75fd00',underwater:'#26e6ff',city:'#9090ff',snakepit:'#ff6600',arctic:'#80d0ff',ocean:'#4488ff',dragon:'#ff6600'};_badge.textContent=wc.emoji+' '+wc.name.toUpperCase();_badge.style.color=_wBadgeColors[this.worldId]||'#fff'}
     window.addEventListener('resize',()=>this._resize());this.running=true;this._animate();
+  }
+  // ── LIVE VIDEO / ANIMATED BACKGROUND ─────────────────────────────────
+  // Tries videos/<worldId>.mp4 first (drop in AI-generated clips from
+  // Gemini Veo, Sora etc). If missing, falls back to a procedurally
+  // ANIMATED canvas background — fish & bubbles underwater, clouds &
+  // birds in the jungle, aurora in arctic, embers in the dragon lair…
+  _initVideoBG(wc){
+    this._bgVideo=null;this._bgTex=null;this._bgWc=wc;
+    const v=document.createElement('video');
+    v.muted=true;v.loop=true;v.playsInline=true;
+    let settled=false;
+    v.addEventListener('canplay',()=>{
+      if(settled)return;settled=true;
+      this._bgVideo=v;v.play().catch(()=>{});
+      const tex=new THREE.VideoTexture(v);
+      tex.encoding=THREE.sRGBEncoding;
+      this.scene.background=tex;
+    });
+    v.addEventListener('error',()=>{if(settled)return;settled=true;this._initCanvasBG(wc)});
+    setTimeout(()=>{if(!settled){settled=true;this._initCanvasBG(wc)}},1500);
+    v.src='videos/'+this.worldId+'.mp4';
+  }
+  _initCanvasBG(wc){
+    const cv=document.createElement('canvas');cv.width=512;cv.height=256;
+    this._bgCv=cv;this._bgCtx=cv.getContext('2d');
+    // Persistent drifting elements (fish/clouds/birds/embers/snow)
+    const els=[];
+    for(let i=0;i<14;i++)els.push({x:Math.random()*512,y:20+Math.random()*180,s:.5+Math.random(),v:8+Math.random()*20,ph:Math.random()*6.28});
+    this._bgEls=els;
+    const tex=new THREE.CanvasTexture(cv);
+    tex.encoding=THREE.sRGBEncoding;
+    this._bgTex=tex;this.scene.background=tex;
+    this._bgDraw(0);tex.needsUpdate=true;
+  }
+  _bgDraw(t){
+    const ctx=this._bgCtx,w=512,h=256,id=this.worldId,els=this._bgEls,wc=this._bgWc;
+    if(!ctx||!wc)return;
+    // Sky gradient from world palette
+    const top='#'+new THREE.Color(wc.bgColor).getHexString();
+    const bot='#'+new THREE.Color(wc.fogColor).getHexString();
+    const gr=ctx.createLinearGradient(0,0,0,h);gr.addColorStop(0,top);gr.addColorStop(1,bot);
+    ctx.fillStyle=gr;ctx.fillRect(0,0,w,h);
+    const TAU=Math.PI*2;
+    if(id==='underwater'||id==='ocean'){
+      // God rays from the surface
+      ctx.save();ctx.globalAlpha=.10;ctx.fillStyle='#bfe8ff';
+      for(let i=0;i<4;i++){const x=60+i*120+Math.sin(t*.3+i)*18;
+        ctx.beginPath();ctx.moveTo(x-14,0);ctx.lineTo(x+14,0);ctx.lineTo(x+52,h);ctx.lineTo(x-52,h);ctx.fill()}
+      ctx.restore();
+      // Schools of fish swimming across
+      els.forEach((e,i)=>{
+        const dir=i%2?1:-1;
+        const x=((e.x+dir*t*e.v)%(w+60)+(w+60))%(w+60)-30;
+        const y=e.y+Math.sin(t*1.4+e.ph)*7;
+        ctx.save();ctx.translate(x,y);ctx.scale(dir*e.s,e.s);
+        ctx.fillStyle=i%3?'rgba(20,50,80,.85)':'rgba(200,220,235,.75)';
+        ctx.beginPath();ctx.ellipse(0,0,11,4.5,0,0,TAU);ctx.fill();
+        ctx.beginPath();ctx.moveTo(-9,0);ctx.lineTo(-16,-5);ctx.lineTo(-16,5);ctx.fill();
+        ctx.restore();
+      });
+      // Rising bubbles
+      for(let i=0;i<10;i++){
+        const bx=(i*53)%w+Math.sin(t+i)*6,by=h-((t*22+i*37)%(h+20));
+        ctx.fillStyle='rgba(220,240,255,.35)';ctx.beginPath();ctx.arc(bx,by,1.5+(i%3),0,TAU);ctx.fill();
+      }
+    }else if(id==='city'){
+      // Skyline with blinking windows
+      els.forEach((e,i)=>{
+        const bw=30+(i%4)*14,bh=60+e.s*90,x=(i/14)*w;
+        ctx.fillStyle='rgba(8,10,22,.9)';ctx.fillRect(x,h-bh,bw,bh);
+        ctx.fillStyle='rgba(255,220,120,.8)';
+        for(let wn=0;wn<5;wn++){
+          if(Math.sin(t*.8+e.ph+wn*2.1)>.2)ctx.fillRect(x+5+(wn%2)*10,h-30-wn*18*e.s,4,5);
+        }
+      });
+    }else if(id==='arctic'){
+      // Aurora borealis bands
+      for(let b=0;b<3;b++){
+        ctx.save();ctx.globalAlpha=.16;ctx.strokeStyle=b?'#7dffb0':'#c58cff';ctx.lineWidth=16-b*4;
+        ctx.beginPath();for(let x=0;x<=w;x+=16)ctx.lineTo(x,50+b*22+Math.sin(x*.02+t*(.5+b*.2))*16);
+        ctx.stroke();ctx.restore();
+      }
+      // Falling snow
+      els.forEach(e=>{
+        const y=(e.y+t*e.v)%h,x=(e.x+Math.sin(t+e.ph)*10+w)%w;
+        ctx.fillStyle='rgba(255,255,255,.8)';ctx.beginPath();ctx.arc(x,y,e.s*1.6,0,TAU);ctx.fill();
+      });
+    }else if(id==='dragon'){
+      // Volcano silhouette + pulsing crater + rising embers
+      ctx.fillStyle='rgba(20,6,4,.95)';ctx.beginPath();ctx.moveTo(0,h);
+      ctx.lineTo(140,90);ctx.lineTo(200,120);ctx.lineTo(300,70);ctx.lineTo(380,130);ctx.lineTo(512,h);ctx.fill();
+      ctx.fillStyle='rgba(255,80,20,'+(.4+Math.sin(t*2)*.15).toFixed(2)+')';
+      ctx.beginPath();ctx.ellipse(300,72,26,8,0,0,TAU);ctx.fill();
+      els.forEach((e,i)=>{
+        const y=h-((t*e.v+e.ph*40)%(h+10)),x=(e.x+Math.sin(t*2+e.ph)*8+w)%w;
+        ctx.fillStyle='rgba(255,'+(100+(i%3)*40)+',30,.8)';ctx.beginPath();ctx.arc(x,y,e.s*1.4,0,TAU);ctx.fill();
+      });
+    }else if(id==='snakepit'){
+      // Desert dunes + shimmering sun + circling vultures
+      ctx.fillStyle='rgba(120,80,40,.5)';ctx.beginPath();ctx.moveTo(0,h);
+      for(let x=0;x<=w;x+=32)ctx.lineTo(x,170+Math.sin(x*.02)*18);
+      ctx.lineTo(w,h);ctx.fill();
+      ctx.fillStyle='rgba(255,200,90,'+(.5+Math.sin(t*3)*.08).toFixed(2)+')';
+      ctx.beginPath();ctx.arc(400,60,24,0,TAU);ctx.fill();
+      els.forEach((e,i)=>{
+        if(i<4){const x=(e.x+t*e.v*.5)%w;
+          ctx.strokeStyle='rgba(60,40,20,.5)';ctx.lineWidth=1.4;
+          ctx.beginPath();ctx.arc(x,55+i*12,7,3.4,6.0);ctx.stroke()}
+      });
+    }else{
+      // Jungle/default: sun, drifting clouds, flapping birds, tree line
+      ctx.fillStyle='rgba(255,250,220,.9)';ctx.beginPath();ctx.arc(430,46,22,0,TAU);ctx.fill();
+      els.forEach((e,i)=>{
+        if(i<8){
+          const x=((e.x+t*e.v*.4)%(w+120))-60,y=30+e.ph*10;
+          ctx.fillStyle='rgba(255,255,255,.75)';
+          ctx.beginPath();ctx.ellipse(x,y,26*e.s,9*e.s,0,0,TAU);
+          ctx.ellipse(x+18*e.s,y+3,18*e.s,7*e.s,0,0,TAU);ctx.fill();
+        }else{
+          const x=((e.x+t*e.v)%(w+40))-20,y=40+Math.sin(t*2+e.ph)*8+(i-8)*14;
+          const f=Math.sin(t*6+e.ph)*3;
+          ctx.strokeStyle='rgba(30,40,30,.7)';ctx.lineWidth=1.6;
+          ctx.beginPath();ctx.moveTo(x-6,y-f);ctx.quadraticCurveTo(x,y+2,x,y);
+          ctx.quadraticCurveTo(x,y+2,x+6,y-f);ctx.stroke();
+        }
+      });
+      ctx.fillStyle='rgba(30,80,35,.55)';ctx.beginPath();ctx.moveTo(0,h);
+      for(let x=0;x<=w;x+=24)ctx.lineTo(x,150+Math.sin(x*.05+1)*12);
+      ctx.lineTo(w,h);ctx.fill();
+    }
   }
   // ── IMAGE-BASED LIGHTING ──────────────────────────────────────────────
   // Procedural canvas cubemap (sky→horizon gradient + ground) set as
@@ -3217,6 +3348,9 @@ class JungleEngine{
     if(!this.running)return;requestAnimationFrame(()=>this._animate());
     const dt=Math.min(this.clock.getDelta(),.05),t=this.clock.getElapsedTime();
 
+    // Animated canvas background (video textures update themselves)
+    if(this._bgTex&&!this._bgVideo){this._bgDraw(t);this._bgTex.needsUpdate=true}
+
     // Stumble/boost timers
     if(this.stumbling){this.stumbleTimer-=dt;if(this.stumbleTimer<=0)this.stumbling=false}
     if(this.speedBoost){this.speedTimer-=dt;if(this.speedTimer<=0)this.speedBoost=false}
@@ -3589,6 +3723,7 @@ class JungleEngine{
   destroy(){
     this.running=false;
     if(this.audioCtx)try{this.audioCtx.close()}catch(e){}
+    if(this._bgVideo){try{this._bgVideo.pause();this._bgVideo.removeAttribute('src');this._bgVideo.load()}catch(e){}}
     if(this.renderer){this.renderer.dispose();this.renderer.domElement.remove()}
   }
 }

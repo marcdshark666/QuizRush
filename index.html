@@ -1120,7 +1120,12 @@ function generateMCQs(text){
       // Skip sentences whose only content is a URL + date (e.g. "www.site.com – 2024-01-15")
       if(/^https?:\/\/\S+\s*[-–—]\s*\d{4}/.test(s))return false;
       return true;
-    });
+    })
+    // Deduplicate — PDFs repeat headers/footers on every page
+    .filter(function(s){
+      const k=s.toLowerCase().replace(/\s+/g,' ');
+      if(this.has(k))return false;this.add(k);return true;
+    },new Set());
 
   if(sents.length<3)throw new Error(lang==='sv'?'Inte tillräckligt med innehåll — lägg till mer text!':'Not enough content — add more text!');
 
@@ -1270,6 +1275,16 @@ function generateMCQs(text){
      q:(m)=>T.which_correct(m[1].trim()+' vs '+m[2].replace(/[.!?]$/,'').trim()),a:(m)=>m[0].replace(/[.!?]$/,'').trim(),type:'compare'},
   ];
 
+  // Trim a captured subject down to its core noun phrase: cut at the first
+  // verb/clause keyword so "Metformin används vid typ 2-diabetes och" → "Metformin".
+  function coreSubject(s){
+    let c=s.trim().replace(/[.!?,;:]+$/,'');
+    c=c.split(/\s+(?:används|verkar|är|var|har|hämmar|blockerar|stimulerar|aktiverar|ges|kan|ska|bör|inhiberar|binder|regleras|orsakar|leder|som|vilket|vilken|is|are|was|were|has|have|acts?|works?|inhibits?|blocks?|binds?|used|which|that)\b/i)[0].trim();
+    const ws=c.split(/\s+/);
+    if(ws.length>5)c=ws.slice(0,5).join(' ');
+    return c||s.trim();
+  }
+
   // ---- MEDICAL-SPECIFIC PATTERNS (only active when medical domain detected) ----
   if(isMedical){
     patterns.push(
@@ -1307,7 +1322,7 @@ function generateMCQs(text){
        a:(m)=>m[2].replace(/[.!?]$/,'').trim(),type:'diagnostic'},
       // MECHANISM OF ACTION: "X works by/verkar genom Y"
       {p:/(.{3,50}?)\s+(?:verkar\s+(?:genom|via|på)|works?\s+(?:by|via|through)|mekanism(?:en)?\s+(?:är|is)|mechanism\s+(?:is|involves)|inhiberar|inhibits?|blockerar|blocks?|stimulerar|stimulates?|hämmar|aktiverar|activates?)\s+(.{5,})/i,
-       q:(m)=>T.med_mechanism?T.med_mechanism(m[1].trim()):T.what_purpose(m[1].trim()),
+       q:(m)=>T.med_mechanism?T.med_mechanism(coreSubject(m[1])):T.what_purpose(coreSubject(m[1])),
        a:(m)=>m[2].replace(/[.!?]$/,'').trim(),type:'mechanism'},
       // RECEPTOR: "X acts on/binds to receptor Y"
       {p:/(.{3,50}?)\s+(?:binder\s+till|binds?\s+(?:to)?|verkar\s+på|acts?\s+on|agonist\s+(?:vid|at|for)|antagonist\s+(?:vid|at|for))\s+(.{3,50}?)\s*(?:receptor|receptorn)/i,
@@ -1315,7 +1330,7 @@ function generateMCQs(text){
        a:(m)=>m[2].replace(/[.!?]$/,'').trim()+' receptor',type:'receptor'},
       // INDICATION: "X indicated for/indicerad vid Y"
       {p:/(.{3,50}?)\s+(?:(?:är\s+)?indicera[dt]\s+(?:vid|för)|indicated\s+(?:for|in)|används\s+vid|used\s+(?:for|in|to\s+treat))\s+(.{5,})/i,
-       q:(m)=>T.med_indication?T.med_indication(m[1].trim()):T.what_purpose(m[1].trim()),
+       q:(m)=>T.med_indication?T.med_indication(coreSubject(m[1])):T.what_purpose(coreSubject(m[1])),
        a:(m)=>m[2].replace(/[.!?]$/,'').trim(),type:'indication'},
       // SIDE EFFECTS: "side effects of X include Y"
       {p:/(?:biverkningar?|side\s*effects?|adverse\s+(?:effects?|reactions?))\s+(?:av|of|vid|från|from|include|inkluderar|är|are)\s+(.{3,50}?)\s+(?:inkluderar|include|är|are|:\s*)(.{5,})/i,
@@ -1327,7 +1342,7 @@ function generateMCQs(text){
        a:(m)=>m[2].replace(/[.!?]$/,'').trim(),type:'contraindication'},
       // PHYSIOLOGY PROCESS
       {p:/(.{3,50}?)\s+(?:regleras\s+(?:av|genom)|regulated\s+by|medieras\s+av|mediated\s+by|styrs\s+av|controlled\s+by|upprätthålls\s+av|maintained\s+by)\s+(.{5,})/i,
-       q:(m)=>T.med_physiology?T.med_physiology(m[1].trim()):T.what_caused(m[1].trim()),
+       q:(m)=>T.med_physiology?T.med_physiology(coreSubject(m[1])):T.what_caused(coreSubject(m[1])),
        a:(m)=>m[2].replace(/[.!?]$/,'').trim(),type:'physiology'},
       // HISTOLOGY: cell type / appearance
       {p:/(.{3,50}?)\s+(?:karaktäriseras\s+(?:av|genom)|characterized\s+by|innehåller|contains?|består\s+av|consists?\s+of|ses\s+(?:vid|i)|(?:is\s+)?seen\s+(?:in|with)|typisk\s+för|typical\s+(?:of|for))\s+(.{5,})/i,
@@ -1367,24 +1382,24 @@ function generateMCQs(text){
     );
   }
 
-  // Clean answer text: remove ellipsis, trim to concise phrase (max ~80 chars)
+  // Clean answer text: concise phrase, max 4 words (6 for doses — units count as words)
+  const TRAIL_WORDS=new Set(['och','eller','med','som','att','av','på','i','för','till','vid','en','ett','den','det','de','samt','än','om','and','or','with','that','which','of','in','on','for','to','at','a','an','the','by','is','are','was','were','än','är','var','has','have','than']);
   function cleanAnswer(s){
     let c=s
       .replace(/…/g,'').replace(/\.\.\./g,'')  // remove all ellipsis
       .replace(/[,;:\-–—]+$/,'')  // remove trailing punctuation fragments
       .replace(/\s+/g,' ').trim();  // normalize whitespace
-    // If too long, cut at a natural boundary (comma, semicolon, dash) within ~80 chars
-    if(c.length>80){
-      // Try cutting at last comma/semicolon/dash before 80
-      const cut=c.substring(0,80);
-      const lastBreak=Math.max(cut.lastIndexOf(','),cut.lastIndexOf(';'),cut.lastIndexOf(' – '),cut.lastIndexOf(' - '));
-      if(lastBreak>20)c=c.substring(0,lastBreak).trim();
-      else c=c.substring(0,80).replace(/\s+\S*$/,'').trim(); // cut at last whole word
-    }
-    return c.replace(/[,;:\-–—]+$/,'').trim();
-    // Cap to max 4 words per answer
-    const ws=c.split(/s+/);if(ws.length>4)c=ws.slice(0,4).join(' ');
-    return c.replace(/[,;:-–—]+$/,'').trim();
+    // Cut at first clause boundary — one atomic phrase per option
+    const clause=c.split(/[,;]|\s[–—]\s|\s\(/)[0].trim();
+    if(clause.length>=3)c=clause;
+    // Hard cap: max 4 words (doses get 6 — numbers/units are tiny tokens)
+    let ws=c.split(/\s+/);
+    const doseLike=/^\d/.test(c)||/\d\s*(?:mg|µg|mcg|g|ml|mL|IE|U|mmol)\b/i.test(c);
+    const cap=doseLike?6:4;
+    if(ws.length>cap)ws=ws.slice(0,cap);
+    // Drop dangling function words left at the end after the cut
+    while(ws.length>1&&TRAIL_WORDS.has(ws[ws.length-1].toLowerCase()))ws.pop();
+    return ws.join(' ').replace(/[,;:\-–—]+$/,'').trim();
   }
 
   function makeQuestion(x){
@@ -1448,6 +1463,9 @@ function generateMCQs(text){
     if(clean.length>10)answerPool['fact'].push({answer:clean,idx:x.i,sent:x.s});
   });
 
+  // Unbiased Fisher-Yates shuffle (sort(()=>Math.random()-.5) is biased)
+  function shuffle(arr){const a=arr.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));const t=a[i];a[i]=a[j];a[j]=t}return a}
+
   function makeDistractors(correctAnswer,sourceSent,usedIdx,qType){
     const distractors=[];
     const correctLower=correctAnswer.toLowerCase();
@@ -1469,9 +1487,11 @@ function generateMCQs(text){
     function cleanD(s){return cleanAnswer(s);}
 
     // Strategy 1: SAME-TYPE answers from other sentences (BEST for medical)
-    // E.g., for a "dose" question, use doses from other drugs as distractors
+    // E.g., for a "dose" question, use doses from other drugs as distractors.
+    // Prefer distractors with similar word count — length mismatch gives the answer away.
     const pool=answerPool[qType]||[];
-    const sameType=pool.filter(x=>x.idx!==usedIdx).sort(()=>Math.random()-.5);
+    const sameType=shuffle(pool.filter(x=>x.idx!==usedIdx))
+      .sort((a,b)=>Math.abs(a.answer.split(/\s+/).length-targetWordCount)-Math.abs(b.answer.split(/\s+/).length-targetWordCount));
     for(const item of sameType){
       if(distractors.length>=3)break;
       let d=cleanD(item.answer);
@@ -1496,7 +1516,7 @@ function generateMCQs(text){
       const related=relatedTypes[qType]||['fact','def'];
       for(const rt of related){
         if(distractors.length>=3)break;
-        const rPool=(answerPool[rt]||[]).filter(x=>x.idx!==usedIdx).sort(()=>Math.random()-.5);
+        const rPool=shuffle((answerPool[rt]||[]).filter(x=>x.idx!==usedIdx));
         for(const item of rPool){
           if(distractors.length>=3)break;
           let d=cleanD(item.answer);
@@ -1522,7 +1542,7 @@ function generateMCQs(text){
 
     // Strategy 4: Extract clean answers from unrelated sentences using patterns
     if(distractors.length<3){
-      const others=scored.filter(x=>x.i!==usedIdx).sort(()=>Math.random()-.5);
+      const others=shuffle(scored.filter(x=>x.i!==usedIdx));
       for(const other of others){
         if(distractors.length>=3)break;
         for(const pat of patterns){
@@ -1537,7 +1557,7 @@ function generateMCQs(text){
 
     // Strategy 5: Last resort — use complete clean sentences (NOT random chunks)
     if(distractors.length<3){
-      const factPool=(answerPool['fact']||[]).filter(x=>x.idx!==usedIdx).sort(()=>Math.random()-.5);
+      const factPool=shuffle((answerPool['fact']||[]).filter(x=>x.idx!==usedIdx));
       for(const item of factPool){
         if(distractors.length>=3)break;
         let d=cleanD(item.answer);
@@ -1580,8 +1600,8 @@ function generateMCQs(text){
       opts.push(`${L[i]}) ${text}`);
     }
 
-    // Build pedagogical explanation (why correct + why others wrong)
-    let explanation=r.src.substring(0,180);
+    // Pedagogical explanation — full source sentence, cut at word boundary
+    let explanation=r.src.length>200?r.src.substring(0,200).replace(/\s+\S*$/,'')+'…':r.src;
 
     qs.push({question:r.q,options:opts,correct:ci,explanation});
     used.add(x.i);

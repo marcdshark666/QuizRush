@@ -2221,6 +2221,16 @@ class JungleEngine{
           this.torches.push({mesh:bulb,light:fl,baseY:1.55,baseZ:z});
         }}
       }
+      // Concrete curbs framing the road (Temple Run edging)
+      const curbMat=new THREE.MeshStandardMaterial({color:0x9a9a9a,roughness:.85});
+      const curbDark=new THREE.MeshStandardMaterial({color:0x7a7a78,roughness:.9});
+      for(let z=startZ;z>startZ-this.CHUNK;z-=3){
+        for(let s=-1;s<=1;s+=2){
+          const curb=new THREE.Mesh(new THREE.BoxGeometry(.35,.22,2.6),Math.random()>.3?curbMat:curbDark);
+          curb.position.set(s*2.0,.1,z-1.2);curb.castShadow=true;
+          this.scene.add(curb);this.scrollObjects.push({mesh:curb,baseZ:curb.position.z});
+        }
+      }
       // Random pedestrian as obstacle
       if(Math.random()<.35){
         const obs=this._buildBatObstacle();
@@ -2267,6 +2277,16 @@ class JungleEngine{
         if(Math.random()>.5){
           const sp=new THREE.Mesh(new THREE.SphereGeometry(.08,4,3),new THREE.MeshBasicMaterial({color:0xffffff}));
           sp.scale.y=.3;sp.position.set((Math.random()-.5)*8,.04,z+Math.random()*5);this.scene.add(sp);this.scrollObjects.push({mesh:sp,baseZ:sp.position.z});
+        }
+      }
+      // Ice block edging along the path (Temple Run framing)
+      const iceEdgeMat=new THREE.MeshStandardMaterial({color:0xcfeaff,roughness:.15,metalness:.2,transparent:true,opacity:.9});
+      const snowEdgeMat=new THREE.MeshStandardMaterial({color:0xf4faff,roughness:.95});
+      for(let z=startZ;z>startZ-this.CHUNK;z-=3.5){
+        for(let s=-1;s<=1;s+=2){
+          const blk=new THREE.Mesh(new THREE.BoxGeometry(.4+Math.random()*.15,.26+Math.random()*.12,3.0),Math.random()>.4?iceEdgeMat:snowEdgeMat);
+          blk.position.set(s*2.0,.12,z-1.5);blk.rotation.y=(Math.random()-.5)*.05;blk.castShadow=true;
+          this.scene.add(blk);this.scrollObjects.push({mesh:blk,baseZ:blk.position.z});
         }
       }
       // Penguins as decorative animals

@@ -2172,160 +2172,209 @@ class JungleEngine{
     this.boulderLight=new THREE.PointLight(0xff2200,2,30);this.scene.add(this.boulderLight);
   }
   _buildSharkEnemy(){
-    // Great White Shark — model built along Z-axis (snout at -Z, tail at +Z)
-    // Wrapper trick: outer g is rotated by _animate() (sway). Inner 'inner' is
-    // rotated 180° so the snout actually faces +Z (toward camera at +Z).
+    // Great White — face-on with massive gaping maw (matches reference image)
+    // Built along Z-axis (snout/mouth at -Z), wrapped in 'inner' rotated 180°
+    // so snout faces +Z (camera side). Outer g still gets _animate() sway.
     const g=new THREE.Group();
     const inner=new THREE.Group();
     this.enemyParts={};
-    const smat=new THREE.MeshStandardMaterial({color:0x4a7090,roughness:.28,metalness:.28});
-    const smatDark=new THREE.MeshStandardMaterial({color:0x283a50,roughness:.32,metalness:.2});
-    const bellyMat=new THREE.MeshStandardMaterial({color:0xeeeadc,roughness:.5});
-    const toothMat=new THREE.MeshStandardMaterial({color:0xfffff8,roughness:.12,metalness:.05});
-    const gumMat=new THREE.MeshStandardMaterial({color:0xcc2233,roughness:.6});
-    const eyeMatI=new THREE.MeshBasicMaterial({color:0x000000});
-    const eyeGlowMat=new THREE.MeshBasicMaterial({color:0x111133});
-    const skinLine=new THREE.MeshStandardMaterial({color:0x2a4a60,roughness:.4});
+    const grey=new THREE.MeshStandardMaterial({color:0x7c8a96,roughness:.4,metalness:.18});
+    const greyDark=new THREE.MeshStandardMaterial({color:0x4a5560,roughness:.45,metalness:.15});
+    const belly=new THREE.MeshStandardMaterial({color:0xf2efe6,roughness:.55});
+    const tooth=new THREE.MeshStandardMaterial({color:0xfffaee,roughness:.18,metalness:.05});
+    const gum=new THREE.MeshStandardMaterial({color:0xd96a7a,roughness:.6,emissive:0x442028,emissiveIntensity:.18});
+    const gumDeep=new THREE.MeshStandardMaterial({color:0x8e2435,roughness:.7,emissive:0x330810,emissiveIntensity:.25});
+    const throat=new THREE.MeshBasicMaterial({color:0x1a0306});
+    const eyeI=new THREE.MeshBasicMaterial({color:0x000000});
+    const eyeRim=new THREE.MeshBasicMaterial({color:0x222428});
 
-    // ── HEAD GROUP (wide face-on great white) ──────────────────────────
+    // ── HEAD (broad, slightly hunched) ─────────────────────────────────
     const headG=new THREE.Group();
-    // Main head — wide, slightly flattened sphere
-    const skull=new THREE.Mesh(new THREE.SphereGeometry(.78,16,12),smat);
-    skull.scale.set(1.12,.72,1.02);skull.position.z=-.18;headG.add(skull);
-    // Belly underside of head (white)
-    const headBelly=new THREE.Mesh(new THREE.SphereGeometry(.72,14,10),bellyMat);
-    headBelly.scale.set(1.0,.42,.88);headBelly.position.set(0,-.22,-.18);headG.add(headBelly);
-    // Blunt snout — offset cone
-    const snout=new THREE.Mesh(new THREE.ConeGeometry(.36,.72,10),smat);
-    snout.rotation.x=-Math.PI/2;snout.position.set(0,-.06,-.88);headG.add(snout);
-    // Snout belly (white tip)
-    const snoutBelly=new THREE.Mesh(new THREE.ConeGeometry(.28,.6,8),bellyMat);
-    snoutBelly.rotation.x=-Math.PI/2;snoutBelly.position.set(0,-.14,-.86);headG.add(snoutBelly);
-    // Lateral line stripe
+    // Skull dome (top half grey)
+    const skullTop=new THREE.Mesh(new THREE.SphereGeometry(.95,18,12,0,Math.PI*2,0,Math.PI*.6),grey);
+    skullTop.scale.set(1.05,.85,1.0);skullTop.position.z=-.05;headG.add(skullTop);
+    // Lower head (white belly)
+    const skullBot=new THREE.Mesh(new THREE.SphereGeometry(.92,16,10,0,Math.PI*2,Math.PI*.4,Math.PI*.6),belly);
+    skullBot.scale.set(1.0,.85,.98);skullBot.position.z=-.05;headG.add(skullBot);
+    // Cheeks bulge out (where mouth opens wide)
     for(let s=-1;s<=1;s+=2){
-      const stripe=new THREE.Mesh(new THREE.BoxGeometry(.04,.06,1.2),skinLine);
-      stripe.position.set(s*.62,0,-.08);stripe.rotation.z=s*.18;headG.add(stripe);
+      const cheek=new THREE.Mesh(new THREE.SphereGeometry(.5,10,8),grey);
+      cheek.scale.set(.85,.9,.78);cheek.position.set(s*.55,-.08,-.4);headG.add(cheek);
+      const cheekBelly=new THREE.Mesh(new THREE.SphereGeometry(.46,8,7),belly);
+      cheekBelly.scale.set(.7,.7,.7);cheekBelly.position.set(s*.6,-.22,-.4);headG.add(cheekBelly);
     }
-    // Eyes — wide set, face-on visible
+    // Snout — short pointed cone ABOVE the mouth (not in front)
+    const snout=new THREE.Mesh(new THREE.ConeGeometry(.32,.6,10),grey);
+    snout.rotation.x=-Math.PI/2;snout.position.set(0,.18,-.78);headG.add(snout);
+    const snoutTip=new THREE.Mesh(new THREE.SphereGeometry(.14,8,6),grey);
+    snoutTip.position.set(0,.22,-1.05);headG.add(snoutTip);
+    // Nostrils
     for(let s=-1;s<=1;s+=2){
-      const eSocket=new THREE.Mesh(new THREE.SphereGeometry(.12,10,8),eyeGlowMat);
-      eSocket.position.set(s*.52,.08,-.42);headG.add(eSocket);
-      const eye=new THREE.Mesh(new THREE.SphereGeometry(.09,10,8),eyeMatI);
-      eye.position.set(s*.55,.08,-.5);headG.add(eye);
-      const eShine=new THREE.Mesh(new THREE.SphereGeometry(.03,5,4),new THREE.MeshBasicMaterial({color:0x223355}));
-      eShine.position.set(s*.56,.1,-.56);headG.add(eShine);
-      const eyeGl=new THREE.PointLight(0x8899cc,.5,1.8);
-      eyeGl.position.set(s*.55,.08,-.52);headG.add(eyeGl);
+      const ns=new THREE.Mesh(new THREE.SphereGeometry(.04,5,4),new THREE.MeshBasicMaterial({color:0x0a0a0a}));
+      ns.position.set(s*.1,.12,-.95);headG.add(ns);
     }
-    // Gill slits
+    // Eyes — small black dots high on the head
     for(let s=-1;s<=1;s+=2){
-      for(let g2=0;g2<5;g2++){
-        const gill=new THREE.Mesh(new THREE.BoxGeometry(.03,.18,.04),skinLine);
-        gill.position.set(s*.66+s*.02*g2,-.05+g2*.03,.1+g2*.1);gill.rotation.z=s*.15;
-        headG.add(gill);
+      const eRim=new THREE.Mesh(new THREE.SphereGeometry(.09,8,6),eyeRim);
+      eRim.position.set(s*.78,.18,-.42);headG.add(eRim);
+      const eye=new THREE.Mesh(new THREE.SphereGeometry(.07,8,6),eyeI);
+      eye.position.set(s*.82,.18,-.48);headG.add(eye);
+    }
+    // Gill slits on the sides
+    for(let s=-1;s<=1;s+=2){
+      for(let i=0;i<5;i++){
+        const gl=new THREE.Mesh(new THREE.BoxGeometry(.025,.22,.04),greyDark);
+        gl.position.set(s*.88,-.05,.05+i*.13);gl.rotation.z=s*.18;headG.add(gl);
       }
     }
+    // Black mouth corners (the dark line where lips meet at rest)
+    for(let s=-1;s<=1;s+=2){
+      const corner=new THREE.Mesh(new THREE.SphereGeometry(.05,5,4),new THREE.MeshBasicMaterial({color:0x0a0608}));
+      corner.position.set(s*.62,-.18,-.55);headG.add(corner);
+    }
 
-    // ── UPPER JAW (pivot at hinge, teeth hang down) ────────────────────
+    // ── THROAT CAVITY (visible through gaping mouth) ───────────────────
+    const cavity=new THREE.Mesh(new THREE.SphereGeometry(.42,14,10),throat);
+    cavity.scale.set(1.05,1.15,.9);cavity.position.set(0,-.05,-.2);headG.add(cavity);
+    // Pink inner walls (annular ring inside the gape)
+    const innerRing=new THREE.Mesh(new THREE.TorusGeometry(.42,.12,8,18),gumDeep);
+    innerRing.scale.set(1.05,1.15,.6);innerRing.position.set(0,-.05,-.55);headG.add(innerRing);
+    // Soft tongue (pink hump on lower jaw bottom)
+    const tongue=new THREE.Mesh(new THREE.SphereGeometry(.22,10,8),gumDeep);
+    tongue.scale.set(1.1,.32,1.4);tongue.position.set(0,-.18,-.35);headG.add(tongue);
+
+    // ── UPPER JAW (top half of toothed ring) ───────────────────────────
     const upperJaw=new THREE.Group();
-    const ujBase=new THREE.Mesh(new THREE.BoxGeometry(.78,.14,.52),smat);upperJaw.add(ujBase);
-    const upperGum=new THREE.Mesh(new THREE.BoxGeometry(.72,.06,.46),gumMat);
-    upperGum.position.y=-.08;upperJaw.add(upperGum);
-    // Two rows of teeth — front row larger
-    for(let i=0;i<9;i++){
-      const t=new THREE.Mesh(new THREE.ConeGeometry(.04,.26,4),toothMat);
-      t.rotation.z=Math.PI;t.position.set(-.32+i*.08,-.2+Math.sin(i*.6)*.02,0);upperJaw.add(t);
+    // Curved upper gum (half-torus)
+    const ujGum=new THREE.Mesh(new THREE.TorusGeometry(.5,.07,8,16,Math.PI),gum);
+    ujGum.rotation.x=Math.PI/2;ujGum.rotation.z=Math.PI;upperJaw.add(ujGum);
+    // Teeth — curved row following the upper arch
+    const upperTeethCount=14;
+    for(let i=0;i<upperTeethCount;i++){
+      const a=(i/(upperTeethCount-1))*Math.PI - Math.PI/2;
+      const x=Math.cos(a+Math.PI/2)*.5;
+      const y=Math.abs(Math.sin(a))*.0; // flat plane
+      const z=Math.sin(a+Math.PI/2)*.5;
+      // Front row (large)
+      const t=new THREE.Mesh(new THREE.ConeGeometry(.045,.2,4),tooth);
+      t.position.set(x,-.04,Math.cos(a)*.0);
+      // Place around the front arch (top): use cos for x, fixed y
+      const xa=Math.sin(a)*.5;
+      t.position.set(xa,-.05,Math.abs(Math.cos(a))*-.02);
+      t.rotation.z=Math.PI; // points down
+      t.rotation.x=a*.4; // tilt tips toward center
+      upperJaw.add(t);
+      // Second row (smaller, behind)
+      if(i<upperTeethCount-1 && i>0){
+        const t2=new THREE.Mesh(new THREE.ConeGeometry(.03,.13,4),tooth);
+        const xa2=Math.sin(a)*.42;
+        t2.position.set(xa2,.0,.05);
+        t2.rotation.z=Math.PI;t2.rotation.x=a*.3;
+        upperJaw.add(t2);
+      }
     }
-    for(let i=0;i<7;i++){
-      const t2=new THREE.Mesh(new THREE.ConeGeometry(.028,.16,4),toothMat);
-      t2.rotation.z=Math.PI;t2.position.set(-.24+i*.08,-.12,-.06);upperJaw.add(t2);
-    }
-    upperJaw.position.set(0,.1,-.68);
+    upperJaw.position.set(0,.05,-.55);
     headG.add(upperJaw);this.enemyParts.upperJaw=upperJaw;
 
-    // ── LOWER JAW (pivot at hinge, teeth point up) ─────────────────────
+    // ── LOWER JAW (bottom half of toothed ring) ────────────────────────
     const lowerJaw=new THREE.Group();
-    const ljBase=new THREE.Mesh(new THREE.BoxGeometry(.76,.12,.5),bellyMat);lowerJaw.add(ljBase);
-    const lowerGum=new THREE.Mesh(new THREE.BoxGeometry(.70,.05,.44),gumMat);
-    lowerGum.position.y=.07;lowerJaw.add(lowerGum);
-    for(let i=0;i<8;i++){
-      const t=new THREE.Mesh(new THREE.ConeGeometry(.036,.22,4),toothMat);
-      t.position.set(-.28+i*.08,.18+Math.sin(i*.6)*.02,0);lowerJaw.add(t);
+    const ljGum=new THREE.Mesh(new THREE.TorusGeometry(.48,.07,8,16,Math.PI),gum);
+    ljGum.rotation.x=Math.PI/2;lowerJaw.add(ljGum);
+    const lowerTeethCount=13;
+    for(let i=0;i<lowerTeethCount;i++){
+      const a=(i/(lowerTeethCount-1))*Math.PI - Math.PI/2;
+      const t=new THREE.Mesh(new THREE.ConeGeometry(.04,.18,4),tooth);
+      const xa=Math.sin(a)*.48;
+      t.position.set(xa,.05,Math.abs(Math.cos(a))*.02);
+      t.rotation.x=-a*.4; // tilt up toward center
+      lowerJaw.add(t);
+      if(i<lowerTeethCount-1 && i>0){
+        const t2=new THREE.Mesh(new THREE.ConeGeometry(.026,.12,4),tooth);
+        const xa2=Math.sin(a)*.4;
+        t2.position.set(xa2,.0,-.05);
+        t2.rotation.x=-a*.3;
+        lowerJaw.add(t2);
+      }
     }
-    for(let i=0;i<6;i++){
-      const t2=new THREE.Mesh(new THREE.ConeGeometry(.024,.14,4),toothMat);
-      t2.position.set(-.2+i*.08,.1,.06);lowerJaw.add(t2);
-    }
-    lowerJaw.position.set(0,-.12,-.68);
+    lowerJaw.position.set(0,-.18,-.55);
     headG.add(lowerJaw);this.enemyParts.lowerJaw=lowerJaw;
 
     inner.add(headG);this.enemyParts.headG=headG;
 
-    // ── BODY (along Z-axis, CylinderGeometry rotated x=PI/2) ──────────
-    // Front torso section
-    const torsoF=new THREE.Mesh(new THREE.CylinderGeometry(.52,.62,1.5,12),smat);
-    torsoF.rotation.x=Math.PI/2;torsoF.position.z=.85;inner.add(torsoF);
-    const torsoFBelly=new THREE.Mesh(new THREE.CylinderGeometry(.46,.56,1.5,10),bellyMat);
-    torsoFBelly.rotation.x=Math.PI/2;torsoFBelly.position.set(0,-.08,.85);torsoFBelly.scale.x=.55;inner.add(torsoFBelly);
-    // Rear taper
-    const torsoR=new THREE.Mesh(new THREE.CylinderGeometry(.38,.18,1.8,10),smat);
-    torsoR.rotation.x=Math.PI/2;torsoR.position.z=2.45;inner.add(torsoR);
+    // ── BODY (tapered, hidden behind head from face-on view) ──────────
+    const torsoF=new THREE.Mesh(new THREE.CylinderGeometry(.62,.58,1.2,12),grey);
+    torsoF.rotation.x=Math.PI/2;torsoF.position.set(0,-.05,.7);inner.add(torsoF);
+    const torsoFB=new THREE.Mesh(new THREE.CylinderGeometry(.55,.5,1.2,10),belly);
+    torsoFB.rotation.x=Math.PI/2;torsoFB.position.set(0,-.18,.7);torsoFB.scale.x=.6;inner.add(torsoFB);
+    const torsoR=new THREE.Mesh(new THREE.CylinderGeometry(.45,.18,1.9,10),grey);
+    torsoR.rotation.x=Math.PI/2;torsoR.position.z=2.3;inner.add(torsoR);
 
-    // ── DORSAL FIN (tall, iconic) ──────────────────────────────────────
-    const dorsalFin=new THREE.Group();
-    const df1=new THREE.Mesh(new THREE.ConeGeometry(.1,.95,4),smatDark);df1.position.y=.5;dorsalFin.add(df1);
-    const df2=new THREE.Mesh(new THREE.BoxGeometry(.06,.55,.38),smatDark);df2.position.set(.08,.24,.1);df2.rotation.z=-.28;dorsalFin.add(df2);
-    dorsalFin.position.set(0,.52,.7);inner.add(dorsalFin);this.enemyParts.dorsalFin=dorsalFin;
+    // ── DORSAL FIN (tall triangle straight up, iconic) ────────────────
+    const dorsal=new THREE.Group();
+    const df1=new THREE.Mesh(new THREE.ConeGeometry(.12,1.15,4),greyDark);
+    df1.position.y=.6;df1.rotation.y=Math.PI/4;dorsal.add(df1);
+    const dfBack=new THREE.Mesh(new THREE.BoxGeometry(.06,.7,.45),greyDark);
+    dfBack.position.set(0,.32,.18);dfBack.rotation.x=-.35;dorsal.add(dfBack);
+    dorsal.position.set(0,.55,.55);inner.add(dorsal);this.enemyParts.dorsalFin=dorsal;
 
-    // Second dorsal (small)
-    const df3=new THREE.Mesh(new THREE.ConeGeometry(.05,.3,4),smatDark);
-    df3.position.set(0,.38,2.1);inner.add(df3);
+    // Second dorsal (small, near tail)
+    const df2=new THREE.Mesh(new THREE.ConeGeometry(.06,.32,4),greyDark);
+    df2.position.set(0,.32,2.2);inner.add(df2);
 
-    // Anal fin (belly side)
-    const af=new THREE.Mesh(new THREE.ConeGeometry(.06,.3,4),smat);
-    af.rotation.x=Math.PI;af.position.set(0,-.48,1.9);inner.add(af);
+    // Anal fin
+    const af=new THREE.Mesh(new THREE.ConeGeometry(.06,.3,4),grey);
+    af.rotation.x=Math.PI;af.position.set(0,-.42,2.0);inner.add(af);
 
-    // ── PECTORAL FINS (large, swept back) ─────────────────────────────
+    // ── PECTORAL FINS (WIDE, almost wing-like, extending sideways) ────
     for(let s=-1;s<=1;s+=2){
       const pfG=new THREE.Group();
-      // Main fin blade
-      const pf1=new THREE.Mesh(new THREE.ConeGeometry(.1,.88,4),smat);
-      pf1.rotation.z=s*.55;pf1.rotation.x=.3;pfG.add(pf1);
-      const pf2=new THREE.Mesh(new THREE.ConeGeometry(.05,.45,3),smat);
-      pf2.rotation.z=s*.3;pf2.rotation.x=.5;pf2.position.set(s*.12,-.1,.15);pfG.add(pf2);
-      pfG.position.set(s*.58,-.12,.55);pfG.rotation.y=s*.25;
+      // Long swept blade — flatter, more horizontal
+      const pf1=new THREE.Mesh(new THREE.ConeGeometry(.14,1.4,4),grey);
+      pf1.scale.set(1,1,.4); // flatten the cone
+      pf1.rotation.z=s*Math.PI/2; // horizontal
+      pf1.rotation.y=s*-.35; // sweep back
+      pf1.position.set(s*.7,0,0);
+      pfG.add(pf1);
+      // White underside
+      const pf1b=new THREE.Mesh(new THREE.ConeGeometry(.13,1.3,4),belly);
+      pf1b.scale.set(1,1,.35);pf1b.rotation.z=s*Math.PI/2;pf1b.rotation.y=s*-.35;
+      pf1b.position.set(s*.7,-.04,0);pfG.add(pf1b);
+      // Dark tip
+      const pfTip=new THREE.Mesh(new THREE.ConeGeometry(.06,.35,4),greyDark);
+      pfTip.rotation.z=s*Math.PI/2;pfTip.rotation.y=s*-.35;
+      pfTip.position.set(s*1.55,-.05,.45);pfG.add(pfTip);
+
+      pfG.position.set(0,-.15,.85);
       inner.add(pfG);
       if(s===-1)this.enemyParts.lPFin=pfG;else this.enemyParts.rPFin=pfG;
     }
 
     // Pelvic fins (small, mid-body)
     for(let s=-1;s<=1;s+=2){
-      const pvf=new THREE.Mesh(new THREE.ConeGeometry(.06,.32,4),smat);
-      pvf.rotation.z=s*.6;pvf.position.set(s*.3,-.28,1.6);inner.add(pvf);
+      const pvf=new THREE.Mesh(new THREE.ConeGeometry(.06,.32,4),grey);
+      pvf.rotation.z=s*Math.PI/2;pvf.rotation.y=s*-.3;
+      pvf.position.set(s*.32,-.32,1.7);inner.add(pvf);
     }
 
-    // ── TAIL (caudal fin, crescent shape) ──────────────────────────────
+    // ── TAIL (caudal fin, crescent) ────────────────────────────────────
     const tailG=new THREE.Group();
-    const tailPed=new THREE.Mesh(new THREE.CylinderGeometry(.1,.06,.7,6),smat);
-    tailPed.rotation.x=Math.PI/2;tailPed.position.z=.22;tailG.add(tailPed);
+    const ped=new THREE.Mesh(new THREE.CylinderGeometry(.1,.05,.5,6),grey);
+    ped.rotation.x=Math.PI/2;ped.position.z=.15;tailG.add(ped);
     for(let s=-1;s<=1;s+=2){
       const tfG=new THREE.Group();
-      const tf1=new THREE.Mesh(new THREE.ConeGeometry(.12,.75,5),smat);tfG.add(tf1);
-      const tf2=new THREE.Mesh(new THREE.ConeGeometry(.07,.42,4),smat);
-      tf2.position.y=.18;tf2.rotation.z=s*.52;tfG.add(tf2);
-      tfG.rotation.z=s*.58+Math.PI/2;tfG.position.set(s*.35,0,.48);
+      const tf1=new THREE.Mesh(new THREE.ConeGeometry(.13,.85,5),grey);tfG.add(tf1);
+      const tf2=new THREE.Mesh(new THREE.ConeGeometry(.08,.45,4),grey);
+      tf2.position.y=.18;tf2.rotation.z=s*.5;tfG.add(tf2);
+      tfG.rotation.z=s*.55+Math.PI/2;tfG.position.set(s*.38,0,.42);
       tailG.add(tfG);
       if(s===-1)this.enemyParts.tailFinLo=tfG;else this.enemyParts.tailFinHi=tfG;
     }
-    tailG.position.z=3.35;
+    tailG.position.z=3.25;
     inner.add(tailG);this.enemyParts.tailG=tailG;
 
-    // Under-water ambience light
-    const uwLight=new THREE.PointLight(0x4488cc,.8,8);uwLight.position.set(0,.5,0);inner.add(uwLight);
-
-    // Bubble trail at tail end
+    // Bubble trail
     this.enemyParts.bubbles=[];
-    for(let i=0;i<12;i++){
+    for(let i=0;i<10;i++){
       const b=new THREE.Mesh(
         new THREE.SphereGeometry(.03+Math.random()*.05,5,4),
         new THREE.MeshBasicMaterial({color:0x90d8ff,transparent:true,opacity:.5})
@@ -2335,8 +2384,7 @@ class JungleEngine{
       inner.add(b);this.enemyParts.bubbles.push(b);
     }
 
-    // Snout faces +Z (toward camera/player) via inner 180° flip.
-    // Outer g still receives _animate()'s sway on rotation.y without breaking orientation.
+    // 180° flip so snout faces +Z (camera direction)
     inner.rotation.y = Math.PI;
     g.add(inner);
     g.scale.setScalar(1.05);

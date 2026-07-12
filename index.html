@@ -2906,38 +2906,49 @@ class JungleEngine{
   _buildOrcaEnemy(){
     const g=new THREE.Group();
     this.enemyParts={};
-    const blk=new THREE.MeshStandardMaterial({color:0x080808,roughness:.4,metalness:.1});
-    const wht=new THREE.MeshStandardMaterial({color:0xf0f0e8,roughness:.35});
+    // Wet glossy skin — low roughness + env reflections read as water-slick
+    const blk=new THREE.MeshStandardMaterial({color:0x0a0a0c,roughness:.22,metalness:.15});
+    const wht=new THREE.MeshStandardMaterial({color:0xf0f0e8,roughness:.28,metalness:.05});
+    const greyM=new THREE.MeshStandardMaterial({color:0x8a929a,roughness:.3});
     const redM=new THREE.MeshBasicMaterial({color:0xcc1111});
 
-    // Main body – elongated ellipsoid
+    // Main body – hi-res elongated ellipsoid
     const bodyG=new THREE.Group();
-    const bod=new THREE.Mesh(new THREE.SphereGeometry(1,14,10),blk);bod.scale.set(1.15,.88,2.9);bodyG.add(bod);
+    const bod=new THREE.Mesh(new THREE.SphereGeometry(1,20,14),blk);bod.scale.set(1.15,.88,2.9);bodyG.add(bod);
+    // Rounded rostrum (snout) at the front
+    const rostrum=new THREE.Mesh(new THREE.SphereGeometry(.52,14,10),blk);rostrum.scale.set(.9,.7,1);rostrum.position.set(0,-.18,-2.65);bodyG.add(rostrum);
+    // White chin patch
+    const chinP=new THREE.Mesh(new THREE.SphereGeometry(.42,12,8),wht);chinP.scale.set(.8,.5,.95);chinP.position.set(0,-.42,-2.55);bodyG.add(chinP);
     // White belly patch
-    const belly=new THREE.Mesh(new THREE.SphereGeometry(.9,12,8),wht);belly.scale.set(.88,.58,2.3);belly.position.set(0,-.28,0);bodyG.add(belly);
+    const belly=new THREE.Mesh(new THREE.SphereGeometry(.9,16,10),wht);belly.scale.set(.88,.58,2.3);belly.position.set(0,-.28,0);bodyG.add(belly);
+    // Grey saddle patch behind the dorsal fin (real orca marking)
+    const saddle=new THREE.Mesh(new THREE.SphereGeometry(.5,12,8),greyM);saddle.scale.set(1.3,.5,1.1);saddle.position.set(0,.62,.75);bodyG.add(saddle);
+    // Blowhole
+    const blow=new THREE.Mesh(new THREE.SphereGeometry(.06,6,5),new THREE.MeshBasicMaterial({color:0x000000}));blow.position.set(0,.86,-1.15);bodyG.add(blow);
     // Eye patches (white oval behind each eye)
     for(let s=-1;s<=1;s+=2){
       const ep=new THREE.Mesh(new THREE.SphereGeometry(.3,8,6),wht);ep.scale.set(.55,1,1.3);ep.position.set(s*.88,.44,-1.25);bodyG.add(ep);
       const eye=new THREE.Mesh(new THREE.SphereGeometry(.1,7,5),new THREE.MeshBasicMaterial({color:0x0a0a0a}));eye.position.set(s*.94,.44,-1.5);bodyG.add(eye);
       const shine=new THREE.Mesh(new THREE.SphereGeometry(.035,5,4),new THREE.MeshBasicMaterial({color:0xffffff}));shine.position.set(s*.94,.52,-1.56);bodyG.add(shine);
     }
-    // Dorsal fin – tall blade
-    const dors=new THREE.Mesh(new THREE.CylinderGeometry(.04,.14,1.55,4),blk);dors.rotation.z=.14;dors.position.set(.06,1.2,.1);bodyG.add(dors);this.enemyParts.dorsalFin=dors;
-    // Pectoral fins
+    // Dorsal fin – tall smooth blade
+    const dors=new THREE.Mesh(new THREE.CylinderGeometry(.04,.14,1.55,8),blk);dors.rotation.z=.14;dors.position.set(.06,1.2,.1);bodyG.add(dors);this.enemyParts.dorsalFin=dors;
+    // Pectoral fins — smooth paddles
     for(let s=-1;s<=1;s+=2){
-      const pec=new THREE.Mesh(new THREE.SphereGeometry(.55,7,5),blk);pec.scale.set(.28,.12,1.35);pec.rotation.z=s*.42;pec.position.set(s*1.08,-.32,.55);bodyG.add(pec);
+      const pec=new THREE.Mesh(new THREE.SphereGeometry(.55,12,8),blk);pec.scale.set(.28,.12,1.35);pec.rotation.z=s*.42;pec.position.set(s*1.08,-.32,.55);bodyG.add(pec);
     }
     // Flukes (tail – horizontal forked)
     const tailG=new THREE.Group();
     for(let s=-1;s<=1;s+=2){
-      const fl=new THREE.Mesh(new THREE.SphereGeometry(.62,7,5),blk);fl.scale.set(1,.14,1.55);fl.position.set(s*.55,0,1.5);tailG.add(fl);
+      const fl=new THREE.Mesh(new THREE.SphereGeometry(.62,12,8),blk);fl.scale.set(1,.14,1.55);fl.position.set(s*.55,0,1.5);tailG.add(fl);
     }
     tailG.position.set(0,0,2.5);bodyG.add(tailG);this.enemyParts.tail=tailG;
     // Grinning mouth
     const mouthPts=[new THREE.Vector3(-.28,-.62,-2.7),new THREE.Vector3(0,-.72,-2.85),new THREE.Vector3(.28,-.62,-2.7)];
     bodyG.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(mouthPts),7,.04,4),redM));
-    // Teeth – top row
-    for(let i=0;i<5;i++){const t=new THREE.Mesh(new THREE.ConeGeometry(.035,.11,3),wht);t.position.set(-.16+i*.08,-.52,-2.82);bodyG.add(t)}
+    // Teeth – two rows of smooth cones
+    for(let i=0;i<7;i++){const t=new THREE.Mesh(new THREE.ConeGeometry(.032,.11,5),wht);t.position.set(-.21+i*.07,-.52,-2.82);bodyG.add(t)}
+    for(let i=0;i<6;i++){const t=new THREE.Mesh(new THREE.ConeGeometry(.026,.09,5),wht);t.rotation.x=Math.PI;t.position.set(-.18+i*.07,-.72,-2.78);bodyG.add(t)}
 
     g.add(bodyG);this.enemyParts.body=bodyG;
 

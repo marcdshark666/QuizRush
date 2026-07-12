@@ -3686,11 +3686,16 @@ class JungleEngine{
 
   // === GAME ACTIONS ===
   stumble(){this.stumbling=true;this.stumbleTimer=1.5}
-  triggerDevour(){this.devourMode=true;this.devourT=0;this.boulderDist=2;this.shake=1.5}
+  triggerDevour(){
+    this.devourMode=true;this.devourT=0;this.boulderDist=2;this.shake=1.5;
+    // Snap the enemy to striking distance — the world animation block that
+    // normally positions it is gated off during the devour sequence
+    if(this.enemy)this.enemy.position.z=3-this.boulderDist;
+  }
   boost(){this.speedBoost=true;this.speedTimer=1.5}
-  moveBoulderCloser(a){this.boulderDist=Math.max(this.minBoulder,this.boulderDist-a)}
-  pushBoulderBack(a){this.boulderDist=Math.min(50,this.boulderDist+a)}
-  setBoulderDist(d){this.boulderDist=Math.max(this.minBoulder,Math.min(50,d))}
+  moveBoulderCloser(a){if(this.devourMode)return;this.boulderDist=Math.max(this.minBoulder,this.boulderDist-a)}
+  pushBoulderBack(a){if(this.devourMode)return;this.boulderDist=Math.min(50,this.boulderDist+a)}
+  setBoulderDist(d){if(this.devourMode)return;this.boulderDist=Math.max(this.minBoulder,Math.min(50,d))}
   _triggerJump(){if(this.jumping||this.stumbling)return;this.jumping=true;this.jumpTimer=this.jumpMaxTime;this._playSound('jump')}
 
   _animate(){
@@ -3837,7 +3842,7 @@ class JungleEngine{
       const sc=1+df*.3;this.boulder.scale.setScalar(sc);
       if(this.boulderLight){this.boulderLight.position.set(0,this.boulder.position.y+3,this.boulder.position.z);this.boulderLight.intensity=1+df*6;this.boulderLight.color.setHex(df>.7?0xff0000:0xff2200)}
       if(this.dustRing)this.dustRing.material.opacity=.15+df*.3+Math.sin(t*4)*.1;
-    }else if(this.enemy){
+    }else if(this.enemy&&!this.devourMode){ // devour drives the enemy itself
       const ez=3-this.boulderDist;
       this.enemy.position.z=ez;
       const sc=1+df*.25;this.enemy.scale.setScalar(sc);
@@ -4018,6 +4023,24 @@ class JungleEngine{
       // Player shrinks as enemy engulfs (if close enough)
       if(dist<1.8){this.player.scale.setScalar(Math.max(0.01,this.player.scale.x-dt*.7))}
       this.enemy.scale.setScalar(1.5+dt2*.4);
+    }
+    // ── BOULDER CRUSH (jungle: the boulder rolls OVER the player and
+    //    flattens them instead of eating — it's a rock, not a monster) ──
+    else if(this.devourMode&&this.boulder&&this.player){
+      this.devourT+=dt;
+      // Accelerating roll forward, PAST the player (boulder z = 3 - boulderDist)
+      const crushSpeed=Math.min(6+this.devourT*this.devourT*12,30);
+      this.boulderDist=Math.max(this.boulderDist-crushSpeed*dt,-4.5);
+      this.bRot+=dt*crushSpeed/2.5; // extra spin matching ground travel (r≈2.5)
+      this.shake=Math.min(this.shake+dt,2.5);
+      // Flatten the player once the boulder is on top of them
+      const bz=3-this.boulderDist;
+      if(bz>=this.player.position.z-1.4){
+        const p=this.player;
+        p.scale.y=Math.max(.05,p.scale.y-dt*3.5);  // squashed pancake-flat
+        p.scale.x=Math.min(1.7,p.scale.x+dt*1.6);  // spreads out sideways
+        p.scale.z=Math.min(1.7,p.scale.z+dt*1.6);
+      }
     }
 
         // Animals (scroll + animate)

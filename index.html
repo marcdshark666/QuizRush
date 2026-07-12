@@ -2820,22 +2820,37 @@ class JungleEngine{
   _buildBearEnemy(){
     const g=new THREE.Group();
     this.enemyParts={};
-    const mat=new THREE.MeshStandardMaterial({color:0xf2f0eb,roughness:.75});
+    // Fur: noise texture as color + bump = real fur-like surface
+    const furTex=this._noiseTexture(0xf2f0eb,1,26);furTex.repeat.set(2,2);
+    const mat=new THREE.MeshStandardMaterial({map:furTex,bumpMap:furTex,bumpScale:.05,roughness:.8});
     const darkMat=new THREE.MeshStandardMaterial({color:0x111111,roughness:.8});
-    const noseMat=new THREE.MeshStandardMaterial({color:0x1a1018,roughness:.7});
+    const noseMat=new THREE.MeshStandardMaterial({color:0x1a1018,roughness:.45});
     const mouthMat=new THREE.MeshStandardMaterial({color:0xcc2233,roughness:.6});
-    // Body (big, low, galloping)
+    // Body (big, low, galloping) — hi-res with polar bear shoulder hump
     const body=new THREE.Group();
-    const torsoMesh=new THREE.Mesh(new THREE.SphereGeometry(.88,10,8),mat);torsoMesh.scale.set(1.1,1,1.4);torsoMesh.position.y=1.1;body.add(torsoMesh);
-    // Fur texture bumps
-    for(let i=0;i<12;i++){const f=new THREE.Mesh(new THREE.SphereGeometry(.08+Math.random()*.06,5,4),mat);f.position.set((Math.random()-.5)*.9,1.0+Math.random()*.4,(Math.random()-.5)*.7);body.add(f)}
+    const torsoMesh=new THREE.Mesh(new THREE.SphereGeometry(.88,16,12),mat);torsoMesh.scale.set(1.1,1,1.4);torsoMesh.position.y=1.1;body.add(torsoMesh);
+    const hump=new THREE.Mesh(new THREE.SphereGeometry(.5,12,9),mat);hump.scale.set(1.1,.8,1);hump.position.set(0,1.7,-.35);body.add(hump);
+    // Dense flattened fur clumps
+    for(let i=0;i<20;i++){
+      const f=new THREE.Mesh(new THREE.SphereGeometry(.09+Math.random()*.07,6,5),mat);
+      f.scale.set(1.1,.5,1.1);f.rotation.z=(Math.random()-.5);
+      f.position.set((Math.random()-.5)*1.1,.85+Math.random()*.65,(Math.random()-.5)*1.0);body.add(f);
+    }
     g.add(body);
-    // Head (big, roaring)
+    // Head (big, roaring) — hi-res with brow ridges and chin
     const headG=new THREE.Group();
-    const headMesh=new THREE.Mesh(new THREE.SphereGeometry(.55,10,8),mat);headG.add(headMesh);
-    // Snout
-    const snout=new THREE.Mesh(new THREE.SphereGeometry(.3,8,6),mat);snout.scale.set(1.1,.72,1.2);snout.position.set(0,-.1,.48);headG.add(snout);
-    const nose=new THREE.Mesh(new THREE.SphereGeometry(.09,6,5),noseMat);nose.position.set(0,.02,.74);headG.add(nose);
+    const headMesh=new THREE.Mesh(new THREE.SphereGeometry(.55,16,12),mat);headG.add(headMesh);
+    // Snout with bridge
+    const snout=new THREE.Mesh(new THREE.SphereGeometry(.3,12,9),mat);snout.scale.set(1.1,.72,1.2);snout.position.set(0,-.1,.48);headG.add(snout);
+    const bridge=new THREE.Mesh(new THREE.SphereGeometry(.18,10,7),mat);bridge.scale.set(.9,.6,1.3);bridge.position.set(0,.08,.42);headG.add(bridge);
+    const nose=new THREE.Mesh(new THREE.SphereGeometry(.09,8,6),noseMat);nose.position.set(0,.02,.74);headG.add(nose);
+    // Brow ridges over the eyes
+    for(let s=-1;s<=1;s+=2){
+      const brow=new THREE.Mesh(new THREE.SphereGeometry(.11,8,6),mat);
+      brow.scale.set(1.2,.5,.8);brow.position.set(s*.25,.3,.4);headG.add(brow);
+    }
+    // Chin under the roaring mouth
+    const chin=new THREE.Mesh(new THREE.SphereGeometry(.16,10,7),mat);chin.scale.set(1.1,.6,1);chin.position.set(0,-.42,.42);headG.add(chin);
     // Eyes with glow
     for(let s=-1;s<=1;s+=2){
       const e=new THREE.Mesh(new THREE.SphereGeometry(.065,7,6),darkMat);e.position.set(s*.25,.18,.42);headG.add(e);
@@ -2864,9 +2879,9 @@ class JungleEngine{
     ];
     for(const lc of legConfigs){
       const legG=new THREE.Group();
-      const upper=new THREE.Mesh(new THREE.CylinderGeometry(.17,.14,.55,7),mat);upper.position.y=-.28;legG.add(upper);
-      const lower=new THREE.Mesh(new THREE.CylinderGeometry(.13,.1,.5,6),mat);lower.position.y=-.85;legG.add(lower);
-      const paw=new THREE.Mesh(new THREE.SphereGeometry(.15,7,5),mat);paw.scale.set(1.2,.5,1.4);paw.position.y=-1.15;legG.add(paw);
+      const upper=new THREE.Mesh(new THREE.CylinderGeometry(.17,.14,.55,10),mat);upper.position.y=-.28;legG.add(upper);
+      const lower=new THREE.Mesh(new THREE.CylinderGeometry(.13,.1,.5,9),mat);lower.position.y=-.85;legG.add(lower);
+      const paw=new THREE.Mesh(new THREE.SphereGeometry(.15,10,7),mat);paw.scale.set(1.2,.5,1.4);paw.position.y=-1.15;legG.add(paw);
       // Claws
       for(let ci=0;ci<4;ci++){const claw=new THREE.Mesh(new THREE.ConeGeometry(.03,.1,3),darkMat);claw.position.set(-.06+ci*.04,-1.22,-.14);legG.add(claw)}
       legG.position.set(lc.x,.88,lc.z);legG.userData.phase=lc.phase;
@@ -2875,9 +2890,9 @@ class JungleEngine{
     // Arms (raised with claws)
     for(let s=-1;s<=1;s+=2){
       const armG=new THREE.Group();
-      const upper=new THREE.Mesh(new THREE.CylinderGeometry(.18,.14,.65,7),mat);upper.position.y=-.32;armG.add(upper);
-      const fore=new THREE.Mesh(new THREE.CylinderGeometry(.14,.1,.55,6),mat);fore.position.y=-.7;armG.add(fore);
-      const paw=new THREE.Mesh(new THREE.SphereGeometry(.16,7,5),mat);paw.scale.set(1.1,.55,1.2);paw.position.y=-1.0;armG.add(paw);
+      const upper=new THREE.Mesh(new THREE.CylinderGeometry(.18,.14,.65,10),mat);upper.position.y=-.32;armG.add(upper);
+      const fore=new THREE.Mesh(new THREE.CylinderGeometry(.14,.1,.55,9),mat);fore.position.y=-.7;armG.add(fore);
+      const paw=new THREE.Mesh(new THREE.SphereGeometry(.16,10,7),mat);paw.scale.set(1.1,.55,1.2);paw.position.y=-1.0;armG.add(paw);
       for(let ci=0;ci<4;ci++){const claw=new THREE.Mesh(new THREE.ConeGeometry(.04,.18,3),darkMat);claw.position.set(-.06+ci*.04,-1.1,-.16);claw.rotation.x=-.4;armG.add(claw)}
       armG.position.set(s*.98,1.8,.2);armG.rotation.z=s*.7;armG.rotation.x=.35;
       g.add(armG);

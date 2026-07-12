@@ -8,7 +8,10 @@
 | Shark.glb | Shark | Quaternius | CC0 (public domain) | https://poly.pizza/m/AyHTK3zUSG |
 | Bear.glb | Black bear | Poly by Google | CC-BY 3.0 | https://poly.pizza/m/56ym_pyVnel |
 | Orca.glb | Orca | Poly by Google | CC-BY 3.0 | https://poly.pizza/m/5p9B6IebY-A |
+| Cobra.glb | Cobra | Poly by Google | CC-BY 3.0 | https://poly.pizza/m/40_5Xq467-U |
+| Vulture.glb | Turkey vulture | Poly by Google | CC-BY 3.0 | https://poly.pizza/m/fvAgunyr1kd |
 
-Attribution (CC-BY models): "Black bear" and "Orca" by **Poly by Google**,
-licensed under [CC-BY 3.0](https://creativecommons.org/licenses/by/3.0/).
+Attribution (CC-BY models): "Black bear", "Orca", "Cobra" and "Turkey
+vulture" by **Poly by Google**, licensed under
+[CC-BY 3.0](https://creativecommons.org/licenses/by/3.0/).
 The bear model is tinted white in-game to depict a polar bear.

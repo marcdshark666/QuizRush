@@ -2517,7 +2517,10 @@ class JungleEngine{
     const SPECS={
       shark:{url:'models/Shark.glb',size:5.2,yaw:0},
       bear: {url:'models/Bear.glb', size:3.4,yaw:0,tint:0xf5f0e8,ground:true},
-      orca: {url:'models/Orca.glb', size:6.0,yaw:Math.PI} // model faces -Z natively
+      orca: {url:'models/Orca.glb', size:6.0,yaw:Math.PI}, // model faces -Z natively
+      snake:{url:'models/Cobra.glb',size:4.2,yaw:0,ground:true},
+      // Birds: wingspan exceeds body length, so skip the long-axis swap
+      drake:{url:'models/Vulture.glb',size:4.6,yaw:0,noAxisSwap:true}
     };
     const spec=SPECS[et];
     if(!spec||!THREE.GLTFLoader)return;
@@ -2530,16 +2533,19 @@ class JungleEngine{
       const size=box.getSize(new THREE.Vector3());
       const maxDim=Math.max(size.x,size.y,size.z)||1;
       model.scale.setScalar(spec.size/maxDim);
-      // Long axis along Z (swim/run direction), then spec yaw for facing
+      // Long axis along Z (swim/run direction), then spec yaw for facing.
+      // Birds opt out — their wingspan (X) is wider than their body (Z).
       const inner=new THREE.Group();
-      if(size.x>size.z)model.rotation.y=Math.PI/2;
+      if(!spec.noAxisSwap&&size.x>size.z)model.rotation.y=Math.PI/2;
       inner.add(model);
       inner.rotation.y=spec.yaw||0;
       // Center on origin (ground-based enemies sit on y=0 instead)
       const box2=new THREE.Box3().setFromObject(inner);
       const c=box2.getCenter(new THREE.Vector3());
       inner.position.sub(c);
-      if(spec.ground)inner.position.y=-box2.min.y-2; // feet at group y-2 (enemy group hovers at y≈2)
+      // Ground enemies: _animate keeps their group near y≈0 (bear bounce,
+      // snake slither), so feet belong at group-local y=0 — NOT y-2.
+      if(spec.ground)inner.position.y=-box2.min.y;
       // Optional tint (e.g. brown bear -> polar bear white)
       model.traverse(o=>{
         if(o.isMesh){

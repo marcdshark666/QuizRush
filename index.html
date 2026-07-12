@@ -2514,6 +2514,7 @@ class JungleEngine{
   // Auto-normalizes size, centers, aligns the long axis to Z. Keeps the
   // procedural enemy if the file is missing or fails (offline-safe).
   _trySwapEnemyGLB(et){
+    if(et==='police')return this._swapPoliceGLB();
     const SPECS={
       shark:{url:'models/Shark.glb',size:5.2,yaw:0},
       bear: {url:'models/Bear.glb', size:3.4,yaw:0,tint:0xf5f0e8,ground:true},
@@ -2565,6 +2566,38 @@ class JungleEngine{
         (this.mixers=this.mixers||[]).push(mixer);
       }
     },undefined,()=>{});
+  }
+  // Police squad: three real officer models (2 male + 1 female).
+  // Swaps in only when ALL three load; procedural squad kept otherwise.
+  _swapPoliceGLB(){
+    if(!THREE.GLTFLoader)return;
+    const loader=new THREE.GLTFLoader();
+    const urls=['models/PoliceM.glb','models/PoliceF.glb','models/PoliceM.glb'];
+    let loaded=0;const placed=[];
+    urls.forEach((u,i)=>{
+      loader.load(u,(gltf)=>{
+        const model=gltf.scene;
+        const box=new THREE.Box3().setFromObject(model);
+        const size=box.getSize(new THREE.Vector3());
+        model.scale.setScalar(2.3/(Math.max(size.x,size.y,size.z)||1));
+        const inner=new THREE.Group();inner.add(model);
+        const b2=new THREE.Box3().setFromObject(inner);
+        const c=b2.getCenter(new THREE.Vector3());
+        model.position.x-=c.x;model.position.z-=c.z;
+        model.position.y-=b2.min.y; // feet on the ground
+        model.traverse(o=>{if(o.isMesh)o.castShadow=true});
+        inner.position.set((i-1)*.62,0,Math.abs(i-1)*.15);
+        placed[i]=inner;loaded++;
+        if(loaded===urls.length&&this.enemy){
+          while(this.enemy.children.length)this.enemy.remove(this.enemy.children[0]);
+          this.enemyParts={officers:[]}; // per-officer limb anims are guarded
+          placed.forEach(p=>this.enemy.add(p));
+          const siren=new THREE.PointLight(0xff0000,1.5,8);
+          siren.position.set(0,3,.3);this.enemy.add(siren);
+          this.enemyParts.siren=siren;
+        }
+      },undefined,()=>{});
+    });
   }
   _buildSharkEnemy(){
     // Great White — face-on with massive gaping maw (matches reference image)

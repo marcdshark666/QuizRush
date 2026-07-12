@@ -6,6 +6,7 @@
   <title>Quiz Rush - Jungle Escape</title>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800&family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="js-gltfloader.js"></script><!-- three r128 GLTFLoader (local copy) -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <style>
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -3319,8 +3320,10 @@ class JungleEngine{
   }
   _animals(){
     const colors=[0xff3333,0x33cc33,0x3366ff,0xffff33,0xff33ff,0xff6600];
-    // Birds & toucans
-    for(let i=0;i<8;i++){
+    this.mixers=this.mixers||[];
+    // Birds — REAL animated GLB models (three.js official: Flamingo/Parrot/Stork)
+    // with wing-flap animations baked in. Procedural fallback if loading fails.
+    const buildProceduralBird=(i)=>{
       const g=new THREE.Group();const c=colors[i%colors.length];const isToucan=i>=5;
       const bd=new THREE.Mesh(new THREE.SphereGeometry(isToucan?.18:.14,6,5),new THREE.MeshStandardMaterial({color:isToucan?0x1a1a1a:c,roughness:.5}));
       bd.scale.set(1,1,1.5);g.add(bd);
@@ -3331,6 +3334,36 @@ class JungleEngine{
       g.position.set((Math.random()-.5)*8,4+Math.random()*3,Math.random()*-60);
       this.scene.add(g);
       this.animals.push({mesh:g,type:'bird',wingL:wl,wingR:wr,baseY:g.position.y,baseX:g.position.x,speed:.3+Math.random()*.5,phase:Math.random()*Math.PI*2});
+    };
+    const BIRD_GLBS=[
+      {url:'models/Flamingo.glb',scale:.011},
+      {url:'models/Parrot.glb',scale:.014},
+      {url:'models/Stork.glb',scale:.011}
+    ];
+    if(THREE.GLTFLoader){
+      const loader=new THREE.GLTFLoader();
+      for(let i=0;i<6;i++){
+        const spec=BIRD_GLBS[i%3];
+        loader.load(spec.url,(gltf)=>{
+          const bird=gltf.scene;
+          bird.scale.setScalar(spec.scale);
+          bird.rotation.y=(i%2?1:-1)*Math.PI/2; // fly across the sky sideways
+          bird.traverse(o=>{if(o.isMesh){o.castShadow=true}});
+          const holder=new THREE.Group();holder.add(bird);
+          holder.position.set((Math.random()-.5)*8,4+Math.random()*3,Math.random()*-60);
+          this.scene.add(holder);
+          // Play the baked flying animation
+          if(gltf.animations&&gltf.animations.length){
+            const mixer=new THREE.AnimationMixer(bird);
+            const act=mixer.clipAction(gltf.animations[0]);
+            act.timeScale=.9+Math.random()*.4;act.play();
+            this.mixers.push(mixer);
+          }
+          this.animals.push({mesh:holder,type:'bird',baseY:holder.position.y,baseX:holder.position.x,speed:.3+Math.random()*.5,phase:Math.random()*Math.PI*2});
+        },undefined,()=>buildProceduralBird(i));
+      }
+    }else{
+      for(let i=0;i<8;i++)buildProceduralBird(i);
     }
     // Monkeys
     for(let i=0;i<5;i++){
@@ -3575,6 +3608,9 @@ class JungleEngine{
 
     // Animated canvas background (video textures update themselves)
     if(this._bgTex&&!this._bgVideo){this._bgDraw(t);this._bgTex.needsUpdate=true}
+
+    // GLB skeletal/morph animations (loaded bird models etc.)
+    if(this.mixers)for(let i=0;i<this.mixers.length;i++)this.mixers[i].update(dt);
 
     // Stumble/boost timers
     if(this.stumbling){this.stumbleTimer-=dt;if(this.stumbleTimer<=0)this.stumbling=false}

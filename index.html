@@ -97,17 +97,28 @@ html,body{width:100%;height:100%;overflow:hidden;font-family:'Be Vietnam Pro',sa
 .hud-stat .stat-icon{font-size:17px}
 #hud-hearts{letter-spacing:2px}
 
-/* Question strip - bottom 20%, glassmorphism */
-.q-strip{position:absolute;bottom:0;left:0;right:0;z-index:20;padding:8px 10px 12px;background:rgba(6,10,8,.75);backdrop-filter:blur(16px) saturate(1.2);border-top:1px solid rgba(255,255,255,.05);max-height:55vh;overflow-y:auto;transition:transform .3s}
-.q-strip.hidden{transform:translateY(100%);pointer-events:none}
-.q-strip .q-progress{display:flex;align-items:center;gap:6px;margin-bottom:4px}
+/* Question UI — non-blocking layout: compact question card at the top,
+   answers split into two slim side columns, CENTER LEFT CLEAR so the
+   runner and the world stay fully visible while answering */
+.q-strip{position:absolute;inset:0;z-index:20;pointer-events:none;background:none;padding:0;transition:opacity .3s}
+.q-strip.hidden{opacity:0;pointer-events:none}
+.q-strip .q-progress{position:absolute;top:54px;left:50%;transform:translateX(-50%);width:min(560px,86vw);display:flex;align-items:center;gap:6px;pointer-events:auto}
 .q-strip .q-dots{display:flex;gap:8px;flex:1}
-.q-strip .q-dot{width:100%;height:6px;border-radius:999px;background:rgba(255,255,255,.08);transition:background .3s,box-shadow .3s}
+.q-strip .q-dot{width:100%;height:6px;border-radius:999px;background:rgba(255,255,255,.16);transition:background .3s,box-shadow .3s}
 .q-strip .q-dot.done{background:#5fff7a;box-shadow:0 0 14px rgba(95,255,122,.25)}.q-strip .q-dot.fail{background:#ff4d71}.q-strip .q-dot.current{background:#ff9e16;box-shadow:0 0 10px rgba(255,158,22,.35)}
-.q-strip .q-count{font-size:12px;font-weight:800;color:#ffb12b;white-space:nowrap;letter-spacing:1px}
-.q-strip .q-text{font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;font-weight:700;line-height:1.25;margin-bottom:6px;color:#f7f7f3}
-.q-strip .q-opts{display:grid;grid-template-columns:1fr 1fr;gap:6px}
-.q-opt{display:flex;align-items:flex-start;gap:8px;min-height:40px;padding:8px 10px;background:rgba(255,255,255,.04);border:2px solid rgba(255,255,255,.07);border-radius:var(--radius-md);cursor:pointer;transition:all .14s cubic-bezier(.22,1,.36,1);color:var(--text)}
+.q-strip .q-count{font-size:12px;font-weight:800;color:#ffb12b;white-space:nowrap;letter-spacing:1px;text-shadow:0 1px 4px rgba(0,0,0,.8)}
+.q-strip .q-text{position:absolute;top:72px;left:50%;transform:translateX(-50%);width:min(620px,86vw);background:rgba(6,10,8,.6);backdrop-filter:blur(12px) saturate(1.2);border:1px solid rgba(255,255,255,.09);border-radius:14px;padding:10px 16px;text-align:center;font-family:'Plus Jakarta Sans',sans-serif;font-size:14px;font-weight:700;line-height:1.3;color:#f7f7f3;pointer-events:auto;box-shadow:0 4px 24px rgba(0,0,0,.35)}
+.q-strip .q-opts{position:absolute;left:12px;right:12px;bottom:16px;display:grid;grid-template-columns:minmax(150px,250px) 1fr minmax(150px,250px);grid-template-rows:auto auto;gap:8px;align-items:end;pointer-events:none}
+.q-opt:nth-child(1){grid-column:1;grid-row:1}
+.q-opt:nth-child(2){grid-column:3;grid-row:1}
+.q-opt:nth-child(3){grid-column:1;grid-row:2}
+.q-opt:nth-child(4){grid-column:3;grid-row:2}
+.q-opt{pointer-events:auto;display:flex;align-items:flex-start;gap:8px;min-height:44px;padding:9px 10px;background:rgba(6,10,8,.55);backdrop-filter:blur(10px);border:2px solid rgba(255,255,255,.1);border-radius:var(--radius-md);cursor:pointer;transition:all .14s cubic-bezier(.22,1,.36,1);color:var(--text)}
+/* Narrow screens: slimmer side columns, still a clear center gap */
+@media (max-width:640px){
+  .q-strip .q-opts{grid-template-columns:minmax(120px,42vw) 1fr minmax(120px,42vw);gap:6px;left:8px;right:8px;bottom:10px}
+  .q-strip .q-text{font-size:13px;padding:8px 12px}
+}
 .q-opt:hover{background:rgba(255,158,22,.11);border-color:rgba(255,158,22,.38);transform:translateY(-1px);box-shadow:0 4px 14px rgba(255,158,22,.08)}
 .q-opt:active{transform:scale(.96) translateY(0)}
 .q-opt .ol{width:30px;height:30px;border-radius:8px;background:rgba(255,255,255,.06);display:flex;align-items:center;justify-content:center;font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:14px;color:#9aa7b8;flex-shrink:0}
@@ -5271,39 +5282,45 @@ JungleEngine.prototype._diverPlayer=function(){
 // CITY RUNNER PLAYER FOR IN-GAME (animated limbs)
 // ========================================================
 JungleEngine.prototype._cityrunnerPlayer=function(){
-  const g=new THREE.Group();
-  const hoodie=new THREE.MeshStandardMaterial({color:0x2a2a3a,roughness:.6});
-  const skin=new THREE.MeshStandardMaterial({color:0xc49a6c,roughness:.6});
-  const pants=new THREE.MeshStandardMaterial({color:0x111118,roughness:.7});
-  const shoe=new THREE.MeshStandardMaterial({color:0xffffff,roughness:.4});
+  // Realistic urban runner on the humanoid base: hoodie with hood +
+  // kangaroo pocket + neon stripe, joggers, white sneakers, backward
+  // cap, headphones
+  const base=this._humanoidBase({skin:0xc49a6c,top:0x2a2a3a,topRough:.62,bottom:0x111118,boots:0xf5f5f5,hair:0x171310,sleeves:'full'});
+  const g=base.g;
+  const hoodie=base.topMat;
+  const neon=new THREE.MeshStandardMaterial({color:0x00ffcc,emissive:0x00cc99,emissiveIntensity:.6,roughness:.3});
   const capM=new THREE.MeshStandardMaterial({color:0xcc2222,roughness:.5});
   const hpM=new THREE.MeshStandardMaterial({color:0x111111,roughness:.4,metalness:.3});
-  const neon=new THREE.MeshStandardMaterial({color:0x00ffcc,emissive:0x00cc99,emissiveIntensity:.6,roughness:.3});
-  // Torso + neon stripe
-  const torso=new THREE.Mesh(new THREE.BoxGeometry(.58,.78,.32),hoodie);torso.position.y=1.2;g.add(torso);
-  const ns=new THREE.Mesh(new THREE.BoxGeometry(.04,.82,.34),neon);ns.position.y=1.2;g.add(ns);
-  const pocket=new THREE.Mesh(new THREE.BoxGeometry(.26,.16,.02),new THREE.MeshStandardMaterial({color:0x1e1e2a,roughness:.7}));pocket.position.set(0,.88,.17);g.add(pocket);
-  // Head
-  const head=new THREE.Mesh(new THREE.SphereGeometry(.2,10,8),skin);head.position.y=1.82;g.add(head);
-  // Cap (backward)
-  const capB=new THREE.Mesh(new THREE.BoxGeometry(.44,.04,.22),capM);capB.position.set(0,2.04,-.08);g.add(capB);
-  const capC=new THREE.Mesh(new THREE.CylinderGeometry(.18,.22,.14,8),capM);capC.position.y=2.07;g.add(capC);
-  // Headphones
-  const band=new THREE.Mesh(new THREE.TorusGeometry(.22,.02,4,10,Math.PI),hpM);band.position.set(0,1.97,0);band.rotation.x=Math.PI/2;g.add(band);
-  for(let s=-1;s<=1;s+=2){const ear=new THREE.Mesh(new THREE.CylinderGeometry(.065,.065,.042,8),hpM);ear.rotation.z=Math.PI/2;ear.position.set(s*.23,1.83,.01);g.add(ear)}
-  for(let s=-1;s<=1;s+=2){const e=new THREE.Mesh(new THREE.SphereGeometry(.025,6,4),new THREE.MeshBasicMaterial({color:0x111111}));e.position.set(s*.07,1.84,.19);g.add(e)}
-  // Legs (animated)
+  // Hood bunched behind the neck + drawstrings
+  const hoodRoll=new THREE.Mesh(new THREE.TorusGeometry(.13,.055,8,14),hoodie);
+  hoodRoll.position.set(0,1.52,-.1);hoodRoll.rotation.x=1.2;g.add(hoodRoll);
   for(let s=-1;s<=1;s+=2){
-    const leg=new THREE.Mesh(new THREE.BoxGeometry(.18,.56,.22),pants);leg.position.set(s*.13,.5,0);g.add(leg);
-    const sh=new THREE.Mesh(new THREE.BoxGeometry(.18,.1,.28),shoe);sh.position.set(0,-.3,.02);leg.add(sh);
-    const sole=new THREE.Mesh(new THREE.BoxGeometry(.2,.04,.3),new THREE.MeshStandardMaterial({color:0xdddddd,roughness:.6}));sole.position.set(0,-.35,.02);leg.add(sole);
-    if(s===-1)this.leftLeg=leg;else this.rightLeg=leg;
+    const str=new THREE.Mesh(new THREE.CylinderGeometry(.008,.008,.16,5),new THREE.MeshStandardMaterial({color:0xdddddd,roughness:.6}));
+    str.position.set(s*.06,1.42,.25);g.add(str);
   }
-  // Arms (animated)
+  // Kangaroo pocket + vertical neon stripe
+  const pocket=new THREE.Mesh(new THREE.BoxGeometry(.24,.14,.03),new THREE.MeshStandardMaterial({color:0x1e1e2a,roughness:.7}));
+  pocket.position.set(0,.94,.26);g.add(pocket);
+  const ns=new THREE.Mesh(new THREE.BoxGeometry(.035,.6,.02),neon);ns.position.set(-.1,1.2,.27);g.add(ns);
+  // Backward cap over short hair
+  const hair=new THREE.Mesh(new THREE.SphereGeometry(.2,14,10),base.hairMat);hair.position.y=1.88;hair.scale.set(.95,.6,.9);g.add(hair);
+  const capC=new THREE.Mesh(new THREE.SphereGeometry(.2,14,10,0,Math.PI*2,0,Math.PI*.55),capM);capC.position.y=1.94;g.add(capC);
+  const capBrim=new THREE.Mesh(new THREE.BoxGeometry(.2,.025,.18),capM);capBrim.position.set(0,1.94,-.26);g.add(capBrim);
+  const capBtn=new THREE.Mesh(new THREE.SphereGeometry(.02,6,5),capM);capBtn.position.y=2.06;g.add(capBtn);
+  // Headphones around the neck
+  const band=new THREE.Mesh(new THREE.TorusGeometry(.14,.022,6,14,Math.PI),hpM);
+  band.position.set(0,1.5,.02);band.rotation.x=.35;band.rotation.z=Math.PI;g.add(band);
   for(let s=-1;s<=1;s+=2){
-    const arm=new THREE.Mesh(new THREE.BoxGeometry(.14,.5,.16),hoodie);arm.position.set(s*.38,1.2,0);g.add(arm);
-    const hand=new THREE.Mesh(new THREE.SphereGeometry(.065,5,4),skin);hand.position.set(0,-.27,0);arm.add(hand);
-    if(s===-1)this.leftArm=arm;else this.rightArm=arm;
+    const cup=new THREE.Mesh(new THREE.CylinderGeometry(.05,.05,.04,10),hpM);
+    cup.rotation.z=Math.PI/2;cup.position.set(s*.14,1.48,.1);g.add(cup);
+    const cushion=new THREE.Mesh(new THREE.TorusGeometry(.04,.012,6,10),neon);
+    cushion.rotation.y=Math.PI/2;cushion.position.set(s*.165,1.48,.1);g.add(cushion);
+  }
+  // Sneaker soles + neon heel tabs
+  for(const side of [this.leftLeg,this.rightLeg]){
+    const sole=new THREE.Mesh(new THREE.BoxGeometry(.17,.035,.28),new THREE.MeshStandardMaterial({color:0xdddddd,roughness:.6}));
+    sole.position.set(0,-.63,.06);side.add(sole);
+    const tab=new THREE.Mesh(new THREE.BoxGeometry(.05,.05,.02),neon);tab.position.set(0,-.56,-.08);side.add(tab);
   }
   g.position.set(0,0,3);this.player=g;this.scene.add(g);
 };
@@ -5312,40 +5329,38 @@ JungleEngine.prototype._cityrunnerPlayer=function(){
 // SNAKE HUNTER PLAYER FOR IN-GAME (animated limbs)
 // ========================================================
 JungleEngine.prototype._snakehunterPlayer=function(){
-  const g=new THREE.Group();
-  const khaki=new THREE.MeshStandardMaterial({color:0xb89a5a,roughness:.65});
+  // Realistic snake hunter on the humanoid base: khaki safari shirt
+  // with chest pockets, pith helmet, machete, rope coil, snake-skin band
+  const base=this._humanoidBase({skin:0xb07a4a,top:0xb89a5a,topRough:.68,bottom:0x7a6a3a,boots:0x3a2a1a,hair:0x2a1c10});
+  const g=base.g;
   const dkh=new THREE.MeshStandardMaterial({color:0x7a6a3a,roughness:.7});
-  const skin=new THREE.MeshStandardMaterial({color:0xb07a4a,roughness:.6});
   const helm=new THREE.MeshStandardMaterial({color:0xd4c080,roughness:.55});
-  const boot=new THREE.MeshStandardMaterial({color:0x3a2a1a,roughness:.8});
   const metal=new THREE.MeshStandardMaterial({color:0xbbbbbb,metalness:.7,roughness:.25});
-  // Torso + pockets
-  const torso=new THREE.Mesh(new THREE.BoxGeometry(.56,.76,.32),khaki);torso.position.y=1.2;g.add(torso);
-  for(let s=-1;s<=1;s+=2){const p=new THREE.Mesh(new THREE.BoxGeometry(.14,.16,.02),dkh);p.position.set(s*.14,1.28,.17);g.add(p)}
-  const belt=new THREE.Mesh(new THREE.BoxGeometry(.58,.07,.33),dkh);belt.position.y=.84;g.add(belt);
-  const buckle=new THREE.Mesh(new THREE.BoxGeometry(.07,.05,.02),metal);buckle.position.set(0,.84,.17);g.add(buckle);
-  // Head
-  const head=new THREE.Mesh(new THREE.SphereGeometry(.2,10,8),skin);head.position.y=1.82;g.add(head);
-  // Pith helmet
-  const dome=new THREE.Mesh(new THREE.SphereGeometry(.26,10,8),helm);dome.scale.set(1,.64,1);dome.position.y=2.0;g.add(dome);
-  const brim=new THREE.Mesh(new THREE.CylinderGeometry(.38,.36,.04,16),helm);brim.position.y=1.97;g.add(brim);
-  const vent=new THREE.Mesh(new THREE.BoxGeometry(.04,.26,.04),new THREE.MeshStandardMaterial({color:0xc0a860,roughness:.6}));vent.position.set(0,2.04,0);g.add(vent);
-  for(let s=-1;s<=1;s+=2){const e=new THREE.Mesh(new THREE.SphereGeometry(.025,6,4),new THREE.MeshBasicMaterial({color:0x111111}));e.position.set(s*.07,1.84,.19);g.add(e)}
-  // Legs (animated)
+  // Chest pockets with button flaps
   for(let s=-1;s<=1;s+=2){
-    const leg=new THREE.Mesh(new THREE.BoxGeometry(.18,.56,.22),dkh);leg.position.set(s*.13,.5,0);g.add(leg);
-    const bt=new THREE.Mesh(new THREE.BoxGeometry(.18,.14,.26),boot);bt.position.set(0,-.3,.02);leg.add(bt);
-    if(s===-1)this.leftLeg=leg;else this.rightLeg=leg;
+    const p=new THREE.Mesh(new THREE.BoxGeometry(.12,.13,.025),dkh);p.position.set(s*.12,1.3,.25);g.add(p);
+    const flap=new THREE.Mesh(new THREE.BoxGeometry(.12,.04,.03),dkh);flap.position.set(s*.12,1.38,.255);g.add(flap);
+    const btn=new THREE.Mesh(new THREE.SphereGeometry(.012,5,4),metal);btn.position.set(s*.12,1.36,.27);g.add(btn);
   }
-  // Arms (animated)
-  for(let s=-1;s<=1;s+=2){
-    const arm=new THREE.Mesh(new THREE.BoxGeometry(.14,.48,.16),khaki);arm.position.set(s*.38,1.2,0);g.add(arm);
-    const hand=new THREE.Mesh(new THREE.SphereGeometry(.065,5,4),skin);hand.position.set(0,-.26,0);arm.add(hand);
-    if(s===-1)this.leftArm=arm;else this.rightArm=arm;
-  }
-  // Machete (right hand)
-  const blade=new THREE.Mesh(new THREE.BoxGeometry(.05,.52,.01),metal);blade.position.set(.52,1.2,0);blade.rotation.z=-.25;g.add(blade);
-  const hilt=new THREE.Mesh(new THREE.CylinderGeometry(.022,.022,.16,5),dkh);hilt.position.set(.5,.83,0);hilt.rotation.z=-.25;g.add(hilt);
+  // Belt with buckle + rope coil on the hip
+  const belt=new THREE.Mesh(new THREE.CylinderGeometry(.27,.27,.07,14),dkh);belt.position.y=.86;g.add(belt);
+  const buckle=new THREE.Mesh(new THREE.BoxGeometry(.07,.05,.025),metal);buckle.position.set(0,.86,.26);g.add(buckle);
+  const rope=new THREE.Mesh(new THREE.TorusGeometry(.09,.025,8,14),new THREE.MeshStandardMaterial({color:0xa08858,roughness:.85}));
+  rope.position.set(-.26,.84,.05);rope.rotation.y=Math.PI/2;g.add(rope);
+  // Pith helmet: dome + wide brim + ventilation band + snake-skin band
+  const dome=new THREE.Mesh(new THREE.SphereGeometry(.24,16,10,0,Math.PI*2,0,Math.PI*.55),helm);dome.position.y=1.94;g.add(dome);
+  const brim=new THREE.Mesh(new THREE.CylinderGeometry(.36,.38,.035,18),helm);brim.position.y=1.95;g.add(brim);
+  const snakeBand=new THREE.Mesh(new THREE.CylinderGeometry(.215,.215,.05,14),new THREE.MeshStandardMaterial({color:0x4a6a22,roughness:.5}));
+  snakeBand.position.y=2.0;g.add(snakeBand);
+  const vent=new THREE.Mesh(new THREE.SphereGeometry(.035,8,6),helm);vent.position.y=2.12;g.add(vent);
+  // Machete in the right hand — blade, spine, guard, wrapped hilt
+  const blade=new THREE.Mesh(new THREE.BoxGeometry(.055,.5,.012),metal);
+  blade.position.set(.5,1.05,.1);blade.rotation.z=-.22;g.add(blade);
+  const tipM=new THREE.Mesh(new THREE.ConeGeometry(.035,.1,4),metal);
+  tipM.position.set(.56,1.31,.1);tipM.rotation.z=-.22;g.add(tipM);
+  const guard=new THREE.Mesh(new THREE.BoxGeometry(.1,.03,.03),dkh);guard.position.set(.45,.82,.1);g.add(guard);
+  const hilt=new THREE.Mesh(new THREE.CylinderGeometry(.022,.026,.14,7),new THREE.MeshStandardMaterial({color:0x2a1a0a,roughness:.7}));
+  hilt.position.set(.44,.74,.1);hilt.rotation.z=-.22;g.add(hilt);
   g.position.set(0,0,3);this.player=g;this.scene.add(g);
 };
 
@@ -5353,44 +5368,67 @@ JungleEngine.prototype._snakehunterPlayer=function(){
 // FIRE KNIGHT PLAYER FOR IN-GAME (animated limbs)
 // ========================================================
 JungleEngine.prototype._knightPlayer=function(){
-  const g=new THREE.Group();
-  const armor=new THREE.MeshStandardMaterial({color:0x7a8a9a,metalness:.8,roughness:.3});
-  const dark=new THREE.MeshStandardMaterial({color:0x4a5a6a,metalness:.7,roughness:.35});
-  const gold=new THREE.MeshStandardMaterial({color:0xddaa22,metalness:.8,roughness:.25});
-  const capeM=new THREE.MeshStandardMaterial({color:0xcc1111,roughness:.6});
-  // Torso (breastplate)
-  const torso=new THREE.Mesh(new THREE.BoxGeometry(.62,.8,.38),armor);torso.position.y=1.2;g.add(torso);
-  const ridge=new THREE.Mesh(new THREE.BoxGeometry(.05,.55,.02),dark);ridge.position.set(0,1.22,.2);g.add(ridge);
-  const collar=new THREE.Mesh(new THREE.CylinderGeometry(.25,.25,.07,10),gold);collar.position.y=1.64;g.add(collar);
-  const cape=new THREE.Mesh(new THREE.BoxGeometry(.55,.65,.05),capeM);cape.position.set(0,1.0,-.2);g.add(cape);
-  // Helmet
-  const helmet=new THREE.Mesh(new THREE.SphereGeometry(.24,10,8),armor);helmet.position.y=1.82;g.add(helmet);
-  const visor=new THREE.Mesh(new THREE.BoxGeometry(.22,.08,.02),dark);visor.position.set(0,1.82,.24);g.add(visor);
-  for(let s=-1;s<=1;s+=2){const sl=new THREE.Mesh(new THREE.BoxGeometry(.06,.02,.01),new THREE.MeshBasicMaterial({color:0x1a3a6a}));sl.position.set(s*.055,1.82,.25);g.add(sl)}
-  // Red crest plumes
-  for(let i=0;i<5;i++){const p=new THREE.Mesh(new THREE.BoxGeometry(.04,.18,.02),capeM);p.position.set((i-2)*.04,2.06,0);g.add(p)}
-  // Legs (animated)
-  for(let s=-1;s<=1;s+=2){
-    const leg=new THREE.Mesh(new THREE.BoxGeometry(.2,.56,.26),armor);leg.position.set(s*.14,.5,0);g.add(leg);
-    const knee=new THREE.Mesh(new THREE.SphereGeometry(.1,6,5),dark);knee.position.set(0,.12,0);leg.add(knee);
-    const bt=new THREE.Mesh(new THREE.BoxGeometry(.2,.14,.28),dark);bt.position.set(0,-.3,.02);leg.add(bt);
-    if(s===-1)this.leftLeg=leg;else this.rightLeg=leg;
+  // Realistic knight on the humanoid base: polished plate armor with
+  // pauldrons, great helm with glowing visor + red plume, cape, sword,
+  // heater shield
+  const armorMat=new THREE.MeshStandardMaterial({color:0x7a8a9a,metalness:.85,roughness:.25});
+  const base=this._humanoidBase({skin:0xd4a574,topMat:armorMat,botMat:armorMat,boots:0x4a5a6a,hair:0x2a1c10,sleeves:'full'});
+  const g=base.g;
+  const dark=new THREE.MeshStandardMaterial({color:0x4a5a6a,metalness:.75,roughness:.32});
+  const gold=new THREE.MeshStandardMaterial({color:0xddaa22,metalness:.85,roughness:.22});
+  const capeM=new THREE.MeshStandardMaterial({color:0xcc1111,roughness:.65,side:THREE.DoubleSide});
+  // Breastplate center ridge + gold rivets
+  const ridge=new THREE.Mesh(new THREE.BoxGeometry(.04,.55,.02),dark);ridge.position.set(0,1.2,.27);g.add(ridge);
+  for(let r=0;r<3;r++)for(let s=-1;s<=1;s+=2){
+    const riv=new THREE.Mesh(new THREE.SphereGeometry(.016,6,5),gold);riv.position.set(s*.14,1.38-r*.16,.26);g.add(riv);
   }
-  // Arms (animated) + pauldrons
-  for(let s=-1;s<=1;s+=2){
-    const shoulder=new THREE.Mesh(new THREE.SphereGeometry(.14,6,5),armor);shoulder.position.set(s*.38,1.52,0);g.add(shoulder);
-    const arm=new THREE.Mesh(new THREE.BoxGeometry(.16,.48,.2),armor);arm.position.set(s*.4,1.2,0);g.add(arm);
-    const gaunt=new THREE.Mesh(new THREE.BoxGeometry(.15,.1,.18),dark);gaunt.position.set(0,-.26,0);arm.add(gaunt);
-    if(s===-1)this.leftArm=arm;else this.rightArm=arm;
+  // Gold gorget collar + waist fauld plates
+  const collar=new THREE.Mesh(new THREE.CylinderGeometry(.13,.16,.08,12),gold);collar.position.y=1.58;g.add(collar);
+  for(let f=0;f<2;f++){
+    const fauld=new THREE.Mesh(new THREE.CylinderGeometry(.285+f*.02,.30+f*.02,.06,14),f%2?dark:armorMat);
+    fauld.position.y=.86-f*.07;g.add(fauld);
   }
-  // Sword (right)
-  const blade=new THREE.Mesh(new THREE.BoxGeometry(.04,.7,.01),armor);blade.position.set(.54,1.4,0);blade.rotation.z=-.18;g.add(blade);
-  const guard=new THREE.Mesh(new THREE.BoxGeometry(.2,.04,.04),gold);guard.position.set(.52,1.06,0);g.add(guard);
-  const hilt=new THREE.Mesh(new THREE.CylinderGeometry(.025,.025,.18,5),gold);hilt.position.set(.5,.9,0);hilt.rotation.z=-.18;g.add(hilt);
-  // Shield (left — not animated)
-  const shield=new THREE.Mesh(new THREE.BoxGeometry(.32,.4,.04),dark);shield.position.set(-.52,1.1,.08);g.add(shield);
-  const sc1=new THREE.Mesh(new THREE.BoxGeometry(.04,.36,.02),gold);sc1.position.set(-.52,1.1,.11);g.add(sc1);
-  const sc2=new THREE.Mesh(new THREE.BoxGeometry(.28,.04,.02),gold);sc2.position.set(-.52,1.12,.11);g.add(sc2);
+  // Flowing cape behind
+  const cape=new THREE.Mesh(new THREE.PlaneGeometry(.5,.8,3,4),capeM);
+  cape.position.set(0,1.15,-.24);cape.rotation.x=.12;g.add(cape);
+  // Great helm over the head: dome + cheek plates + glowing visor slit
+  const helmet=new THREE.Mesh(new THREE.SphereGeometry(.235,16,12),armorMat);helmet.position.y=1.86;helmet.scale.set(.98,1.05,.95);g.add(helmet);
+  const visor=new THREE.Mesh(new THREE.BoxGeometry(.24,.09,.03),dark);visor.position.set(0,1.86,.2);g.add(visor);
+  const slit=new THREE.Mesh(new THREE.BoxGeometry(.18,.018,.01),new THREE.MeshStandardMaterial({color:0x66aaff,emissive:0x3377ff,emissiveIntensity:1.6}));
+  slit.position.set(0,1.87,.222);g.add(slit);
+  const breath=new THREE.Mesh(new THREE.BoxGeometry(.08,.06,.02),dark);breath.position.set(0,1.76,.21);g.add(breath);
+  // Red plume crest arcing over the helm
+  for(let i=0;i<6;i++){
+    const p=new THREE.Mesh(new THREE.BoxGeometry(.035,.2-i*.012,.02),capeM);
+    p.position.set(0,2.1+Math.sin(i*.5)*.03,.06-i*.05);p.rotation.x=-.25-i*.12;g.add(p);
+  }
+  // Pauldrons over the shoulders
+  for(let s=-1;s<=1;s+=2){
+    const pd=new THREE.Mesh(new THREE.SphereGeometry(.15,12,8,0,Math.PI*2,0,Math.PI*.55),armorMat);
+    pd.position.set(s*.3,1.56,0);g.add(pd);
+    const pdTrim=new THREE.Mesh(new THREE.TorusGeometry(.14,.015,6,14),gold);
+    pdTrim.position.set(s*.3,1.5,0);pdTrim.rotation.x=Math.PI/2;g.add(pdTrim);
+  }
+  // Gauntlet cuffs + knee cops on the base limbs
+  for(const side of [this.leftArm,this.rightArm]){
+    const cuff=new THREE.Mesh(new THREE.CylinderGeometry(.065,.075,.07,10),dark);cuff.position.set(0,-.42,0);side.add(cuff);
+  }
+  for(const side of [this.leftLeg,this.rightLeg]){
+    const cop=new THREE.Mesh(new THREE.SphereGeometry(.085,10,7),dark);cop.scale.z=1.2;cop.position.set(0,-.18,.03);side.add(cop);
+  }
+  // Longsword in the right hand
+  const blade=new THREE.Mesh(new THREE.BoxGeometry(.045,.72,.014),armorMat);blade.position.set(.5,1.25,.08);blade.rotation.z=-.16;g.add(blade);
+  const swTip=new THREE.Mesh(new THREE.ConeGeometry(.03,.09,4),armorMat);swTip.position.set(.56,1.64,.08);swTip.rotation.z=-.16;g.add(swTip);
+  const guard=new THREE.Mesh(new THREE.BoxGeometry(.18,.035,.035),gold);guard.position.set(.44,.9,.08);g.add(guard);
+  const hilt=new THREE.Mesh(new THREE.CylinderGeometry(.02,.024,.16,7),new THREE.MeshStandardMaterial({color:0x3a2210,roughness:.6}));
+  hilt.position.set(.42,.8,.08);hilt.rotation.z=-.16;g.add(hilt);
+  const pommel=new THREE.Mesh(new THREE.SphereGeometry(.03,8,6),gold);pommel.position.set(.4,.71,.08);g.add(pommel);
+  // Heater shield on the left arm with gold cross
+  const shield=new THREE.Mesh(new THREE.CylinderGeometry(.2,.14,.5,3,1),dark);
+  shield.rotation.x=Math.PI/2;shield.rotation.z=Math.PI;shield.scale.z=.18;
+  shield.position.set(-.52,1.1,.1);g.add(shield);
+  const sc1=new THREE.Mesh(new THREE.BoxGeometry(.035,.32,.02),gold);sc1.position.set(-.52,1.1,.16);g.add(sc1);
+  const sc2=new THREE.Mesh(new THREE.BoxGeometry(.22,.035,.02),gold);sc2.position.set(-.52,1.16,.16);g.add(sc2);
   g.position.set(0,0,3);this.player=g;this.scene.add(g);
 };
 

@@ -2507,6 +2507,58 @@ class JungleEngine{
     eg.position.set(0,2,3-this.boulderDist);this.enemy=eg;this.scene.add(eg);
     // Reuse boulderLight for enemy light
     this.boulderLight=new THREE.PointLight(0xff2200,2,30);this.scene.add(this.boulderLight);
+    this._trySwapEnemyGLB(et); // async: replace with a real 3D model when available
+  }
+  // ── REAL 3D ENEMY MODELS (GLB) ────────────────────────────────────────
+  // Loads a downloaded model and swaps it into the live enemy group.
+  // Auto-normalizes size, centers, aligns the long axis to Z. Keeps the
+  // procedural enemy if the file is missing or fails (offline-safe).
+  _trySwapEnemyGLB(et){
+    const SPECS={
+      shark:{url:'models/Shark.glb',size:5.2,yaw:0},
+      bear: {url:'models/Bear.glb', size:3.4,yaw:0,tint:0xf5f0e8,ground:true},
+      orca: {url:'models/Orca.glb', size:6.0,yaw:Math.PI} // model faces -Z natively
+    };
+    const spec=SPECS[et];
+    if(!spec||!THREE.GLTFLoader)return;
+    const loader=new THREE.GLTFLoader();
+    loader.load(spec.url,(gltf)=>{
+      if(!this.enemy)return;
+      const model=gltf.scene;
+      // Normalize size to the spec target (largest dimension)
+      const box=new THREE.Box3().setFromObject(model);
+      const size=box.getSize(new THREE.Vector3());
+      const maxDim=Math.max(size.x,size.y,size.z)||1;
+      model.scale.setScalar(spec.size/maxDim);
+      // Long axis along Z (swim/run direction), then spec yaw for facing
+      const inner=new THREE.Group();
+      if(size.x>size.z)model.rotation.y=Math.PI/2;
+      inner.add(model);
+      inner.rotation.y=spec.yaw||0;
+      // Center on origin (ground-based enemies sit on y=0 instead)
+      const box2=new THREE.Box3().setFromObject(inner);
+      const c=box2.getCenter(new THREE.Vector3());
+      inner.position.sub(c);
+      if(spec.ground)inner.position.y=-box2.min.y-2; // feet at group y-2 (enemy group hovers at y≈2)
+      // Optional tint (e.g. brown bear -> polar bear white)
+      model.traverse(o=>{
+        if(o.isMesh){
+          o.castShadow=true;
+          if(spec.tint&&o.material&&o.material.color)
+            o.material.color.lerp(new THREE.Color(spec.tint),.65);
+        }
+      });
+      // Swap: clear procedural children, keep the group (animations target it)
+      while(this.enemy.children.length)this.enemy.remove(this.enemy.children[0]);
+      this.enemyParts={}; // part-level animations are guarded — body sway still applies
+      this.enemy.add(inner);
+      // Play baked animations if the model has any
+      if(gltf.animations&&gltf.animations.length){
+        const mixer=new THREE.AnimationMixer(model);
+        mixer.clipAction(gltf.animations[0]).play();
+        (this.mixers=this.mixers||[]).push(mixer);
+      }
+    },undefined,()=>{});
   }
   _buildSharkEnemy(){
     // Great White — face-on with massive gaping maw (matches reference image)

@@ -2715,49 +2715,78 @@ class JungleEngine{
   }
 
   _buildPoliceEnemy(){
+    // Three distinct officers — rounded anatomy, faces, duty gear.
+    // Animation pivots (lLeg/rLeg/rArm/lArm per officer) unchanged.
     const g=new THREE.Group();
     this.enemyParts={};
     this.enemyParts.officers=[];
-    const uniformMat=new THREE.MeshStandardMaterial({color:0x1a2855,roughness:.65});
-    const darkUniform=new THREE.MeshStandardMaterial({color:0x0a1535,roughness:.7});
-    const skinMat=new THREE.MeshStandardMaterial({color:0xd4a574,roughness:.6});
+    const uniformMat=new THREE.MeshStandardMaterial({color:0x1a2855,roughness:.6});
+    const darkUniform=new THREE.MeshStandardMaterial({color:0x0a1535,roughness:.65});
     const badgeMat=new THREE.MeshStandardMaterial({color:0xddbb00,metalness:.9,roughness:.2});
     const batonMat=new THREE.MeshStandardMaterial({color:0x3a2010,roughness:.5});
+    const beltMat=new THREE.MeshStandardMaterial({color:0x14100c,roughness:.45});
+    const hairM=new THREE.MeshStandardMaterial({color:0x2a1c10,roughness:.85});
+    const skinTones=[0xd4a574,0x8a5c38,0xe8c49a];
     for(let i=-1;i<=1;i++){
       const pg=new THREE.Group();const parts={};
-      // Torso
-      const torso=new THREE.Mesh(new THREE.BoxGeometry(.48,.72,.3),uniformMat);torso.position.y=1.1;pg.add(torso);
-      // Badge + shirt detail
-      const badge=new THREE.Mesh(new THREE.BoxGeometry(.08,.08,.01),badgeMat);badge.position.set(-.1,1.25,.16);pg.add(badge);
-      const collar=new THREE.Mesh(new THREE.BoxGeometry(.5,.06,.32),darkUniform);collar.position.y=1.42;pg.add(collar);
-      // Head
-      const head=new THREE.Mesh(new THREE.SphereGeometry(.18,10,8),skinMat);head.position.y=1.74;pg.add(head);
-      // Police cap
-      const cap=new THREE.Mesh(new THREE.CylinderGeometry(.2,.21,.09,10),darkUniform);cap.position.y=1.9;pg.add(cap);
-      const capBrim=new THREE.Mesh(new THREE.CylinderGeometry(.26,.27,.025,12),darkUniform);capBrim.position.y=1.835;pg.add(capBrim);
-      // Cap badge
-      const capBadge=new THREE.Mesh(new THREE.SphereGeometry(.04,5,4),badgeMat);capBadge.position.set(0,1.91,.21);pg.add(capBadge);
-      // Eyes (determined look)
-      for(let s=-1;s<=1;s+=2){const e=new THREE.Mesh(new THREE.SphereGeometry(.022,5,4),new THREE.MeshBasicMaterial({color:0x111111}));e.position.set(s*.07,1.76,.17);pg.add(e)}
-      // Legs animated
+      const skinMat=new THREE.MeshStandardMaterial({color:skinTones[i+1],roughness:.55});
+      // Torso — rounded uniform with shoulders and patches
+      const torso=new THREE.Mesh(new THREE.CylinderGeometry(.21,.24,.7,12),uniformMat);torso.position.y=1.1;torso.castShadow=true;pg.add(torso);
+      for(let s=-1;s<=1;s+=2){
+        const sh=new THREE.Mesh(new THREE.SphereGeometry(.1,8,6),uniformMat);sh.position.set(s*.24,1.42,0);pg.add(sh);
+        const patch=new THREE.Mesh(new THREE.BoxGeometry(.02,.09,.07),badgeMat);patch.position.set(s*.27,1.36,0);pg.add(patch);
+      }
+      // Duty belt with pouches
+      const dBelt=new THREE.Mesh(new THREE.CylinderGeometry(.235,.235,.07,12),beltMat);dBelt.position.y=.78;pg.add(dBelt);
+      for(let p=0;p<3;p++){
+        const pouch=new THREE.Mesh(new THREE.BoxGeometry(.07,.09,.05),beltMat);
+        const pa=-.8+p*.8;pouch.position.set(Math.sin(pa)*.24,.78,Math.cos(pa)*.24);pg.add(pouch);
+      }
+      // Badge, tie, chest radio
+      const badge=new THREE.Mesh(new THREE.BoxGeometry(.07,.08,.015),badgeMat);badge.position.set(-.1,1.28,.22);pg.add(badge);
+      const tie=new THREE.Mesh(new THREE.BoxGeometry(.06,.3,.02),darkUniform);tie.position.set(0,1.22,.23);pg.add(tie);
+      const radio=new THREE.Mesh(new THREE.BoxGeometry(.05,.08,.03),new THREE.MeshStandardMaterial({color:0x111111,roughness:.4}));radio.position.set(.12,1.32,.21);pg.add(radio);
+      // Head — hi-res with full face
+      const head=new THREE.Mesh(new THREE.SphereGeometry(.18,16,12),skinMat);head.position.y=1.74;head.scale.set(.95,1.05,.92);head.castShadow=true;pg.add(head);
+      const neck=new THREE.Mesh(new THREE.CylinderGeometry(.07,.09,.12,8),skinMat);neck.position.y=1.54;pg.add(neck);
+      for(let s=-1;s<=1;s+=2){
+        const ear=new THREE.Mesh(new THREE.SphereGeometry(.04,7,5),skinMat);ear.scale.set(.5,1,.7);ear.position.set(s*.165,1.74,0);pg.add(ear);
+        const white=new THREE.Mesh(new THREE.SphereGeometry(.03,7,5),new THREE.MeshBasicMaterial({color:0xf2eee6}));white.scale.set(1,.7,.5);white.position.set(s*.065,1.77,.15);pg.add(white);
+        const pupil=new THREE.Mesh(new THREE.SphereGeometry(.015,6,5),new THREE.MeshBasicMaterial({color:0x1a1208}));pupil.position.set(s*.065,1.77,.166);pg.add(pupil);
+        // Stern angled brows
+        const brow=new THREE.Mesh(new THREE.BoxGeometry(.06,.014,.018),hairM);brow.position.set(s*.065,1.82,.158);brow.rotation.z=s*-.2;pg.add(brow);
+      }
+      const pnose=new THREE.Mesh(new THREE.ConeGeometry(.03,.07,7),skinMat);pnose.rotation.x=Math.PI/2;pnose.position.set(0,1.73,.18);pg.add(pnose);
+      const pmouth=new THREE.Mesh(new THREE.BoxGeometry(.06,.012,.016),new THREE.MeshStandardMaterial({color:0x7a4a3a,roughness:.6}));pmouth.position.set(0,1.66,.155);pg.add(pmouth);
+      // Police cap: domed top + front visor only (not a full disc)
+      const cap=new THREE.Mesh(new THREE.CylinderGeometry(.19,.2,.1,14),darkUniform);cap.position.y=1.9;pg.add(cap);
+      const capTop=new THREE.Mesh(new THREE.SphereGeometry(.19,12,8),darkUniform);capTop.scale.y=.45;capTop.position.y=1.95;pg.add(capTop);
+      const visor=new THREE.Mesh(new THREE.CylinderGeometry(.2,.24,.02,12,1,false,-.6,1.2),new THREE.MeshStandardMaterial({color:0x050a18,roughness:.3}));
+      visor.position.y=1.85;pg.add(visor);
+      const capBadge=new THREE.Mesh(new THREE.SphereGeometry(.035,6,5),badgeMat);capBadge.position.set(0,1.9,.2);pg.add(capBadge);
+      // Legs — rounded with knees and boots (same pivots)
       const lLeg=new THREE.Group();const rLeg=new THREE.Group();
       for(const[leg,sx] of [[lLeg,-1],[rLeg,1]]){
-        const thigh=new THREE.Mesh(new THREE.BoxGeometry(.18,.42,.22),uniformMat);thigh.position.y=-.22;leg.add(thigh);
-        const shin=new THREE.Mesh(new THREE.BoxGeometry(.16,.38,.2),uniformMat);shin.position.y=-.42;thigh.add(shin);
-        const boot=new THREE.Mesh(new THREE.BoxGeometry(.18,.12,.28),darkUniform);boot.position.set(0,-.22,.03);shin.add(boot);
+        const thigh=new THREE.Mesh(new THREE.CylinderGeometry(.085,.075,.42,9),uniformMat);thigh.position.y=-.22;thigh.castShadow=true;leg.add(thigh);
+        const shin=new THREE.Mesh(new THREE.CylinderGeometry(.07,.06,.38,9),uniformMat);shin.position.y=-.42;thigh.add(shin);
+        const boot=new THREE.Mesh(new THREE.BoxGeometry(.14,.11,.24),darkUniform);boot.position.set(0,-.24,.04);shin.add(boot);
+        const toe=new THREE.Mesh(new THREE.SphereGeometry(.07,7,5),darkUniform);toe.scale.set(1,.65,1);toe.position.set(0,-.26,.15);shin.add(toe);
         leg.position.set(sx*.13,.84,0);pg.add(leg);
       }
       parts.lLeg=lLeg;parts.rLeg=rLeg;
-      // Right arm with baton (animated)
+      // Right arm with baton (animated) — rounded with hand
       const rArm=new THREE.Group();
-      const upper=new THREE.Mesh(new THREE.BoxGeometry(.12,.38,.14),uniformMat);upper.position.y=-.2;rArm.add(upper);
-      const fore=new THREE.Mesh(new THREE.BoxGeometry(.1,.32,.12),skinMat);fore.position.y=-.56;rArm.add(fore);
-      const baton=new THREE.Mesh(new THREE.CylinderGeometry(.025,.025,.55,5),batonMat);baton.position.y=-.2;fore.add(baton);
+      const upper=new THREE.Mesh(new THREE.CylinderGeometry(.06,.052,.38,9),uniformMat);upper.position.y=-.2;rArm.add(upper);
+      const fore=new THREE.Mesh(new THREE.CylinderGeometry(.05,.044,.32,9),skinMat);fore.position.y=-.56;rArm.add(fore);
+      const rHand=new THREE.Mesh(new THREE.SphereGeometry(.055,7,5),skinMat);rHand.position.y=-.74;rArm.add(rHand);
+      const baton=new THREE.Mesh(new THREE.CylinderGeometry(.025,.025,.55,7),batonMat);baton.position.y=-.2;fore.add(baton);
       rArm.position.set(.34,1.48,0);rArm.rotation.z=-.5;
       pg.add(rArm);parts.rArm=rArm;
-      // Left arm swinging
+      // Left arm swinging — now with forearm and hand
       const lArm=new THREE.Group();
-      const lUpper=new THREE.Mesh(new THREE.BoxGeometry(.12,.38,.14),uniformMat);lUpper.position.y=-.2;lArm.add(lUpper);
+      const lUpper=new THREE.Mesh(new THREE.CylinderGeometry(.06,.052,.38,9),uniformMat);lUpper.position.y=-.2;lArm.add(lUpper);
+      const lFore=new THREE.Mesh(new THREE.CylinderGeometry(.05,.044,.3,9),skinMat);lFore.position.y=-.54;lArm.add(lFore);
+      const lHand=new THREE.Mesh(new THREE.SphereGeometry(.055,7,5),skinMat);lHand.position.y=-.7;lArm.add(lHand);
       lArm.position.set(-.34,1.48,0);lArm.rotation.z=.4;
       pg.add(lArm);parts.lArm=lArm;
       pg.position.set(i*.58,0,Math.abs(i)*.15);

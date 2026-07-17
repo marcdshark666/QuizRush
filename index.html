@@ -3,11 +3,19 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="description" content="Quiz Rush — turn any text, PDF or webpage into a 3D endless-runner quiz game. Outrun the boulder, answer to survive!">
+  <meta name="theme-color" content="#0d1117">
+  <meta property="og:title" content="Quiz Rush - Jungle Escape">
+  <meta property="og:description" content="Turn any study material into a 3D runner quiz. 7 worlds, real 3D monsters, coins & costumes.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏃</text></svg>">
   <title>Quiz Rush - Jungle Escape</title>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800&family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script src="js-gltfloader.js"></script><!-- three r128 GLTFLoader (local copy) -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <!-- pdf.js is only needed when a PDF is uploaded — defer it off the critical path -->
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <style>
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 :root{
@@ -802,8 +810,11 @@ html,body{width:100%;height:100%;overflow:hidden;font-family:'Be Vietnam Pro',sa
 // ========================================================
 // PDF EXTRACTION
 // ========================================================
-pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 async function extractPDF(file,onProgress){
+  // pdf.js loads deferred — configure the worker lazily on first use
+  if(typeof pdfjsLib==='undefined')throw new Error('PDF engine still loading — try again in a second.');
+  if(!pdfjsLib.GlobalWorkerOptions.workerSrc)
+    pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
   const data=await file.arrayBuffer();
   const pdf=await pdfjsLib.getDocument({data}).promise;
   const total=pdf.numPages;
@@ -3702,8 +3713,9 @@ class JungleEngine{
     if(!this.running)return;requestAnimationFrame(()=>this._animate());
     const dt=Math.min(this.clock.getDelta(),.05),t=this.clock.getElapsedTime();
 
-    // Animated canvas background (video textures update themselves)
-    if(this._bgTex&&!this._bgVideo){this._bgDraw(t);this._bgTex.needsUpdate=true}
+    // Animated canvas background — redrawn every 2nd frame (halves 2D cost,
+    // still 30fps for slow drifting clouds/fish). Video textures self-update.
+    if(this._bgTex&&!this._bgVideo&&((this._bgFrame=(this._bgFrame||0)+1)&1)){this._bgDraw(t);this._bgTex.needsUpdate=true}
 
     // GLB skeletal/morph animations (loaded bird models etc.)
     if(this.mixers)for(let i=0;i<this.mixers.length;i++)this.mixers[i].update(dt);

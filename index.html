@@ -1752,7 +1752,7 @@ class JungleEngine{
     this._initVideoBG(wc); // per-world video background (or animated canvas fallback)
     this.camera=new THREE.PerspectiveCamera(70,window.innerWidth/window.innerHeight,.1,200);
     this.camera.position.set(0,4.15,9.6);this.camera.lookAt(0,1.05,-18);
-    this.renderer=new THREE.WebGLRenderer({antialias:true});
+    this.renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});
     this.renderer.setSize(window.innerWidth,window.innerHeight);
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio,3)); // native-res on 4K/retina
     this.renderer.shadowMap.enabled=true;
@@ -1775,7 +1775,9 @@ class JungleEngine{
     if(_ao)_ao.className=this.worldId!=='jungle'?this.worldId:'';
     const _badge=document.getElementById('hud-world-badge');
     if(_badge){const _wBadgeColors={jungle:'#75fd00',underwater:'#26e6ff',city:'#9090ff',snakepit:'#ff6600',arctic:'#80d0ff',ocean:'#4488ff',dragon:'#ff6600'};_badge.textContent=wc.emoji+' '+wc.name.toUpperCase();_badge.style.color=_wBadgeColors[this.worldId]||'#fff'}
-    window.addEventListener('resize',()=>this._resize());this.running=true;this._animate();
+    this._onResize=()=>this._resize(); // stored so destroy() can remove it
+    window.addEventListener('resize',this._onResize);
+    this.running=true;this._animate();
   }
   // ── LIVE VIDEO / ANIMATED BACKGROUND ─────────────────────────────────
   // Tries videos/<worldId>.mp4 first (drop in AI-generated clips from
@@ -4109,8 +4111,26 @@ class JungleEngine{
   _resize(){if(!this.camera)return;this.camera.aspect=window.innerWidth/window.innerHeight;this.camera.updateProjectionMatrix();this.renderer.setSize(window.innerWidth,window.innerHeight)}
   destroy(){
     this.running=false;
+    if(this._onResize)window.removeEventListener('resize',this._onResize);
     if(this.audioCtx)try{this.audioCtx.close()}catch(e){}
     if(this._bgVideo){try{this._bgVideo.pause();this._bgVideo.removeAttribute('src');this._bgVideo.load()}catch(e){}}
+    // Free GPU memory: every restart used to leak hundreds of geometries,
+    // materials and textures — dispose the whole scene graph explicitly.
+    if(this.scene){
+      this.scene.traverse(o=>{
+        if(o.geometry)o.geometry.dispose();
+        if(o.material){
+          const mats=Array.isArray(o.material)?o.material:[o.material];
+          for(const m of mats){
+            for(const k in m)if(m[k]&&m[k].isTexture)m[k].dispose();
+            m.dispose();
+          }
+        }
+      });
+      if(this.scene.environment&&this.scene.environment.dispose)this.scene.environment.dispose();
+      if(this.scene.background&&this.scene.background.dispose)this.scene.background.dispose();
+    }
+    this.mixers=[];
     if(this.renderer){this.renderer.dispose();this.renderer.domElement.remove()}
   }
 }

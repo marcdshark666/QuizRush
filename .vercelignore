@@ -1,0 +1,7 @@
+# Legacy March-era files — the game is the single root index.html now.
+# public/ contains a stale April copy that Vercel would serve instead.
+public
+server.js
+package.json
+uploads
+.env.local

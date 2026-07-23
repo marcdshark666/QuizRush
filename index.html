@@ -2031,6 +2031,18 @@ class JungleEngine{
     // Bark: vertical-repeat noise texture (color + bump) on all trunks
     const barkTex=this._noiseTexture(0x3a2a1a,1,52);
     const treeMat=new THREE.MeshStandardMaterial({map:barkTex,bumpMap:barkTex,bumpScale:.06,roughness:.9});
+    // Shared unit geometries — chunks respawn continuously while scrolling,
+    // so per-mesh geometry allocation churned hundreds of GPU buffers.
+    // One unit geometry + per-mesh scale renders identically.
+    const GC=this._geoCache||(this._geoCache={
+      sphere8:new THREE.SphereGeometry(1,8,6),
+      sphere6:new THREE.SphereGeometry(1,6,5),
+      cone4:new THREE.ConeGeometry(1,1,4),
+      box:new THREE.BoxGeometry(1,1,1),
+      dodeca:new THREE.DodecahedronGeometry(1,0),
+      plane:new THREE.PlaneGeometry(1,1),
+      flowerMats:[0xff4488,0xffcc22,0xff6633,0xcc55ff].map(c=>new THREE.MeshStandardMaterial({color:c,roughness:.5,emissive:c,emissiveIntensity:.15}))
+    });
     const leafMats=[new THREE.MeshStandardMaterial({color:0x1a6a1a,roughness:.7}),new THREE.MeshStandardMaterial({color:0x2a8a2a,roughness:.7}),new THREE.MeshStandardMaterial({color:0x1a5a2a,roughness:.7})];
     const vineMat=new THREE.MeshStandardMaterial({color:0x2a5a2a,roughness:.8});
     const fernMat=new THREE.MeshStandardMaterial({color:0x3a7a3a,roughness:.8,side:THREE.DoubleSide});
@@ -2049,9 +2061,9 @@ class JungleEngine{
         // Canopy
         for(let j=0;j<2+Math.floor(Math.random()*2);j++){
           const r=1+Math.random()*1.8;
-          const leaf=new THREE.Mesh(new THREE.SphereGeometry(r,8,6),leafMats[Math.floor(Math.random()*3)]);
+          const leaf=new THREE.Mesh(GC.sphere8,leafMats[Math.floor(Math.random()*3)]);
           leaf.position.set(x+(Math.random()-.5)*1.8,h+Math.random()*1.5-.5,z+Math.random()*3);
-          leaf.scale.y=.5+Math.random()*.2;leaf.castShadow=true;this.scene.add(leaf);
+          leaf.scale.set(r,r*(.5+Math.random()*.2),r);leaf.castShadow=true;this.scene.add(leaf);
           this.scrollObjects.push({mesh:leaf,baseZ:leaf.position.z});
         }
         // Vine (50% chance)
@@ -2064,14 +2076,16 @@ class JungleEngine{
       }
       // Ferns
       if(Math.random()>.3){
-        const fern=new THREE.Mesh(new THREE.PlaneGeometry(.4+Math.random()*.5,.8+Math.random()*.8),fernMat);
+        const fern=new THREE.Mesh(GC.plane,fernMat);
+        fern.scale.set(.4+Math.random()*.5,.8+Math.random()*.8,1);
         fern.position.set((Math.random()-.5)*9,.35,z+Math.random()*3);
         fern.rotation.y=Math.random()*Math.PI;fern.rotation.x=-.2;this.scene.add(fern);
         this.scrollObjects.push({mesh:fern,baseZ:fern.position.z});
       }
       // Rock
       if(Math.random()>.7){
-        const r=new THREE.Mesh(new THREE.DodecahedronGeometry(.1+Math.random()*.25,0),rockMat);
+        const r=new THREE.Mesh(GC.dodeca,rockMat);
+        r.scale.setScalar(.1+Math.random()*.25);
         r.position.set((Math.random()-.5)*7,.1,z+Math.random()*3);
         r.rotation.set(Math.random()*Math.PI,Math.random()*Math.PI,0);this.scene.add(r);
         this.scrollObjects.push({mesh:r,baseZ:r.position.z});
@@ -2081,22 +2095,22 @@ class JungleEngine{
         if(Math.random()>.4){
           const gx=s*(2.1+Math.random()*.5),gz=z+Math.random()*4;
           for(let b=0;b<3;b++){
-            const blade=new THREE.Mesh(new THREE.ConeGeometry(.03,.3+Math.random()*.25,4),leafMats[b%3]);
+            const blade=new THREE.Mesh(GC.cone4,leafMats[b%3]);
+            blade.scale.set(.03,.3+Math.random()*.25,.03);
             blade.position.set(gx+(Math.random()-.5)*.2,.15,gz+(Math.random()-.5)*.2);
             blade.rotation.z=(Math.random()-.5)*.4;this.scene.add(blade);
             this.scrollObjects.push({mesh:blade,baseZ:gz});
           }
         }
       }
-      // Jungle flowers — small color pops
+      // Jungle flowers — small color pops (shared geometry + cached materials)
       if(Math.random()>.6){
-        const fCol=[0xff4488,0xffcc22,0xff6633,0xcc55ff][Math.floor(Math.random()*4)];
         const fx=(Math.random()>.5?1:-1)*(2.2+Math.random()*2),fz=z+Math.random()*4;
         const stem=new THREE.Mesh(new THREE.CylinderGeometry(.015,.02,.35,4),vineMat);
         stem.position.set(fx,.18,fz);this.scene.add(stem);
         this.scrollObjects.push({mesh:stem,baseZ:fz});
-        const bloom=new THREE.Mesh(new THREE.SphereGeometry(.09,6,5),new THREE.MeshStandardMaterial({color:fCol,roughness:.5,emissive:fCol,emissiveIntensity:.15}));
-        bloom.scale.y=.6;bloom.position.set(fx,.4,fz);this.scene.add(bloom);
+        const bloom=new THREE.Mesh(GC.sphere6,GC.flowerMats[Math.floor(Math.random()*4)]);
+        bloom.scale.set(.09,.054,.09);bloom.position.set(fx,.4,fz);this.scene.add(bloom);
         this.scrollObjects.push({mesh:bloom,baseZ:fz});
       }
     }
@@ -2105,9 +2119,8 @@ class JungleEngine{
     const mossStoneMat=new THREE.MeshStandardMaterial({color:0x6a7a5a,roughness:.9});
     for(let z=startZ;z>startZ-this.CHUNK;z-=4){
       for(let s=-1;s<=1;s+=2){
-        const st=new THREE.Mesh(
-          new THREE.BoxGeometry(.5+Math.random()*.2,.28+Math.random()*.14,3.4),
-          Math.random()>.35?pathStoneMat:mossStoneMat);
+        const st=new THREE.Mesh(GC.box,Math.random()>.35?pathStoneMat:mossStoneMat);
+        st.scale.set(.5+Math.random()*.2,.28+Math.random()*.14,3.4);
         st.position.set(s*2.0,.12,z-1.5+Math.random()*.4);
         st.rotation.y=(Math.random()-.5)*.06;st.rotation.z=(Math.random()-.5)*.05;
         st.castShadow=true;this.scene.add(st);

@@ -498,7 +498,7 @@ html,body{width:100%;height:100%;overflow:hidden;font-family:'Be Vietnam Pro',sa
     <div class="upload-card relic">
       <div class="card-header"><div class="card-icon relic">📤</div><span class="pill-badge orange">Archive Drop</span></div>
       <h3>UPLOAD FILES</h3>
-      <p class="card-desc">Toss in your PDF or TXT scrolls for processing.</p>
+      <p class="card-desc">PDF, TXT or Markdown — big files are fine, the whole document is read and the questions are spread across it.</p>
       <div class="drop-zone" id="drop-zone"><div class="dz-icon">📁</div><p>DROP 'EM HERE!</p></div>
       <input type="file" id="file-input" accept=".pdf,.txt,.md" hidden>
       <div class="file-selected" id="file-selected"></div>
@@ -521,7 +521,7 @@ html,body{width:100%;height:100%;overflow:hidden;font-family:'Be Vietnam Pro',sa
     <div class="upload-card" style="background:var(--bg-card)">
       <div class="card-header"><div class="card-icon" style="background:rgba(255,45,85,0.15)">🎯</div><span class="pill-badge" style="background:rgba(255,45,85,0.15);color:var(--danger)">Challenge</span></div>
       <h3>DIFFICULTY</h3>
-      <p class="card-desc">Choose your challenge level. Harder = fewer lives!</p>
+      <p class="card-desc">Harder = fewer lives <em>and</em> tougher questions: recall → understanding → application → expert traps. The AI writes them from your material.</p>
       <div id="diff-selector" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px">
         <button class="diff-btn" data-diff="beginner" onclick="setDifficulty('beginner')">
           <span class="diff-icon">🌱</span><span class="diff-name">Beginner</span><span class="diff-hearts">❤️×10</span>
@@ -1652,6 +1652,61 @@ const DEMO_QUESTIONS=[
 ];
 
 // ========================================================
+// AI QUIZ PIPELINE — Gemini via /api/generate (key stays on the server)
+// ========================================================
+// Big documents are split into a handful of windows spread evenly over the
+// whole text; each window becomes one request, run in parallel, so a 300-page
+// PDF still yields questions from the beginning, middle and end.
+const AI_ENDPOINT='/api/generate';
+const AI_CHUNK=24000;    // characters per request (well inside the model's window)
+const AI_MAX_PARTS=6;    // parallel requests at most
+function splitForAI(text,count){
+  const clean=text.replace(/\r/g,'').replace(/[ \t]+/g,' ').replace(/\n{3,}/g,'\n\n').trim();
+  if(clean.length<=AI_CHUNK)return[clean];
+  const parts=Math.min(AI_MAX_PARTS,Math.max(2,Math.ceil(count/6)),Math.ceil(clean.length/AI_CHUNK));
+  const block=Math.floor(clean.length/parts);
+  const out=[];
+  for(let i=0;i<parts;i++){
+    let start=i*block;const end=i===parts-1?clean.length:(i+1)*block;
+    if(i>0){const nl=clean.indexOf('\n',start);if(nl!==-1&&nl-start<2000)start=nl+1} // snap to a paragraph edge
+    let seg=clean.slice(start,end);
+    if(seg.length>AI_CHUNK){const mid=Math.floor((seg.length-AI_CHUNK)/2);seg=seg.slice(mid,mid+AI_CHUNK)} // representative window from the block's middle
+    out.push(seg);
+  }
+  return out;
+}
+async function aiGenerate(seg,count,difficulty,lang,part,parts){
+  const r=await fetch(AI_ENDPOINT,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({text:seg,count,difficulty,lang,part,parts}),signal:AbortSignal.timeout(70000)});
+  const d=await r.json().catch(()=>({}));
+  if(!r.ok){const e=new Error(d.message||('AI '+r.status));e.code=d.error||r.status;throw e}
+  return Array.isArray(d.questions)?d.questions:[];
+}
+async function buildQuiz(text,onProgress){
+  const count=selectedQCount||10,difficulty=selectedDifficulty||'easy',lang=detectLanguage(text);
+  const segs=splitForAI(text,count);
+  const per=Math.min(30,Math.ceil(count*1.25/segs.length)); // small surplus → dedupe + selection
+  const label={beginner:'beginner',easy:'easy',medium:'medium',hard:'hard',insane:'insane'}[difficulty]||difficulty;
+  let done=0;
+  if(onProgress)onProgress(`AI is reading your material — writing ${count} ${label} questions (${segs.length} part${segs.length>1?'s':''})...`);
+  const results=await Promise.allSettled(segs.map((seg,i)=>aiGenerate(seg,per,difficulty,lang,i+1,segs.length).then(qs=>{done++;if(onProgress)onProgress(`AI writing questions — part ${done}/${segs.length} done...`);return qs})));
+  const lists=results.filter(r=>r.status==='fulfilled').map(r=>r.value).filter(l=>l.length);
+  if(!lists.length){const first=results.find(r=>r.status==='rejected');const e=first?first.reason:new Error('AI returned nothing');throw e}
+  // Walk through the document: round-robin over the parts, drop near-duplicates, cap at count
+  const seen=new Set(),out=[];
+  const norm=s=>String(s).toLowerCase().replace(/[^\p{L}\p{N}]+/gu,' ').trim();
+  for(let i=0;out.length<count;i++){
+    let any=false;
+    for(const l of lists){
+      if(i<l.length){any=true;const q=l[i];const k=norm(q.question);
+        if(!k||seen.has(k)||!Array.isArray(q.options)||q.options.length!==4)continue;
+        seen.add(k);out.push(q);if(out.length>=count)break}
+    }
+    if(!any)break;
+  }
+  return out.map(q=>({question:q.question,options:q.options.map((o,i)=>'ABCD'[i]+') '+String(o).replace(/^[A-D]\)\s*/,'')),correct:q.correct,explanation:q.explanation||'',topic:q.topic||'',ai:true}));
+}
+
+// ========================================================
 // UPLOAD LOGIC
 // ========================================================
 const dropZone=document.getElementById('drop-zone'),fileInput=document.getElementById('file-input'),fileSelected=document.getElementById('file-selected'),startBtn=document.getElementById('start-btn'),loadingMsg=document.getElementById('loading-msg'),errorBanner=document.getElementById('error-banner');
@@ -1708,11 +1763,21 @@ startBtn.addEventListener('click',async()=>{
       text=document.getElementById('text-input').value.trim();
     }
     if(!text||text.length<50){showError('Please provide at least 50 characters of content! Upload a PDF, paste a URL, or type/paste text.');startBtn.disabled=false;loadingMsg.style.display='none';return}
-    setLoading('Generating quiz from your content...');
-    // Use setTimeout to let the UI update before heavy processing
-    await new Promise(r=>setTimeout(r,100));
-    const q=generateMCQs(text);
-    if(!q||q.length<1)throw new Error('Could not extract any questions — please provide more detailed content.');
+    // AI first: the model reads the material and writes real questions at the chosen
+    // difficulty. The old sentence-chopper stays as an offline fallback only.
+    let q=null,aiNote='';
+    try{q=await buildQuiz(text,msg=>setLoading(msg))}
+    catch(e){
+      console.warn('AI quiz failed',e);
+      aiNote=e.code==='no_key'?'AI is not configured on the server':e.code==='quota'?'AI quota reached for now':e.code==='too_short'?'Too little text for the AI':'AI unavailable right now';
+    }
+    if(!q||q.length<1){
+      setLoading(aiNote+' — building a basic quiz instead...');
+      await new Promise(r=>setTimeout(r,100)); // let the UI paint before heavy processing
+      q=generateMCQs(text);
+      if(!q||q.length<1)throw new Error('Could not extract any questions — please provide more detailed content.');
+      showError(aiNote+' — questions were built by the simple generator.');
+    }
     loadingMsg.style.display='none';
     launchGame(q);
   }catch(e){
@@ -2541,13 +2606,17 @@ class JungleEngine{
   // procedural enemy if the file is missing or fails (offline-safe).
   _trySwapEnemyGLB(et){
     if(et==='police')return this._swapPoliceGLB();
+    // Sizes are the model's longest axis in world units. They were tuned up
+    // (2026-09-06) after headless renders showed the shark, orca and cobra as
+    // near-invisible specks: the enemy sits 20–45 units from the camera, and a
+    // 5-unit shark seen head-on is only two units wide.
     const SPECS={
-      shark:{url:'models/Shark.glb',size:5.2,yaw:0},
-      bear: {url:'models/Bear.glb', size:3.4,yaw:0,tint:0xf5f0e8,ground:true},
-      orca: {url:'models/Orca.glb', size:6.0,yaw:Math.PI}, // model faces -Z natively
-      snake:{url:'models/Cobra.glb',size:4.2,yaw:0,ground:true},
+      shark:{url:'models/Shark.glb',size:7.6,yaw:0},
+      bear: {url:'models/Bear.glb', size:4.6,yaw:0,ground:true},
+      orca: {url:'models/Orca.glb', size:8.4,yaw:Math.PI}, // model faces -Z natively
+      snake:{url:'models/Cobra.glb',size:7.0,yaw:0,ground:true},
       // Birds: wingspan exceeds body length, so skip the long-axis swap
-      drake:{url:'models/Vulture.glb',size:4.6,yaw:0,noAxisSwap:true}
+      drake:{url:'models/Vulture.glb',size:5.8,yaw:0,noAxisSwap:true}
     };
     const spec=SPECS[et];
     if(!spec||!THREE.GLTFLoader)return;
@@ -2573,46 +2642,47 @@ class JungleEngine{
       // Ground enemies: _animate keeps their group near y≈0 (bear bounce,
       // snake slither), so feet belong at group-local y=0 — NOT y-2.
       if(spec.ground)inner.position.y=-box2.min.y;
-      // Optional tint (e.g. brown bear -> polar bear white)
-      model.traverse(o=>{
-        if(o.isMesh){
-          o.castShadow=true;
-          if(spec.tint&&o.material&&o.material.color)
-            o.material.color.lerp(new THREE.Color(spec.tint),.65);
-        }
-      });
+      model.traverse(o=>{if(o.isMesh)o.castShadow=true});
+      // Light, materials and the effects the procedural enemy had
+      const extras=this._dressGLB(et,inner,new THREE.Box3().setFromObject(inner));
       // Swap: clear procedural children, keep the group (animations target it)
       while(this.enemy.children.length)this.enemy.remove(this.enemy.children[0]);
-      this.enemyParts={}; // part-level animations are guarded — body sway still applies
+      this.enemyParts=extras.parts; // part-level animations are guarded — body sway still applies
       this.enemy.add(inner);
-      // Play baked animations if the model has any
+      // Play baked animations if the model has any (the shark swims)
+      let mixer=null;
       if(gltf.animations&&gltf.animations.length){
-        const mixer=new THREE.AnimationMixer(model);
+        mixer=new THREE.AnimationMixer(model);
         mixer.clipAction(gltf.animations[0]).play();
         (this.mixers=this.mixers||[]).push(mixer);
       }
+      this.enemyGLB={type:et,inner,mixer,head:extras.head,fire:extras.fire};
     },undefined,()=>{});
   }
   // Police squad: three real officer models (2 male + 1 female).
   // Swaps in only when ALL three load; procedural squad kept otherwise.
+  // The models ship with a Sprint clip — without it they stood frozen mid-chase.
   _swapPoliceGLB(){
     if(!THREE.GLTFLoader)return;
     const loader=new THREE.GLTFLoader();
     const urls=['models/PoliceM.glb','models/PoliceF.glb','models/PoliceM.glb'];
-    let loaded=0;const placed=[];
+    let loaded=0;const placed=[];const mixers=[];
     urls.forEach((u,i)=>{
       loader.load(u,(gltf)=>{
         const model=gltf.scene;
         const box=new THREE.Box3().setFromObject(model);
         const size=box.getSize(new THREE.Vector3());
-        model.scale.setScalar(2.3/(Math.max(size.x,size.y,size.z)||1));
+        model.scale.setScalar(2.4/(Math.max(size.x,size.y,size.z)||1));
         const inner=new THREE.Group();inner.add(model);
         const b2=new THREE.Box3().setFromObject(inner);
         const c=b2.getCenter(new THREE.Vector3());
         model.position.x-=c.x;model.position.z-=c.z;
         model.position.y-=b2.min.y; // feet on the ground
-        model.traverse(o=>{if(o.isMesh)o.castShadow=true});
+        model.traverse(o=>{if(o.isMesh){o.castShadow=true;const m=o.material;if(m){if(m.metalness!==undefined)m.metalness=.08;if(m.roughness!==undefined)m.roughness=.75;if(m.envMapIntensity!==undefined)m.envMapIntensity=1.4;m.needsUpdate=true}}});
         inner.position.set((i-1)*.62,0,Math.abs(i-1)*.15);
+        const anims=gltf.animations||[];
+        const clip=anims.find(a=>/sprint/i.test(a.name))||anims.find(a=>/run|walk/i.test(a.name))||anims[0];
+        if(clip){const mx=new THREE.AnimationMixer(model);const act=mx.clipAction(clip);act.play();act.time=Math.random()*clip.duration;mx.timeScale=1.05+i*.08;mixers.push(mx)}
         placed[i]=inner;loaded++;
         if(loaded===urls.length&&this.enemy){
           while(this.enemy.children.length)this.enemy.remove(this.enemy.children[0]);
@@ -2620,10 +2690,132 @@ class JungleEngine{
           placed.forEach(p=>this.enemy.add(p));
           const siren=new THREE.PointLight(0xff0000,1.5,8);
           siren.position.set(0,3,.3);this.enemy.add(siren);
-          this.enemyParts.siren=siren;
+          const siren2=new THREE.PointLight(0x2255ff,1.5,8);
+          siren2.position.set(0,3,.3);this.enemy.add(siren2);
+          this.enemyParts.siren=siren;this.enemyParts.siren2=siren2;
+          // Street-lamp key light from the camera side so the uniforms read in the dark city
+          const key=new THREE.PointLight(0xfff1cc,2.2,16,2);key.position.set(1.4,3.6,4.5);this.enemy.add(key);
+          (this.mixers=this.mixers||[]).push(...mixers);
+          this.enemyGLB={type:'police',inner:null,mixer:null};
         }
       },undefined,()=>{});
     });
+  }
+  // ── GLB PRESENTATION ───────────────────────────────────────────────────
+  // The world sun sits BEHIND the enemy (it lights the runner's face), so an
+  // untouched GLB reads as a black cut-out in the dark worlds — the headless
+  // renders showed the shark and orca vanishing into the fog. Every real model
+  // therefore gets its own key + rim light, materials that never go pure black,
+  // and the effects its procedural stand-in had (bubbles, fire, ember eyes).
+  _dressGLB(et,inner,box){
+    const size=box.getSize(new THREE.Vector3());
+    const KEY={shark:0xa8dcff,orca:0x8fb8ff,snake:0xffb060,bear:0xffffff,drake:0xff8a3c}[et]||0xffffff;
+    const key=new THREE.PointLight(KEY,2.8,size.z*3+14,2);key.position.set(1.4,size.y*.9+1.2,size.z*.7+3);inner.add(key);
+    const rim=new THREE.PointLight(0xffffff,1.2,size.z*2+10,2);rim.position.set(-1.8,size.y*1.5+2,-size.z*.5);inner.add(rim);
+    inner.traverse(o=>{
+      if(!o.isMesh||!o.material)return;
+      const m=o.material;
+      if(m.metalness!==undefined)m.metalness=Math.min(m.metalness,.12);
+      if(m.roughness!==undefined)m.roughness=Math.min(Math.max(m.roughness,.35),.85);
+      if(m.envMapIntensity!==undefined)m.envMapIntensity=1.6;
+      if(m.emissive){m.emissive.setHex(0x14141c);m.emissiveIntensity=.4}
+      m.needsUpdate=true;
+    });
+    const parts={};let head=null,fire=null;
+    const yTop=box.max.y-inner.position.y,zFront=box.max.z-inner.position.z; // inner-local extents
+    if(et==='bear'){
+      // Polar bear: the file is a black bear. Tinting a dark texture only makes grey,
+      // so the fur is lifted with a cool white self-light — the darker eyes and nose
+      // in the texture still read as features.
+      inner.traverse(o=>{if(o.isMesh&&o.material){const m=o.material;m.color.setHex(0xffffff);m.roughness=.95;m.emissive.setHex(0xe4ecff);m.emissiveIntensity=.62;m.needsUpdate=true}});
+      key.color.setHex(0xdff2ff);key.intensity=2.2;
+    }
+    if(et==='shark'||et==='orca'){
+      // Bubble trail behind the tail
+      const bubbles=[];
+      for(let i=0;i<10;i++){
+        const b=new THREE.Mesh(new THREE.SphereGeometry(.05+Math.random()*.08,5,4),new THREE.MeshStandardMaterial({color:0x9fd6ff,transparent:true,opacity:.5,roughness:.2}));
+        b.position.set((Math.random()-.5)*1.6,size.y*.3+Math.random()*.8,-size.z*.45-Math.random()*2);
+        inner.add(b);bubbles.push(b);
+      }
+      parts.bubbles=bubbles;
+      // Wet skin: glossy, catches the key light
+      inner.traverse(o=>{if(o.isMesh&&o.material&&o.material.roughness!==undefined){o.material.roughness=.38;o.material.envMapIntensity=2.2}});
+    }
+    if(et==='snake'){
+      // Hood glow + the pit's ember light on the scales
+      head=new THREE.Vector3(0,yTop*.88,zFront*.3);
+      const eyeL=new THREE.PointLight(0xffcc33,1.3,4);eyeL.position.copy(head);inner.add(eyeL);
+      inner.traverse(o=>{if(o.isMesh&&o.material&&o.material.emissive){o.material.emissive.setHex(0x3a1a06);o.material.emissiveIntensity=.35}});
+    }
+    if(et==='drake'){
+      // Demonic tint, ember eyes and a fire breath aimed at the runner
+      inner.traverse(o=>{if(o.isMesh&&o.material){const m=o.material;m.color.setHex(0xd8a08a);m.emissive.setHex(0x2a0a04);m.emissiveIntensity=.5;m.needsUpdate=true}});
+      head=new THREE.Vector3(0,yTop*.9,zFront*.45);
+      for(const s of[-1,1]){const eye=new THREE.Mesh(new THREE.SphereGeometry(.09,6,5),new THREE.MeshStandardMaterial({color:0xff9900,emissive:0xff5500,emissiveIntensity:3}));eye.position.set(s*.16,head.y,head.z+.08);inner.add(eye)}
+      const eyeL=new THREE.PointLight(0xff7700,1.6,4);eyeL.position.copy(head);inner.add(eyeL);
+      const fl=new THREE.PointLight(0xff4400,3.2,16);fl.position.set(0,head.y-.6,head.z+1.4);inner.add(fl);parts.fireLight=fl;
+      fire=[];
+      for(let i=0;i<10;i++){
+        const f=new THREE.Mesh(new THREE.SphereGeometry(.16+Math.random()*.12,5,4),new THREE.MeshBasicMaterial({color:[0xffd23a,0xff8a1e,0xff4a10][i%3],transparent:true,opacity:.7}));
+        f.position.set(0,head.y-.4,head.z+.4+Math.random()*3.5);inner.add(f);fire.push(f);
+      }
+    }
+    return{parts,head,fire};
+  }
+  // Per-frame life for the real models. The world block above handles bob/sway
+  // and the ocean bubbles; this adds the motion a single static mesh lacks.
+  _animateGLB(t,dt,df){
+    const g=this.enemyGLB,e=this.enemy;if(!g||!e)return;
+    const threat=Math.max(0,Math.min(1,df));
+    switch(g.type){
+      case'shark':{ // hunting: circles in three-quarter view, snaps faster as it closes in
+        // Head-on a shark is a two-unit blob hidden behind the runner; a yawed
+        // profile shows the whole body, and it looms above the runner's head.
+        if(g.mixer)g.mixer.timeScale=1+threat*1.4;
+        e.rotation.y=.62+Math.sin(t*.85)*.28;
+        e.rotation.x=Math.sin(t*1.7)*.05;
+        e.position.y+=1.2;
+        e.position.x=Math.sin(t*(.9+threat*3))*(1.1-threat*.5);
+        if(this.enemyParts&&this.enemyParts.bubbles)for(const b of this.enemyParts.bubbles){b.position.y+=dt*.25;b.position.x+=Math.sin(t*4+b.position.z)*.006;if(b.position.y>3.6){b.position.y=.3;b.position.z=-1-Math.random()*2.5}}
+        break}
+      case'orca':{ // undulating glide in three-quarter view, noses up when close
+        e.rotation.y=-.55+Math.sin(t*.65)*.22;
+        e.rotation.x=Math.sin(t*1.3+.5)*.09+threat*.08;
+        e.rotation.z=Math.sin(t*.9)*.05;
+        e.position.y+=1.0;
+        e.position.x=Math.sin(t*.7)*(1.2-threat*.5);
+        break}
+      case'bear':{ // gallop: rocking pitch + squash/stretch in time with the bounce
+        const ph=t*6;
+        e.rotation.x=Math.sin(ph)*.11;
+        e.scale.y=e.scale.x*(1+Math.sin(ph+.6)*.06);
+        e.position.x=Math.sin(t*1.1)*.25;
+        break}
+      case'snake':{ // rears up and strikes when close
+        e.rotation.x=-.06-Math.sin(t*1.9)*.05-threat*.12;
+        const strike=Math.pow(Math.max(0,Math.sin(t*2.6)),6)*threat;
+        e.position.z+=strike*1.2;
+        break}
+      case'drake':{ // fire breath toward the runner, wing-beat surge
+        if(g.fire&&g.head){
+          for(const f of g.fire){
+            f.position.z+=dt*(3.2+threat*2.5);
+            const life=(f.position.z-g.head.z)/4;
+            f.scale.setScalar(Math.max(.15,1.1-life)*(.8+Math.random()*.5));
+            f.material.opacity=Math.max(0,.85-life)*(.6+Math.random()*.4);
+            f.position.x=(Math.random()-.5)*.35*(1+life*2);
+            f.position.y=g.head.y-.4+Math.sin(t*9+f.position.z)*.08+life*.45;
+            if(life>1)f.position.z=g.head.z+.4;
+          }
+        }
+        e.position.y+=Math.sin(t*5.2)*.05;
+        break}
+      case'police':{ // sprinting: lean into the run, alternate the siren
+        e.rotation.x=.06+Math.sin(t*9)*.02;
+        if(this.enemyParts&&this.enemyParts.siren2){const ph=Math.sin(t*6);this.enemyParts.siren.intensity=1+Math.max(0,ph)*2.2;this.enemyParts.siren2.intensity=1+Math.max(0,-ph)*2.2}
+        break}
+    }
   }
   _buildSharkEnemy(){
     // Great White — face-on with massive gaping maw (matches reference image)
@@ -3992,6 +4184,9 @@ class JungleEngine{
       }
     }
 
+    // Real GLB models: the motion a single mesh lacks (gallop, strike, fire…)
+    if(this.enemyGLB&&this.enemy&&!this.devourMode)this._animateGLB(t,dt,df);
+
     // ── DEVOUR SEQUENCE (last heart lost → enemy charges + eats player) ──
     if(this.devourMode&&this.enemy&&this.player){
       this.devourT+=dt;
@@ -4190,7 +4385,7 @@ class QuizGame{
     const m=Math.floor(Math.max(0,this.left)/60),s=Math.max(0,this.left)%60;
     document.getElementById('hud-time').textContent=String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
     document.getElementById('hud-score').textContent=this.score.toLocaleString();
-    document.getElementById('hud-hearts').textContent='💖'.repeat(Math.max(0,this.hearts))+'🖤'.repeat(Math.max(0,3-this.hearts));
+    document.getElementById('hud-hearts').textContent='💖'.repeat(Math.max(0,this.hearts))+'🖤'.repeat(Math.max(0,this.maxHearts-this.hearts));
     document.getElementById('q-count').textContent=`${Math.min(this.cur+1,this.target)}/${Math.min(this.target,this.qs.length)}`;
     // Update dots
     const dots=document.querySelectorAll('.q-dot');
@@ -5914,6 +6109,42 @@ showScreen=function(name){
 // Init on page load
 syncCoins();
 refreshWorldSelector();
+
+// ── PREVIEW/TEST: ?demo=<world>&diff=<difficulty>&dist=<enemyDistance> ──
+// Autostartar demot i vald värld så en headless-webbläsare kan fota fienden.
+// Låser upp världen bara i den här webbläsarprofilen (localStorage) — inget
+// ändras på riktigt för spelare som inte använder parametern.
+(function(){
+  try{
+    const p=new URLSearchParams(location.search);
+    const w=p.get('demo');if(!w)return;
+    if(WORLDS[w]){CoinBank.ownWorld(w);refreshWorldSelector();setWorld(w)}
+    const d=p.get('diff');if(d&&DIFFICULTY[d])setDifficulty(d);
+    const dist=parseFloat(p.get('dist'));
+    setTimeout(()=>{
+      launchGame(DEMO_QUESTIONS);
+      if(dist&&curGame&&curGame.engine){curGame.engine.setBoulderDist(dist);curGame.engine._debugHoldDist=dist}
+    },250);
+    // &aitest=1: kör AI-pipelinen mot /api/generate på en provtext och skriver resultatet till <title>
+    if(p.get('aitest')){
+      const sample='Hjärtsvikt är ett tillstånd där hjärtat inte förmår pumpa tillräckligt med blod för kroppens behov. Den vanligaste orsaken i Sverige är ischemisk hjärtsjukdom, följt av hypertoni. Diagnosen ställs med anamnes, status, EKG, NT-proBNP och ekokardiografi; ett NT-proBNP under 125 ng/L gör diagnosen osannolik hos en obehandlad patient. Ejektionsfraktionen delar in hjärtsvikt i HFrEF (EF under 40 procent), HFmrEF (EF 41–49 procent) och HFpEF (EF 50 procent eller mer). Basbehandlingen vid HFrEF består av ACE-hämmare eller ARNI, betablockerare, MRA och SGLT2-hämmare. Loopdiuretika ges vid vätskeretention men förbättrar inte överlevnaden. Betablockerare påbörjas när patienten är euvolem. NYHA-klass IV innebär symtom i vila. Vid EF under 35 procent trots optimerad behandling i tre månader övervägs ICD.';
+      selectedQCount=6;selectedDifficulty=p.get('diff')||'hard';
+      document.title='AITEST running';
+      buildQuiz(sample,m=>{document.title='AITEST '+m}).then(q=>{document.title='AITEST OK '+q.length+' | '+q.map(x=>x.question).join(' || ').slice(0,900)}).catch(e=>{document.title='AITEST FAIL '+(e.code||'')+' '+e.message});
+      return;
+    }
+    // &debug=1: fiendens läge/storlek skrivs till <title> så en headless-körning kan läsa av det med --dump-dom
+    if(p.get('debug'))setInterval(()=>{
+      try{
+        const eng=curGame&&curGame.engine;if(!eng)return;
+        const e=eng.enemy||eng.boulder;if(!e){document.title='DBG no-enemy';return}
+        const b=new THREE.Box3().setFromObject(e);const r=v=>+v.toFixed(2);
+        const names=[];e.traverse(o=>{if(o.isMesh&&names.length<6)names.push((o.name||'mesh')+(o.isSkinnedMesh?'*':''))});
+        document.title='DBG '+JSON.stringify({pos:e.position.toArray().map(r),sc:r(e.scale.x),min:b.min.toArray().map(r),max:b.max.toArray().map(r),kids:e.children.length,meshes:names,dist:r(eng.boulderDist),cam:eng.camera.position.toArray().map(r)});
+      }catch(err){document.title='DBG err '+err.message}
+    },1500);
+  }catch(e){console.warn('demo-param',e)}
+})();
 </script>
 </body>
 </html>

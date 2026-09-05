@@ -1,0 +1,32 @@
+<!doctype html>
+<!-- Tillfällig modellvisare för utveckling: ?m=Shark&size=5&yaw=0 — tas bort före deploy. -->
+<html><head><meta charset="utf-8"><style>html,body{margin:0;background:#3a4a5c;overflow:hidden}#t{position:fixed;left:8px;top:8px;color:#fff;font:14px monospace;white-space:pre}</style></head>
+<body><div id="t"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="js-gltfloader.js"></script>
+<script>
+const p=new URLSearchParams(location.search);
+const name=p.get('m')||'Shark',size=parseFloat(p.get('size'))||5,yaw=parseFloat(p.get('yaw'))||0,noSwap=p.get('noswap')==='1',ground=p.get('ground')==='1';
+const scene=new THREE.Scene();scene.background=new THREE.Color(0x3a4a5c);
+const camera=new THREE.PerspectiveCamera(50,innerWidth/innerHeight,.1,100);camera.position.set(0,3.2,9);camera.lookAt(0,1.2,0);
+const renderer=new THREE.WebGLRenderer({antialias:true});renderer.setSize(innerWidth,innerHeight);renderer.outputEncoding=THREE.sRGBEncoding;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.shadowMap.enabled=true;document.body.appendChild(renderer.domElement);
+scene.add(new THREE.HemisphereLight(0xffffff,0x334455,.9));
+const sun=new THREE.DirectionalLight(0xfff4e0,1.1);sun.position.set(4,8,8);sun.castShadow=true;scene.add(sun);
+const floor=new THREE.Mesh(new THREE.PlaneGeometry(30,30),new THREE.MeshStandardMaterial({color:0x8899aa,roughness:.9}));floor.rotation.x=-Math.PI/2;floor.receiveShadow=true;scene.add(floor);
+scene.add(new THREE.GridHelper(20,20,0x223344,0x556677));
+const t=document.getElementById('t');
+const mixers=[];const clock=new THREE.Clock();
+new THREE.GLTFLoader().load('models/'+name+'.glb',(gltf)=>{
+  const model=gltf.scene;
+  const box=new THREE.Box3().setFromObject(model);const sz=box.getSize(new THREE.Vector3());
+  const maxDim=Math.max(sz.x,sz.y,sz.z)||1;model.scale.setScalar(size/maxDim);
+  const inner=new THREE.Group();if(!noSwap&&sz.x>sz.z)model.rotation.y=Math.PI/2;inner.add(model);inner.rotation.y=yaw;
+  const b2=new THREE.Box3().setFromObject(inner);const c=b2.getCenter(new THREE.Vector3());inner.position.sub(c);
+  if(ground)inner.position.y=-b2.min.y;else inner.position.y+=2;
+  const mats=[];model.traverse(o=>{if(o.isMesh){o.castShadow=true;const m=o.material;mats.push(`${o.name}${o.isSkinnedMesh?'*':''}: ${m.type} color=#${m.color?m.color.getHexString():'-'} map=${!!m.map} rough=${m.roughness} metal=${m.metalness} emis=#${m.emissive?m.emissive.getHexString():'-'} side=${m.side} transp=${m.transparent} op=${m.opacity}`)}});
+  scene.add(inner);
+  if(gltf.animations&&gltf.animations.length){const mx=new THREE.AnimationMixer(model);mx.clipAction(gltf.animations[0]).play();mixers.push(mx)}
+  t.textContent=`${name}.glb  raw size ${sz.x.toFixed(2)}×${sz.y.toFixed(2)}×${sz.z.toFixed(2)}  scale ${(size/maxDim).toFixed(4)}  anims=${(gltf.animations||[]).map(a=>a.name).join(',')||'-'}\n`+mats.join('\n');
+},undefined,(e)=>{t.textContent='FEL '+(e&&e.message||e)});
+(function loop(){requestAnimationFrame(loop);const dt=clock.getDelta();mixers.forEach(m=>m.update(dt));renderer.render(scene,camera)})();
+</script></body></html>

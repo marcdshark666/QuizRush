@@ -2,5 +2,8 @@
   "framework": null,
   "buildCommand": null,
   "installCommand": null,
-  "outputDirectory": null
+  "outputDirectory": null,
+  "functions": {
+    "api/generate.js": { "maxDuration": 60 }
+  }
 }

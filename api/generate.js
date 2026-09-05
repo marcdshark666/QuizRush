@@ -130,7 +130,9 @@ module.exports = async (req, res) => {
   }
   if (req.method !== 'POST') return res.status(405).json({ error: 'method' });
 
-  const key = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
+  // BOM/blanksteg strippas: en nyckel som lagts in via en PowerShell-pipe fick ett
+  // U+FEFF först, och fetch vägrar då sätta headern ("ByteString … 65279").
+  const key = String(process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || '').replace(/^﻿/, '').trim();
   if (!key) return res.status(503).json({ error: 'no_key', message: 'GEMINI_API_KEY saknas på servern.' });
 
   let body = req.body;
@@ -168,6 +170,7 @@ module.exports = async (req, res) => {
     if (!questions.length) return res.status(502).json({ error: 'empty', message: 'Modellen gav inga användbara frågor.' });
     return res.status(200).json({ questions, model: used, part, parts });
   } catch (e) {
+    console.error('generate misslyckades:', e && e.status, e && e.name, String(e && e.message || e).slice(0, 400));
     const quota = e.status === 429 || /quota|RESOURCE_EXHAUSTED|rate limit/i.test(e.message || '');
     const status = quota ? 429 : e.name === 'AbortError' ? 504 : 502;
     return res.status(status).json({ error: quota ? 'quota' : e.name === 'AbortError' ? 'timeout' : 'upstream', message: String(e.message || e).slice(0, 300) });

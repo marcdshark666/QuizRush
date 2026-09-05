@@ -6117,11 +6117,11 @@ refreshWorldSelector();
 (function(){
   try{
     const p=new URLSearchParams(location.search);
-    const w=p.get('demo');if(!w)return;
-    if(WORLDS[w]){CoinBank.ownWorld(w);refreshWorldSelector();setWorld(w)}
+    const w=p.get('demo');if(!w&&!p.get('aitest'))return;
+    if(w&&WORLDS[w]){CoinBank.ownWorld(w);refreshWorldSelector();setWorld(w)}
     const d=p.get('diff');if(d&&DIFFICULTY[d])setDifficulty(d);
     const dist=parseFloat(p.get('dist'));
-    setTimeout(()=>{
+    if(w)setTimeout(()=>{
       launchGame(DEMO_QUESTIONS);
       if(dist&&curGame&&curGame.engine){curGame.engine.setBoulderDist(dist);curGame.engine._debugHoldDist=dist}
     },250);

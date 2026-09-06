@@ -561,7 +561,7 @@ html,body{width:100%;height:100%;overflow:hidden;font-family:'Be Vietnam Pro',sa
     <div class="upload-card" style="background:var(--bg-card)">
       <div class="card-header"><div class="card-icon" style="background:rgba(38,230,255,0.12)">🌍</div><span class="pill-badge cyan">WORLD</span></div>
       <h3>CHOOSE WORLD</h3>
-      <p class="card-desc">Different environments &amp; enemies. Unlock more in the shop!</p>
+      <p class="card-desc">Seven arenas, seven monsters, seven soundtracks — all free. Pick your run.</p>
       <div id="world-selector" style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
         <button class="diff-btn active" data-world="jungle" onclick="setWorld('jungle')">
           <span class="diff-icon">🌿</span><span class="diff-name">Jungle</span><span class="diff-hearts">Boulder</span>
@@ -3708,53 +3708,156 @@ class JungleEngine{
     this.scene.add(this.particles);
   }
   // ── SOUND ENGINE (Web Audio API — all synthesized, no files) ─────────────
+  // Running-game music in the Subway Surfers spirit: a real 16th-note step
+  // sequencer with drums, bass, chord stabs and a lead — one song per world,
+  // written in that world's idiom (marimba jungle, dreamy reef, chiptune city,
+  // snake-charmer pit, sleigh-bell arctic, abyssal ocean, metal dragon lair).
+  // The chase drives the arrangement: hats open up and the lead climbs an
+  // octave when the enemy is close, and Fever adds a sparkling top layer.
+  // Patterns are strings, one char per 16th: digits 1–7 = scale degree,
+  // a–g = same degree an octave up, '.' = rest, '-' = hold the previous note.
+  _song(wid){
+    const SONGS={
+      jungle:{bpm:126,root:60,scale:[0,2,4,5,7,9,11],lead:'triangle',bass:'sawtooth',chord:'triangle',bright:true,
+        kick:'x...x...x...x...x...x...x..xx...',snare:'....x.......x.......x.......x..x',hat:'x.x.x.x.x.x.x.x.x.x.x.x.x.x.xxx.',perc:'..w...w...w.w...',
+        bassP:'1-..1-..5-..5-..6-..6-..4-..5-..1-..1-..5-..5-..6-..6-..4-.-5-.-',
+        chords:[[1,3,5],[5,7,2],[6,1,3],[4,6,1]],chordP:'s.......s...s...',
+        leadP:'3.5.6.5.3.1.....5.6.a.6.5.3.....3.5.6.a.c.a.6.5.3.1.2.3.5.-.....',delayTime:.19,delayFb:.25,delayWet:.16},
+      underwater:{bpm:104,root:62,scale:[0,2,4,6,7,9,11],lead:'sine',bass:'sine',chord:'pad',
+        kick:'x.......x.......x.......x.......',snare:'........x...............x.......',hat:'..x...x...x...x...x...x...x...x.',perc:'',
+        bassP:'1-------1---.---6-------6---.---4-------4---.---5-------5---.---',
+        chords:[[1,3,5,7],[6,1,3,5],[4,6,1,3],[5,7,2,4]],chordP:'p...............',
+        leadP:'5---6---a-------3---5---6-------1---3---5---6---a---6---5-------',delayTime:.34,delayFb:.4,delayWet:.4,lowpass:2600},
+      city:{bpm:134,root:57,scale:[0,2,3,5,7,9,10],lead:'square',bass:'sawtooth',chord:'sawtooth',
+        kick:'x...x...x...x...x...x...x...x.x.',snare:'....x.......x.......x.......x...',hat:'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',perc:'',
+        bassP:'1.1.1.1.1.1.b.1.6.6.6.6.6.6.5.4.3.3.3.3.3.3.b.3.4.4.4.4.5.5.5.5.',
+        chords:[[1,3,5],[6,1,3],[3,5,7],[4,6,1]],chordP:'..s...s...s.....',
+        leadP:'1.3.5.a.5.3.1...6.a.b.a.6.5.....3.5.7.a.7.5.3...4.5.6.5.4.3.2.1.',delayTime:.11,delayFb:.2,delayWet:.12},
+      snakepit:{bpm:116,root:64,scale:[0,1,4,5,7,8,10],lead:'sawtooth',bass:'triangle',chord:'triangle',vibrato:true,
+        kick:'x.....x...x.....x.....x...x.....',snare:'....x.......x.......x.......x...',hat:'x.xxx.x.x.xxx.x.x.xxx.x.x.xxx.x.',perc:'..c.c...c...c.c.',
+        bassP:'1-..1-.11-..1-..1-..1-.1b-..b-..1-..1-.11-..1-..6-..6-.66-..5-..',
+        chords:[[1,3,5],[1,3,5],[2,4,6],[1,3,5]],chordP:'s...............',
+        leadP:'1.2.3.2.1.7.1...3.4.5.4.3.2.1...5.6.5.4.3.2.3...2.1.7.1.2.3.2.1.',delayTime:.27,delayFb:.3,delayWet:.2},
+      arctic:{bpm:122,root:67,scale:[0,2,4,5,7,9,11],lead:'bell',bass:'sine',chord:'pad',
+        kick:'x.......x.......x.......x.......',snare:'....x.......x.......x.......x...',hat:'x.x.x.x.x.x.x.x.x.x.x.x.x.x.x.x.',perc:'',
+        bassP:'1-------6-------4-------5-------1-------6-------4-------5-------',
+        chords:[[1,3,5],[6,1,3],[4,6,1],[5,7,2]],chordP:'p...............',
+        leadP:'5.3.1.3.5.6.5...a.6.5.6.a.b.a...5.6.a.b.c.b.a.6.5.6.5.3.1-------',delayTime:.3,delayFb:.35,delayWet:.3},
+      ocean:{bpm:96,root:55,scale:[0,2,3,5,7,8,10],lead:'sine',bass:'sine',chord:'pad',
+        kick:'x.......x.......x.......x.....x.',snare:'........x...............x.......',hat:'........x.......x.......x.......',perc:'s...............',
+        bassP:'1---------------6---------------4---------------5-------7-------',
+        chords:[[1,3,5],[6,1,3],[4,6,1],[5,7,2]],chordP:'p...............',
+        leadP:'1-------3-------5-------3-------6-------5-------3-------2---1---',delayTime:.42,delayFb:.45,delayWet:.45,lowpass:1900},
+      dragon:{bpm:144,root:52,scale:[0,2,3,5,7,8,11],lead:'sawtooth',bass:'square',chord:'power',vibrato:true,
+        kick:'x.x.x...x.x.x...x.x.x...x.x.x.x.',snare:'....x.......x.......x.......x...',hat:'x.x.x.x.x.x.x.x.x.x.x.x.x.x.xxxx',perc:'t.......t.......t.......t...t...',
+        bassP:'1.1.1.1.1.1.1.1.6.6.6.6.6.6.6.6.4.4.4.4.4.4.4.4.5.5.5.5.7.7.7.7.',
+        chords:[[1,5],[6,3],[4,1],[5,2]],chordP:'s.......s.s.....',
+        leadP:'1...3.5.a.5.3.1.6...a.b.c.b.a.6.4...6.a.c.a.6.4.5...7.b.7.5.7.b.',delayTime:.16,delayFb:.25,delayWet:.12}
+    };
+    const S=Object.assign({delayTime:.2,delayFb:.25,delayWet:.15},SONGS[wid]||SONGS.jungle);
+    S.length=64;
+    const parse=(p)=>{ // → array of {n:degreeIndex (0-based, octave folded in), d:steps} or null per step
+      const out=new Array(64).fill(null);let cur=null;
+      for(let i=0;i<64;i++){const ch=p[i%p.length]||'.';
+        if(ch==='-'){if(cur)cur.d++;continue}
+        cur=null;if(ch==='.')continue;
+        const n=/\d/.test(ch)?parseInt(ch,10)-1:(ch.charCodeAt(0)-97)+7;
+        cur={n,d:1};out[i]=cur;}
+      return out;};
+    S.bassN=parse(S.bassP);S.leadN=parse(S.leadP);
+    S.chordN=new Array(64).fill(null);
+    for(let i=0;i<64;i++){const ch=S.chordP[i%S.chordP.length];if(ch==='s'||ch==='p')S.chordN[i]={kind:ch,notes:S.chords[Math.floor(i/16)%S.chords.length]}}
+    S.freq=(deg,oct=0)=>440*Math.pow(2,((S.root+S.scale[((deg%7)+7)%7]+12*(Math.floor(deg/7)+oct))-69)/12);
+    return S;
+  }
   _startMusic(){
     try{
       const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;
       // Reuse pre-unlocked context if available (avoids auto-suspend from async chain)
       this.audioCtx=window._sharedAudioCtx||new AC();const ctx=this.audioCtx;
       if(ctx.state==='suspended')ctx.resume().catch(()=>{});
-      // Master gain
-      const master=ctx.createGain();master.gain.value=.13;master.connect(ctx.destination);
-      this._masterGain=master;
-      // World-specific melodies
-      const TRACKS={
-        jungle:   {mel:[392,440,494,523,587,523,494,440,392,330,349,392,440,494,440,392],bass:[196,196,220,220,262,262,247,247,196,196,220,220,262,262,247,247],tempo:.22,type:'triangle'},
-        underwater:{mel:[330,370,415,370,330,294,330,370,330,294,277,294,330,370,415,370],bass:[110,110,123,123,110,98,110,110,98,98,110,110,123,110,98,98],tempo:.30,type:'sine'},
-        city:     {mel:[523,587,523,494,440,494,523,587,659,587,523,494,440,494,523,440],bass:[262,262,247,247,220,220,262,262,330,330,262,247,220,220,262,220],tempo:.18,type:'square'},
-        snakepit: {mel:[311,330,311,294,277,294,311,330,311,277,262,277,294,311,294,277],bass:[155,155,147,147,139,139,155,155,147,147,139,139,147,155,147,139],tempo:.25,type:'sawtooth'},
-        arctic:   {mel:[523,587,659,587,523,494,440,494,523,587,523,494,440,415,440,494],bass:[131,131,147,147,131,131,110,110,131,131,131,131,110,110,110,131],tempo:.35,type:'sine'},
-        ocean:    {mel:[277,311,370,415,370,311,277,247,277,311,370,311,277,247,233,247],bass:[92,98,92,92,98,92,87,87,92,98,92,98,87,87,87,92],tempo:.38,type:'sine'},
-        dragon:   {mel:[196,220,247,196,220,165,196,220,247,262,247,220,196,175,196,220],bass:[98,98,110,110,98,82,98,98,110,110,110,98,98,87,87,98],tempo:.20,type:'sawtooth'}
+      // Bus layout: sfx/ambient → master, sequencer → music; both into a compressor
+      const comp=ctx.createDynamicsCompressor();comp.threshold.value=-14;comp.knee.value=18;comp.ratio.value=4;comp.attack.value=.004;comp.release.value=.2;comp.connect(ctx.destination);
+      const master=ctx.createGain();master.gain.value=.42;master.connect(comp);this._masterGain=master;
+      const S=this._song(this.worldId);
+      let musicOut=comp;
+      if(S.lowpass){const lp=ctx.createBiquadFilter();lp.type='lowpass';lp.frequency.value=S.lowpass;lp.Q.value=.6;lp.connect(comp);musicOut=lp}
+      const music=ctx.createGain();music.gain.value=.3;music.connect(musicOut);this._musicGain=music;
+      const delay=ctx.createDelay(1.5);const dfb=ctx.createGain();const dwet=ctx.createGain();
+      delay.delayTime.value=S.delayTime;dfb.gain.value=S.delayFb;dwet.gain.value=S.delayWet;
+      delay.connect(dfb);dfb.connect(delay);delay.connect(dwet);dwet.connect(music);
+      const leadBus=ctx.createGain();leadBus.connect(music);leadBus.connect(delay);
+      this._seq={S,step:0,bar:0,next:ctx.currentTime+.1,stepDur:60/S.bpm/4,music,leadBus};
+      const tick=()=>{
+        if(!this.running){music.gain.linearRampToValueAtTime(0,ctx.currentTime+.8);return}
+        const q=this._seq;
+        while(q.next<ctx.currentTime+.14){this._playStep(q.step,q.next,q.stepDur);q.next+=q.stepDur;q.step++;if(q.step>=64){q.step=0;q.bar++}}
+        this._seqTimer=setTimeout(tick,30);
       };
-      const track=TRACKS[this.worldId]||TRACKS.jungle;
-      const playNote=(freq,start,dur,type,vol,dest)=>{
-        const o=ctx.createOscillator();const g=ctx.createGain();
-        o.type=type;o.frequency.setValueAtTime(freq,start);
-        g.gain.setValueAtTime(0,start);g.gain.linearRampToValueAtTime(vol,start+.025);
-        g.gain.linearRampToValueAtTime(vol*.55,start+dur*.65);g.gain.linearRampToValueAtTime(0,start+dur);
-        o.connect(g);g.connect(dest);o.start(start);o.stop(start+dur+.05);
-      };
-      const scheduleLoop=()=>{
-        if(!this.running){master.gain.linearRampToValueAtTime(0,ctx.currentTime+.8);return}
-        const now=ctx.currentTime;const t=track.tempo;
-        for(let i=0;i<track.mel.length;i++){
-          playNote(track.mel[i],now+i*t,t*.78,track.type,.28,master);
-          playNote(track.bass[i],now+i*t,t*.88,'sine',.18,master);
-          // Kick on beat 1&3 (all worlds)
-          if(i%4===0){
-            const buf=ctx.createBuffer(1,Math.floor(ctx.sampleRate*.06),ctx.sampleRate);
-            const d=buf.getChannelData(0);for(let j=0;j<d.length;j++)d[j]=(Math.random()*2-1)*Math.exp(-j/500);
-            const n=ctx.createBufferSource();n.buffer=buf;
-            const ng=ctx.createGain();ng.gain.value=.14;n.connect(ng);ng.connect(master);n.start(now+i*t);
-          }
-        }
-        setTimeout(scheduleLoop,(track.mel.length*t*1000)-80);
-      };
-      scheduleLoop();
+      tick();
       // ── AMBIENT SOUND LAYER ──
       this._startAmbient(ctx,master);
     }catch(e){console.log('Audio init failed',e)}
+  }
+  // One 16th of the song. `t` is the AudioContext time the step lands on.
+  _playStep(i,t,d){
+    const ctx=this.audioCtx,q=this._seq;if(!ctx||!q)return;const S=q.S,out=q.music;
+    const threat=Math.max(0,Math.min(1,1-(this.boulderDist-this.minBoulder)/45));
+    const fever=!!this.speedBoost;const fill=q.bar%2===1&&i>=60;
+    const noise=(dur,type,freq,Q,vol,at=t)=>{ // short filtered noise burst
+      const n=Math.max(1,Math.floor(ctx.sampleRate*dur));const buf=ctx.createBuffer(1,n,ctx.sampleRate);const dd=buf.getChannelData(0);
+      for(let k=0;k<n;k++)dd[k]=(Math.random()*2-1)*(1-k/n);
+      const src=ctx.createBufferSource();src.buffer=buf;const f=ctx.createBiquadFilter();f.type=type;f.frequency.value=freq;f.Q.value=Q;
+      const g=ctx.createGain();g.gain.setValueAtTime(vol,at);g.gain.exponentialRampToValueAtTime(.001,at+dur);
+      src.connect(f);f.connect(g);g.connect(out);src.start(at);src.stop(at+dur+.02);};
+    const tone=(type,f0,f1,dur,vol,dest=out,at=t)=>{const o=ctx.createOscillator();const g=ctx.createGain();o.type=type;o.frequency.setValueAtTime(f0,at);
+      if(f1&&f1!==f0)o.frequency.exponentialRampToValueAtTime(f1,at+dur*.6);g.gain.setValueAtTime(vol,at);g.gain.exponentialRampToValueAtTime(.001,at+dur);
+      o.connect(g);g.connect(dest);o.start(at);o.stop(at+dur+.03);return o;};
+    const c=(p)=>p[i%p.length];
+    // Drums
+    if(c(S.kick)==='x'||(fever&&i%4===0)){tone('sine',150,46,.22,.95);noise(.012,'highpass',2500,.7,.35)}
+    if(c(S.snare)==='x'||fill){noise(.16,'bandpass',1900,.7,fill?.35+((i-60)*.12):.55);tone('triangle',200,120,.09,.3)}
+    const h=c(S.hat);
+    if(h==='x'||(threat>.55&&i%2===0)||fever){noise(threat>.8&&i%4===2?.22:.045,'highpass',7500,.5,i%4===0?.22:.14)}
+    if(S.perc){const pc=c(S.perc);
+      if(pc==='w')tone('square',1600,1500,.05,.12); // wood block
+      else if(pc==='c')tone('sine',230,165,.13,.3); // conga
+      else if(pc==='t'){tone('sine',95,58,.5,.6);noise(.05,'lowpass',400,.5,.3)} // timpani
+      else if(pc==='s'&&q.bar%2===0){tone('sine',1760,1740,.9,.08,q.leadBus)} // sonar ping
+    }
+    // Bass
+    const b=S.bassN[i];
+    if(b){const f=S.freq(b.n,-2),dur=d*b.d*.9;
+      const o=ctx.createOscillator();o.type=S.bass;o.frequency.value=f;
+      const lp=ctx.createBiquadFilter();lp.type='lowpass';lp.frequency.setValueAtTime(900+threat*900,t);lp.frequency.exponentialRampToValueAtTime(260,t+dur);lp.Q.value=2;
+      const g=ctx.createGain();g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.55,t+.012);g.gain.setValueAtTime(.55,t+dur*.7);g.gain.linearRampToValueAtTime(0,t+dur);
+      o.connect(lp);lp.connect(g);g.connect(out);o.start(t);o.stop(t+dur+.05);
+      if(S.bass!=='sine'){const sub=ctx.createOscillator();sub.type='sine';sub.frequency.value=f/2;const sg=ctx.createGain();sg.gain.setValueAtTime(.3,t);sg.gain.linearRampToValueAtTime(0,t+dur);sub.connect(sg);sg.connect(out);sub.start(t);sub.stop(t+dur+.05)}
+    }
+    // Chords — stabs (s) or pads (p)
+    const ch=S.chordN[i];
+    if(ch){const pad=ch.kind==='p'||S.chord==='pad';const dur=pad?d*16*.95:d*3;
+      for(const deg of ch.notes){const f=S.freq(deg-1,pad?0:-1);
+        const voices=S.chord==='power'?[['sawtooth',0],['sawtooth',-8]]:pad?[['triangle',5],['triangle',-5]]:[[S.chord==='pad'?'triangle':S.chord,0]];
+        for(const[w,det]of voices){const o=ctx.createOscillator();o.type=w;o.frequency.value=f;o.detune.value=det;
+          const g=ctx.createGain();const v=pad?.07:S.chord==='power'?.13:.11;
+          if(pad){g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(v,t+.25);g.gain.setValueAtTime(v,t+dur*.6);g.gain.linearRampToValueAtTime(0,t+dur)}
+          else{g.gain.setValueAtTime(v,t);g.gain.exponentialRampToValueAtTime(.001,t+dur)}
+          const lp=ctx.createBiquadFilter();lp.type='lowpass';lp.frequency.value=pad?1800:3200;
+          o.connect(lp);lp.connect(g);g.connect(out);o.start(t);o.stop(t+dur+.05)}}
+    }
+    // Lead
+    const L=S.leadN[i];
+    if(L){const oct=(threat>.75?1:0);const f=S.freq(L.n,oct),dur=d*L.d*.92;
+      const bell=S.lead==='bell';const o=ctx.createOscillator();o.type=bell?'sine':S.lead;o.frequency.value=f;
+      if(S.vibrato||S.lead==='sine'){const lfo=ctx.createOscillator();const lg=ctx.createGain();lfo.frequency.value=5.5;lg.gain.value=S.vibrato?f*.012:f*.004;lfo.connect(lg);lg.connect(o.frequency);lfo.start(t+.08);lfo.stop(t+dur+.05)}
+      const g=ctx.createGain();const v=S.lead==='square'?.13:S.lead==='sawtooth'?.14:.24;
+      g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(v,t+(bell?.004:.015));g.gain.exponentialRampToValueAtTime(v*(bell?.15:.5),t+dur*.7);g.gain.linearRampToValueAtTime(0,t+dur);
+      const lp=ctx.createBiquadFilter();lp.type='lowpass';lp.frequency.value=S.lead==='sawtooth'?2600:6000;
+      o.connect(lp);lp.connect(g);g.connect(q.leadBus);o.start(t);o.stop(t+dur+.05);
+      if(bell){tone('sine',f*2.76,f*2.76,Math.min(.25,dur),.06,q.leadBus)} // glockenspiel partial
+      if(fever){tone('triangle',f*2,f*2,Math.min(.12,dur),.08,q.leadBus)} // sparkle layer
+    }
   }
 
   _startAmbient(ctx,master){
@@ -3838,12 +3941,30 @@ class JungleEngine{
   }
 
   // ── SFX PLAYER ──────────────────────────────────────────────────────────
+  // Layered, punchy game sounds: every hit has a body (tone), a transient
+  // (noise) and a tail. 'hurt' also plays the world's monster — a shark
+  // chomp, a hiss, a siren, a growl, a roar, a boulder crack.
   _playSound(type){
     try{
       const ctx=this.audioCtx;if(!ctx)return;
       if(ctx.state==='suspended')ctx.resume();
       const out=this._masterGain||ctx.destination;
       const now=ctx.currentTime;
+      const noise=(dur,ftype,freq,Q,vol,at=now,dest=out)=>{const n=Math.max(1,Math.floor(ctx.sampleRate*dur));const buf=ctx.createBuffer(1,n,ctx.sampleRate);const dd=buf.getChannelData(0);
+        for(let k=0;k<n;k++)dd[k]=(Math.random()*2-1)*(1-k/n);const src=ctx.createBufferSource();src.buffer=buf;const f=ctx.createBiquadFilter();f.type=ftype;f.frequency.value=freq;f.Q.value=Q;
+        const g=ctx.createGain();g.gain.setValueAtTime(vol,at);g.gain.exponentialRampToValueAtTime(.001,at+dur);src.connect(f);f.connect(g);g.connect(dest);src.start(at);src.stop(at+dur+.02);return f};
+      const tone=(w,f0,f1,dur,vol,at=now,dest=out)=>{const o=ctx.createOscillator();const g=ctx.createGain();o.type=w;o.frequency.setValueAtTime(f0,at);
+        if(f1&&f1!==f0)o.frequency.exponentialRampToValueAtTime(f1,at+dur*.7);g.gain.setValueAtTime(vol,at);g.gain.exponentialRampToValueAtTime(.001,at+dur);o.connect(g);g.connect(dest);o.start(at);o.stop(at+dur+.03);return o};
+      if(type==='count'){tone('square',880,880,.09,.16);tone('sine',1760,1760,.06,.08);return}
+      if(type==='go'){[523,659,784,1047].forEach((f,k)=>{tone('square',f,f,.14,.16,now+k*.06);tone('sine',f*2,f*2,.1,.06,now+k*.06)});noise(.3,'highpass',6000,.6,.12,now+.2);return}
+      if(type==='blip'){tone('sine',1320,1560,.07,.1);return}
+      if(type==='correct'){[784,988,1175,1568].forEach((f,k)=>{tone('triangle',f,f,.16,.2,now+k*.05);tone('sine',f*2,f*2,.08,.05,now+k*.05)});noise(.25,'highpass',7000,.5,.1,now+.15);return}
+      if(type==='devour'){this._playEnemySound(1.6);noise(.9,'lowpass',300,.4,.8);tone('sine',70,28,1.1,.9);tone('sawtooth',55,40,.9,.25);return}
+      if(type==='hurt'){
+        // Thud + crunch + a short buzzer, then the monster
+        tone('sine',160,42,.28,.8);noise(.12,'bandpass',900,.6,.6);
+        tone('square',220,110,.2,.18,now+.03);tone('square',165,82,.22,.14,now+.14);
+        this._playEnemySound(1);return}
       if(type==='jump'){
         // Mario boing — sine with fast pitch sweep up
         const o=ctx.createOscillator();const g=ctx.createGain();
@@ -3856,21 +3977,9 @@ class JungleEngine{
         g2.gain.setValueAtTime(.08,now);g2.gain.exponentialRampToValueAtTime(.001,now+.18);
         o2.connect(g2);g2.connect(out);o2.start(now);o2.stop(now+.2);
       }else if(type==='coin'){
-        // Mario coin — two-tone ascending square beep
-        [[880,.0],[1108,.07]].forEach(([f,delay])=>{
-          const o=ctx.createOscillator();const g=ctx.createGain();
-          o.type='square';o.frequency.setValueAtTime(f,now+delay);
-          g.gain.setValueAtTime(.22,now+delay);g.gain.exponentialRampToValueAtTime(.001,now+delay+.12);
-          o.connect(g);g.connect(out);o.start(now+delay);o.stop(now+delay+.15);
-        });
-      }else if(type==='hurt'){
-        // 8-bit damage — two descending square tones
-        [[440,.0],[220,.09]].forEach(([f,delay])=>{
-          const o=ctx.createOscillator();const g=ctx.createGain();
-          o.type='square';o.frequency.setValueAtTime(f,now+delay);o.frequency.exponentialRampToValueAtTime(f*.45,now+delay+.14);
-          g.gain.setValueAtTime(.28,now+delay);g.gain.exponentialRampToValueAtTime(.001,now+delay+.18);
-          o.connect(g);g.connect(out);o.start(now+delay);o.stop(now+delay+.22);
-        });
+        // Coin + chime: two-tone square with a sine sparkle on top
+        [[880,.0],[1175,.07]].forEach(([f,delay])=>{tone('square',f,f,.14,.16,now+delay);tone('sine',f*2,f*2,.1,.07,now+delay)});
+        noise(.18,'highpass',8000,.5,.08,now+.1);
       }else if(type==='boost'){
         // Power-up arpeggio — 6-note ascending square
         [262,330,392,523,659,784].forEach((f,i)=>{
@@ -3901,11 +4010,41 @@ class JungleEngine{
       }
     }catch(e){}
   }
+  // The world's monster reacts: played on every lost heart and, bigger, on the devour.
+  _playEnemySound(k){
+    try{
+      const ctx=this.audioCtx;if(!ctx)return;const out=this._masterGain||ctx.destination;const now=ctx.currentTime;
+      const noise=(dur,ftype,freq,Q,vol,at=now)=>{const n=Math.max(1,Math.floor(ctx.sampleRate*dur));const buf=ctx.createBuffer(1,n,ctx.sampleRate);const dd=buf.getChannelData(0);
+        for(let j=0;j<n;j++)dd[j]=(Math.random()*2-1)*(1-j/n);const src=ctx.createBufferSource();src.buffer=buf;const f=ctx.createBiquadFilter();f.type=ftype;f.frequency.value=freq;f.Q.value=Q;
+        const g=ctx.createGain();g.gain.setValueAtTime(vol,at);g.gain.exponentialRampToValueAtTime(.001,at+dur);src.connect(f);f.connect(g);g.connect(out);src.start(at);src.stop(at+dur+.02);return f};
+      const tone=(w,f0,f1,dur,vol,at=now)=>{const o=ctx.createOscillator();const g=ctx.createGain();o.type=w;o.frequency.setValueAtTime(f0,at);
+        if(f1&&f1!==f0)o.frequency.exponentialRampToValueAtTime(f1,at+dur*.7);g.gain.setValueAtTime(vol,at);g.gain.exponentialRampToValueAtTime(.001,at+dur);o.connect(g);g.connect(out);o.start(at);o.stop(at+dur+.03);return o};
+      const w=this.worldId;
+      if(w==='underwater'||w==='ocean'){ // chomp: jaws slam, bubbles burst
+        noise(.08,'lowpass',500,.8,.7*k,now+.05);tone('sine',120,50,.22,.8*k,now+.05);noise(.35,'bandpass',2200,1.2,.35*k,now+.1);
+        for(let j=0;j<5;j++)tone('sine',500+Math.random()*700,1400,.06,.12*k,now+.15+j*.05);
+      }else if(w==='snakepit'){ // hiss + strike
+        const f=noise(.55*k,'highpass',3200,.8,.5*k);f.frequency.setValueAtTime(3200,now);f.frequency.exponentialRampToValueAtTime(1600,now+.5*k);
+        tone('triangle',220,90,.18,.5*k,now+.08);
+      }else if(w==='city'){ // siren blip + whistle
+        [[660,.0],[880,.16],[660,.32]].forEach(([f,d])=>tone('square',f,f,.14,.14*k,now+d));noise(.25,'bandpass',3000,3,.2*k,now+.45);
+      }else if(w==='arctic'){ // bear growl
+        const o=tone('sawtooth',70,55,.6*k,.35*k);const lfo=ctx.createOscillator();const lg=ctx.createGain();lfo.frequency.value=22;lg.gain.value=14;lfo.connect(lg);lg.connect(o.frequency);lfo.start(now);lfo.stop(now+.7*k);
+        noise(.5*k,'lowpass',700,.5,.3*k);
+      }else if(w==='dragon'){ // roar + fire
+        const o=tone('sawtooth',58,96,.9*k,.4*k);const lfo=ctx.createOscillator();const lg=ctx.createGain();lfo.frequency.value=17;lg.gain.value=9;lfo.connect(lg);lg.connect(o.frequency);lfo.start(now);lfo.stop(now+1*k);
+        noise(.9*k,'bandpass',900,.6,.45*k);noise(1.2*k,'lowpass',260,.5,.4*k,now+.1);
+      }else{ // boulder: rock crack + rumble
+        noise(.06,'highpass',1800,.5,.6*k);noise(.7*k,'lowpass',180,.7,.7*k,now+.03);tone('sine',60,32,.6*k,.6*k);
+      }
+    }catch(e){}
+  }
 
   // === GAME ACTIONS ===
   stumble(){this.stumbling=true;this.stumbleTimer=1.5}
   triggerDevour(){
     this.devourMode=true;this.devourT=0;this.boulderDist=2;this.shake=1.5;
+    this._playSound('devour');
     // Snap the enemy to striking distance — the world animation block that
     // normally positions it is gated off during the devour sequence
     if(this.enemy)this.enemy.position.z=3-this.boulderDist;
@@ -4370,8 +4509,9 @@ class QuizGame{
   _countdown(cb){
     const ov=document.getElementById('countdown-ov'),n=document.getElementById('cn');
     ov.classList.remove('hidden');let c=3;n.textContent=c;n.style.animation='none';void n.offsetWidth;n.style.animation='cPulse .8s ease-out';
-    const iv=setInterval(()=>{c--;if(c>0){n.textContent=c;n.style.animation='none';void n.offsetWidth;n.style.animation='cPulse .8s ease-out'}
-    else{n.textContent='RUN!';n.style.color='var(--jungle-glow)';n.style.animation='none';void n.offsetWidth;n.style.animation='cPulse .8s ease-out';
+    if(this.engine)this.engine._playSound('count');
+    const iv=setInterval(()=>{c--;if(c>0){n.textContent=c;n.style.animation='none';void n.offsetWidth;n.style.animation='cPulse .8s ease-out';if(this.engine)this.engine._playSound('count')}
+    else{n.textContent='RUN!';n.style.color='var(--jungle-glow)';n.style.animation='none';void n.offsetWidth;n.style.animation='cPulse .8s ease-out';if(this.engine)this.engine._playSound('go');
       setTimeout(()=>{ov.classList.add('hidden');n.style.color='';cb()},700);clearInterval(iv)}},900);
   }
   _startTimer(){
@@ -4416,6 +4556,7 @@ class QuizGame{
       div.addEventListener('click',()=>this._answer(i));opts.appendChild(div);
     });
     document.getElementById('q-strip').classList.remove('hidden');
+    if(this.engine)this.engine._playSound('blip');
     this.answering=true;this._hud();
   }
   _answer(idx){
@@ -4652,7 +4793,8 @@ const CoinBank={
   getEquipped(){return localStorage.getItem(this._equippedKey)||'explorer'},
   equip(id){localStorage.setItem(this._equippedKey,id)},
   spend(n){const c=this.getCoins();if(c>=n){localStorage.setItem(this._key,c-n);return true}return false},
-  getOwnedWorlds(){try{return JSON.parse(localStorage.getItem(this._worldKey)||'["jungle"]')}catch(e){return['jungle']}},
+  // All worlds are free (Marc 2026-09-06) — the shop still lists them, just never locked.
+  getOwnedWorlds(){return Object.keys(WORLDS)},
   ownWorld(id){const o=this.getOwnedWorlds();if(!o.includes(id)){o.push(id);localStorage.setItem(this._worldKey,JSON.stringify(o))}},
   spendWorld(price){return this.spend(price)},
   getWinterGear(){return localStorage.getItem(this._gearKey)||'skis'},

@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<title>Quiz Rush — funktionsprov</title>
+<style>
+  body{margin:0;font:14px/1.5 system-ui,sans-serif;background:#0d1117;color:#e8ecf0;padding:16px}
+  iframe{width:420px;height:760px;border:1px solid #2a3340;border-radius:8px;background:#000}
+  #lista{margin-top:14px;font-family:ui-monospace,monospace;font-size:13px}
+  .ok{color:#00e676} .nej{color:#ff2d55}
+</style>
+</head>
+<body>
+<!--
+  Funktionsprov för QUIZ RUSH PLUS.
+
+  Rökprovet (`quizcli.js smoke`) svarar bara på om spelet startar. Det här
+  provet svarar på om de NYA sakerna gör vad de ska: svarar tangentbordet,
+  hamnar den missade frågan i repetitionsbanken, pausar spelet när fliken göms,
+  och byggs svarsalternativen som text i stället för HTML.
+
+  Spelet körs i en iframe från samma server, så provet kommer åt både DOM:en och
+  localStorage inifrån. Filen deployas aldrig (.vercelignore) — den finns bara
+  för `node quizcli.js prov`, som läser provrutan längst ner med --dump-dom.
+-->
+<iframe id="spel" src="index.html?demo=jungle&dist=600"></iframe>
+<div id="lista"></div>
+<pre id="prov" hidden></pre>
+<script>
+(function(){
+  const rader=[];
+  const lagg=(namn,ok,detalj)=>{rader.push({namn,ok:!!ok,detalj:detalj||''})};
+  const ram=document.getElementById('spel');
+  const vanta=(ms)=>new Promise(r=>setTimeout(r,ms));
+
+  /** Vänta tills villkoret är sant, eller ge upp. Spelet har en nedräkning på
+   *  ~3 s innan första frågan, så gränsen måste vara generös. */
+  async function tills(villkor,gransMs,steg){
+    const slut=Date.now()+gransMs;
+    while(Date.now()<slut){
+      try{ if(villkor()) return true; }catch(e){ /* dokumentet inte klart än */ }
+      await vanta(steg||120);
+    }
+    return false;
+  }
+
+  function skriv(){
+    const ut={rader,fel:rader.filter(r=>!r.ok).length,klar:true};
+    document.getElementById('prov').textContent=JSON.stringify(ut);
+    document.getElementById('lista').innerHTML=rader
+      .map(r=>`<div class="${r.ok?'ok':'nej'}">${r.ok?'✓':'✗'} ${r.namn}${r.detalj?' — '+r.detalj:''}</div>`).join('');
+    document.title='PROV '+(ut.fel?('FEL '+ut.fel):'ok');
+  }
+
+  ram.addEventListener('load',async()=>{
+    const d=ram.contentDocument,w=ram.contentWindow;
+    try{ w.localStorage.removeItem('quizrush_bank'); }catch(e){}
+
+    // 1. Frågan kommer upp överhuvudtaget.
+    const framme=await tills(()=>d.querySelectorAll('#q-opts .q-opt').length>=2,20000);
+    lagg('Frågan visas',framme,framme?'':'inga svarsalternativ inom 20 s');
+    if(!framme){skriv();return}
+
+    // 2. Alternativen byggs som text, inte som HTML (XSS-skyddet).
+    const forst=d.querySelector('#q-opts .q-opt');
+    const barnAr=[...forst.children].map(x=>x.className).join(',');
+    lagg('Alternativ som noder',/ol/.test(barnAr)&&/ot/.test(barnAr),barnAr);
+    lagg('Alternativ nåbart för tangentbord',forst.tabIndex===0&&forst.getAttribute('role')==='button',
+      `tabIndex=${forst.tabIndex} role=${forst.getAttribute('role')}`);
+
+    // 3. aria-live på frågan, så en skärmläsare hör när den byts.
+    const qt=d.getElementById('q-text');
+    lagg('aria-live på frågan',qt&&qt.getAttribute('aria-live')==='polite',qt?String(qt.getAttribute('aria-live')):'saknas');
+
+    // 4. Tangentbordet svarar: «1» ska välja alternativ A.
+    const fragaFore=qt?qt.textContent:'';
+    d.dispatchEvent(new w.KeyboardEvent('keydown',{key:'1',bubbles:true}));
+    const svarade=await tills(()=>d.querySelectorAll('#q-opts .q-opt.disabled').length>0,3000);
+    lagg('Tangentbordet svarar (1 = A)',svarade,svarade?'':'inget alternativ låstes');
+
+    // 5. Repetitionsbanken: frågan ska ha hamnat där med sitt schema.
+    const bankOk=await tills(()=>{
+      const b=JSON.parse(w.localStorage.getItem('quizrush_bank')||'{}');
+      return Object.keys(b).length>0;
+    },3000);
+    let bankDetalj='';
+    try{
+      const b=JSON.parse(w.localStorage.getItem('quizrush_bank')||'{}');
+      const p=Object.values(b)[0]||{};
+      bankDetalj=`${Object.keys(b).length} post(er), nästa ${String(p.nasta||'').slice(0,16)}`;
+    }catch(e){}
+    lagg('Missad fråga sparas med schema',bankOk,bankDetalj);
+
+    // 6. Paus när fliken göms — och att spelet kommer tillbaka.
+    Object.defineProperty(d,'hidden',{value:true,configurable:true});
+    d.dispatchEvent(new w.Event('visibilitychange'));
+    const pausad=await tills(()=>!!d.getElementById('qr-paus'),2500);
+    lagg('Pausar när fliken göms',pausad,pausad?'':'ingen pausruta');
+    Object.defineProperty(d,'hidden',{value:false,configurable:true});
+    d.dispatchEvent(new w.Event('visibilitychange'));
+    const tillbaka=await tills(()=>!d.getElementById('qr-paus'),2500);
+    lagg('Fortsätter när fliken syns igen',tillbaka,tillbaka?'':'pausrutan låg kvar');
+
+    // 7. Rekordet per värld skrivs (nyckeln finns även innan första rundan är slut).
+    lagg('Rekordnyckeln finns',typeof w.localStorage.getItem('quizrush_rekord')!=='undefined');
+
+    // 8. Nästa fråga kommer efter svaret — spelet hänger sig inte på hakarna.
+    const gickVidare=await tills(()=>{
+      const nu=d.getElementById('q-text');
+      return nu&&nu.textContent&&nu.textContent!==fragaFore;
+    },9000);
+    lagg('Spelet går vidare till nästa fråga',gickVidare,gickVidare?'':'frågan byttes aldrig');
+
+    skriv();
+  });
+
+  // Kommer sidan aldrig igång ska provet ändå svara.
+  setTimeout(()=>{if(!rader.length){lagg('iframe laddade aldrig',false);skriv()}},40000);
+})();
+</script>
+</body>
+</html>

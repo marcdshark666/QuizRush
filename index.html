@@ -1691,9 +1691,12 @@ const DEMO_QUESTIONS=[
 // Big documents are split into a handful of windows spread evenly over the
 // whole text; each window becomes one request, run in parallel, so a 300-page
 // PDF still yields questions from the beginning, middle and end.
-// Relativ sökväg: på Vercel ligger sidan i roten, på GitHub Pages under /QuizRush/.
-// En absolut '/api/generate' skulle peka utanför kopian där och alltid ge 404.
-const AI_ENDPOINT='api/generate';
+// På Vercel ligger sidan och serverfunktionen på samma domän — en relativ sökväg
+// räcker, och en absolut '/api/generate' skulle peka utanför kopian på GitHub Pages
+// (den ligger under /QuizRush/). Studiekopian där har ingen egen serverfunktion; den
+// lånar Vercels, som släpper in just den domänen (api/generate.js, ALLOWED_ORIGINS).
+const AI_HOST=/\.github\.io$/i.test(location.hostname)?'https://quiz-rush-game.vercel.app':'';
+const AI_ENDPOINT=AI_HOST?AI_HOST+'/api/generate':'api/generate';
 const AI_CHUNK=24000;    // characters per request (well inside the model's window)
 const AI_MAX_PARTS=6;    // parallel requests at most
 function splitForAI(text,count){
@@ -1712,7 +1715,11 @@ function splitForAI(text,count){
   return out;
 }
 async function aiGenerate(seg,count,difficulty,lang,part,parts){
-  const r=await fetch(AI_ENDPOINT,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({text:seg,count,difficulty,lang,part,parts}),signal:AbortSignal.timeout(70000)});
+  let r;
+  try{r=await fetch(AI_ENDPOINT,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({text:seg,count,difficulty,lang,part,parts}),signal:AbortSignal.timeout(70000)})}
+  catch(err){ // nät, CORS eller timeout — i studiekopian betyder det den lånade servern, inte ett API-fel
+    const e=new Error(AI_HOST?'the study copy could not reach the AI server':(err.message||'network error'));
+    e.code=AI_HOST?'no_server':'network';throw e}
   const d=await r.json().catch(()=>({}));
   // 404 utan JSON = statisk kopia utan serverfunktion (GitHub Pages), inte ett trasigt API.
   if(r.status===404&&!d.error){const e=new Error('no AI server in this copy');e.code='no_server';throw e}
@@ -1807,7 +1814,7 @@ startBtn.addEventListener('click',async()=>{
     try{q=await buildQuiz(text,msg=>setLoading(msg))}
     catch(e){
       console.warn('AI quiz failed',e);
-      aiNote=e.code==='no_server'?'This is the static study copy — no AI server here':e.code==='no_key'?'AI is not configured on the server':e.code==='quota'?'AI quota reached for now':e.code==='too_short'?'Too little text for the AI':'AI unavailable right now';
+      aiNote=e.code==='no_server'?'The study copy could not reach the AI server':e.code==='network'?'No connection to the AI server':e.code==='no_key'?'AI is not configured on the server':e.code==='quota'?'AI quota reached for now':e.code==='too_short'?'Too little text for the AI':'AI unavailable right now';
     }
     if(!q||q.length<1){
       setLoading(aiNote+' — building a basic quiz instead...');

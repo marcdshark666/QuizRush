@@ -123,8 +123,25 @@ function sanitize(list, count) {
   return out;
 }
 
+// Studiekopian på GitHub Pages (marcdshark666.github.io/QuizRush) ligger på en annan
+// domän och har ingen egen serverfunktion — den lånar den här. Bara den domänen
+// släpps in: en öppen CORS skulle låta vem som helst bränna nyckelns kvot.
+const ALLOWED_ORIGINS = new Set(['https://marcdshark666.github.io']);
+function cors(req, res) {
+  const origin = req.headers && req.headers.origin;
+  if (!origin || !ALLOWED_ORIGINS.has(origin)) return false;
+  res.setHeader('Access-Control-Allow-Origin', origin);
+  res.setHeader('Vary', 'Origin');
+  res.setHeader('Access-Control-Allow-Headers', 'content-type');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, GET, OPTIONS');
+  res.setHeader('Access-Control-Max-Age', '86400');
+  return true;
+}
+
 module.exports = async (req, res) => {
   res.setHeader('Cache-Control', 'no-store');
+  cors(req, res);
+  if (req.method === 'OPTIONS') return res.status(204).end();
   if (req.method === 'GET') {
     return res.status(200).json({ ok: true, model: MODEL, hasKey: !!(process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY) });
   }

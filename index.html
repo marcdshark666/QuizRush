@@ -2120,6 +2120,10 @@ class JungleEngine{
           crack.rotation.x=-Math.PI/2;crack.rotation.z=Math.random()*.5;crack.position.set((Math.random()-.5)*10,.012,-j*15+Math.random()*10);grp.add(crack);
         }
       }
+      // Marktilen ar en enda kropp som scrollar — vagmarkeringar, snodrivor,
+      // sandrafflor och lavasprickor ror sig aldrig i forhallande till den.
+      // Innan #346 var de anda en draw call var (staden: 20 vita streck).
+      this._mergeGroup(grp);
       grp.position.z=-i*L;
       this.scene.add(grp);
       this.groundTiles.push({grp,len:L});
@@ -2146,35 +2150,167 @@ class JungleEngine{
   // som barer en textur, ett eget ljus (emissive) eller genomskinlighet maste
   // behalla sitt eget material; dar ar uuid:t nyckeln.
   _matNyckel(m){
-    const enkel=m.type==='MeshStandardMaterial'&&!m.map&&!m.bumpMap&&!m.normalMap
-      &&!m.emissiveMap&&!m.alphaMap&&!m.aoMap&&!m.roughnessMap&&!m.metalnessMap
-      &&!m.transparent&&!m.vertexColors&&!m.flatShading&&m.opacity===1
-      &&(!m.emissive||m.emissive.getHex()===0||!m.emissiveIntensity);
+    // MeshBasicMaterial rakhas ocksa (#346): stadens fonster far ETT eget
+    // material var — 189 tanda + 99 slackta rutor blev 288 egna draw calls som
+    // #341 inte kom at, eftersom nyckeln foll tillbaka pa uuid:t. Basic har
+    // ingen ljussattning alls, sa tva basic-material med samma sida och full
+    // opacitet ritar exakt likadant; bara fargen skiljer, och den bakas in
+    // per vertex precis som for standard-materialen.
+    const basic=m.type==='MeshBasicMaterial',std=m.type==='MeshStandardMaterial';
+    // NASTAN ogenomskinligt far ocksa slas ihop (#346). Ett genomskinligt
+    // foremal ritas efter de ogenomskinliga och sorteras bakifran och fram
+    // PER FOREMAL — slar man ihop dem forsvinner den inbordes sorteringen.
+    // Vid opacitet 0,8 och uppare ar det inte sarskiljbart (arktis isspetsar
+    // ligger pa .85, iskanten pa .9), men vid .5 och nedat, som bubblor,
+    // lavaskenet och ljusstralarna under vattnet, syns det direkt. Darfor
+    // gransen, och darfor bara normal blandning med djupskrivning kvar.
+    const nastanTat=m.transparent&&m.opacity>=.8&&m.depthWrite!==false
+      &&(m.blending===undefined||m.blending===THREE.NormalBlending);
+    const tat=!m.transparent&&m.opacity===1;
+    const enkel=(basic||std)&&!m.map&&!m.alphaMap&&!m.specularMap&&!m.lightMap
+      &&!m.vertexColors&&(tat||nastanTat)
+      &&(basic||(!m.bumpMap&&!m.normalMap&&!m.emissiveMap&&!m.aoMap&&!m.roughnessMap&&!m.metalnessMap
+        &&!m.flatShading&&(!m.emissive||m.emissive.getHex()===0||!m.emissiveIntensity)));
     if(!enkel)return 'u:'+m.uuid;
-    return 'f:'+m.side+':'+(+m.roughness.toFixed(3))+':'+(+m.metalness.toFixed(3));
+    // Genomskinliga far en egen nyckel med sin opacitet: tva olika opaciteter
+    // kan aldrig bli ett material, hur lika fargerna an ar.
+    const gs=m.transparent?'t'+(+m.opacity.toFixed(3))+':':'';
+    // Vag 1 i rekommendationen till #346, men gjord en gang for alla varldar i
+    // stallet for hand per lovverk: ytfinheten avrundas till narmaste tiondel i
+    // NYCKELN. Lov pa .7, sten pa .75 och bark pa .8 blev forut tre meshar per
+    // z-segment; nu blir .7 och .75 samma grupp och far ett delat material med
+    // .7. Skillnaden ar hogst 0,05 i ytfinhet — inte sarskiljbar i bild — och
+    // enfargade grupper ror vi inte alls, de behaller sitt eget material.
+    return basic
+      ? 'b:'+gs+m.side
+      : 'f:'+gs+m.side+':'+(Math.round(m.roughness*10)/10).toFixed(1)+':'+(Math.round(m.metalness*10)/10).toFixed(1);
   }
-  // Ett delat material per signatur — samma shader for alla segment.
+  // Ett delat material per signatur — samma shader for alla segment. Ytfinheten
+  // tas ur NYCKELN, inte ur mallen: annars hade vilket material som rakade ligga
+  // forst i gruppen bestamt hur hela segmentet ser ut, och samma nyckel kunnat
+  // se olika ut i olika segment.
   _vcolMat(nyckel,mall){
     const cache=this._vcolMats||(this._vcolMats=new Map());
     let m=cache.get(nyckel);
     if(!m){
       m=mall.clone();m.vertexColors=true;m.color.setHex(0xffffff);
+      const d=nyckel.split(':');
+      if(nyckel.charAt(0)==='f'){
+        const r=parseFloat(d[d.length-2]),mt=parseFloat(d[d.length-1]);
+        if(Number.isFinite(r))m.roughness=r;
+        if(Number.isFinite(mt))m.metalness=mt;
+      }
       m.name='merged '+nyckel;cache.set(nyckel,m);
     }
     return m;
+  }
+  // Slar ihop de statiska barnen i EN grupp, i gruppens eget rum. Anvands for
+  // marktilarna, som flyttas som en klump: barnen behover ingen segmentering
+  // eftersom hela tilen wrappar samtidigt.
+  // FACKLORNA — vag 2 i rekommendationen till #346, dar den faktiskt behovs.
+  // Varje fackla, gatlykta och glodlampa var en egen liten sfar som dessutom
+  // flimrar (position och skala skrivs varje bildruta), sa sammanslagningen i
+  // #341 kunde aldrig rora dem: staden hade 66 draw calls enbart i lampor, och
+  // eftersom nya facklor laggs till for varje chunk vaxte talet sa lange man
+  // sprang. Nu ar de EN InstancedMesh: en enhetssfar, en matris per flamma och
+  // fargen per instans. Flimret ar kvar precis som forut — det skrivs i
+  // matrisen i stallet for i scengrafen.
+  _flammaPlats(farg){
+    const CAP=this._flamCap||(this._flamCap=192);
+    if(!this.flames){
+      const mat=new THREE.MeshBasicMaterial({color:0xffffff});
+      this.flames=new THREE.InstancedMesh(new THREE.SphereGeometry(1,5,5),mat,CAP);
+      this.flames.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+      // Instanserna ligger utspridda over hela banan; three raknar synligheten
+      // pa geometrins enhetssfar och hade annars klippt bort hela klumpen.
+      this.flames.frustumCulled=false;
+      // Fargbufferten maste ligga i FULL storlek fran borjan. three r128:s
+      // setColorAt skapar den forst vid forsta anropet och dimensionerar den
+      // efter `count` just da — med count=1 blev bufferten tre flyttal lang,
+      // och fackla nummer tva och framat fick svart eller skrap. (Det syntes:
+      // gatlyktorna lyste svarta och cyanfargade i staden.)
+      this.flames.instanceColor=new THREE.BufferAttribute(new Float32Array(CAP*3).fill(1),3);
+      // Alla platser borjar med nollskala, sa en oanvand plats aldrig ritas.
+      const noll=new THREE.Matrix4().makeScale(0,0,0);
+      for(let i=0;i<CAP;i++)this.flames.setMatrixAt(i,noll);
+      this.flames.count=0;
+      this.scene.add(this.flames);
+    }
+    if(this._flamN==null)this._flamN=0;
+    this.flames.count=Math.min(this._flamN+1,this.flames.instanceMatrix.count);
+    const i=this._flamN++;
+    // Full? Da far de sista facklorna dela plats med de forsta — hellre en
+    // flamma som flimrar i takt med en annan an en krasch mitt i spelet.
+    const plats=i<this.flames.instanceMatrix.count?i:(i%this.flames.instanceMatrix.count);
+    if(this.flames.setColorAt){this.flames.setColorAt(plats,new THREE.Color(farg));if(this.flames.instanceColor)this.flames.instanceColor.needsUpdate=true}
+    return plats;
+  }
+  // Skriver flammornas lagen till instansmatrisen. Kallas sist i scrollslingan,
+  // nar bade z (scrollobjekten) och y/skala (facklorna) ar satta.
+  _skrivFlammor(){
+    if(!this.flames)return;
+    const m=new THREE.Matrix4(),q=new THREE.Quaternion(),sk=new THREE.Vector3();
+    for(const tc of this.torches){
+      if(tc.plats==null)continue;
+      const p=tc.mesh;
+      sk.setScalar((p.scale.x||1)*(tc.radie||.1));
+      m.compose(p.position,q,sk);
+      this.flames.setMatrixAt(tc.plats,m);
+    }
+    this.flames.instanceMatrix.needsUpdate=true;
+  }
+  _mergeGroup(grp){
+    const behall=[],grupper=new Map();
+    for(const barn of grp.children.slice()){
+      const ok=barn.isMesh&&!barn.children.length&&barn.geometry&&barn.material&&!Array.isArray(barn.material)
+        &&!barn.geometry.morphAttributes?.position?.length
+        &&Object.values(barn.geometry.attributes).every(a=>a&&a.array&&!a.isInterleavedBufferAttribute);
+      if(!ok){behall.push(barn);continue}
+      const nyckel=this._matNyckel(barn.material)+'|'+Object.keys(barn.geometry.attributes).sort().join(',');
+      const g=grupper.get(nyckel)||{mk:this._matNyckel(barn.material),objekt:[]};
+      g.objekt.push(barn);grupper.set(nyckel,g);
+    }
+    for(const g of grupper.values()){
+      if(g.objekt.length<2){behall.push(...g.objekt);continue}
+      const forsta=g.objekt[0].material;
+      let blandat=false,skugga=false,tar=false;
+      const bitar=g.objekt.map(o=>{
+        o.updateMatrix();
+        if(o.material!==forsta)blandat=true;
+        skugga=skugga||o.castShadow;tar=tar||o.receiveShadow;
+        return {geometry:o.geometry,matrix:o.matrix.clone(),color:o.material.color};
+      });
+      const vcol=blandat&&(g.mk.charAt(0)==='f'||g.mk.charAt(0)==='b');
+      let geo;
+      try{geo=this._mergeGeos(bitar,vcol)}catch(e){behall.push(...g.objekt);continue}
+      const mesh=new THREE.Mesh(geo,vcol?this._vcolMat(g.mk,forsta):forsta);
+      mesh.castShadow=skugga;mesh.receiveShadow=tar;
+      for(const o of g.objekt)grp.remove(o);
+      behall.push(mesh);
+    }
+    grp.clear();
+    for(const b of behall)grp.add(b);
   }
   _mergeStatic(){
     if(!this.scrollObjects||!this.scrollObjects.length)return;
     const SEG=5;
     const kvar=[],grupper=new Map();
     const delad=new Set(Object.values(this._geoCache||{}).filter(g=>g&&g.isBufferGeometry));
+    // Facklorna och djuren ligger BADE i scrollObjects och i sin egen lista,
+    // dar scrollslingan flyttar och skalar dem varje bildruta. Innan #346 skotte
+    // materialnyckeln det at oss av misstag: lagorna ar MeshBasicMaterial och
+    // foll pa uuid:t, sa de blev aldrig sammanslagna. Nu gor de det — och en
+    // sammanslagen mesh tas ur scenen, sa flamman hade slutat flimra och
+    // gatlyktan slocknat. Darfor star de har, pa ett stalle, i klartext.
+    const rorliga=new Set();
+    for(const lista of [this.torches,this.animals])for(const x of (lista||[]))if(x&&x.mesh)rorliga.add(x.mesh);
     for(const obj of this.scrollObjects){
       const m=obj.mesh;
       // Allt som ror sig av sig sjalvt, bar barn eller triggar hopp maste
       // forbli en egen mesh — sammanslagningen tar bort deras egen position.
       const statisk=m&&m.isMesh&&!m.children.length&&m.geometry&&m.material
-        &&!Array.isArray(m.material)&&!m.material.transparent
-        &&!obj.isRiver&&!obj.isSnake&&!obj.isBat&&!obj.isBubble&&!obj.dynamic
+        &&!Array.isArray(m.material)
+        &&!obj.isRiver&&!obj.isSnake&&!obj.isBat&&!obj.isBubble&&!obj.dynamic&&!rorliga.has(m)
         &&!m.geometry.morphAttributes?.position?.length
         &&Object.values(m.geometry.attributes).every(a=>a&&a.array&&!a.isInterleavedBufferAttribute);
       if(!statisk){kvar.push(obj);continue}
@@ -2203,7 +2339,7 @@ class JungleEngine{
       }
       // Bara nar gruppen faktiskt bar flera material behovs vertexfarger;
       // en enfargad grupp behaller sitt original och sparar ett attribut.
-      const vcol=blandat&&g.mk.charAt(0)==='f';
+      const vcol=blandat&&(g.mk.charAt(0)==='f'||g.mk.charAt(0)==='b');
       let geo;
       try{geo=this._mergeGeos(bitar,vcol)}catch(e){console.warn('merge hoppades over:',e.message);kvar.push(...g.objekt);efterN+=g.objekt.length;continue}
       geo.translate(0,0,-refZ);
@@ -2432,9 +2568,8 @@ class JungleEngine{
         holder.position.set(s*2.2,1.5,z2);this.scene.add(holder);
         this.scrollObjects.push({mesh:holder,baseZ:z2});
         const fl=new THREE.PointLight(0xff6620,.6,8);fl.position.set(s*2.1,2,z2);this.scene.add(fl);
-        const fm=new THREE.Mesh(new THREE.SphereGeometry(.1,5,5),new THREE.MeshBasicMaterial({color:0xff8833}));
-        fm.position.copy(fl.position);this.scene.add(fm);
-        this.torches.push({mesh:fm,light:fl,baseY:2,baseZ:z2});
+        const fm=new THREE.Object3D();fm.position.copy(fl.position);
+        this.torches.push({mesh:fm,light:fl,baseY:2,baseZ:z2,plats:this._flammaPlats(0xff8833),radie:.1});
         this.scrollObjects.push({mesh:fm,baseZ:z2});
       }
     }
@@ -2511,14 +2646,18 @@ class JungleEngine{
         // Streetlight
         if(z%16<8){for(let s=-1;s<=1;s+=2){
           const pole=new THREE.Mesh(new THREE.CylinderGeometry(.04,.05,.5,5),tMat);pole.position.set(s*2.5,1,z);this.scene.add(pole);self.scrollObjects.push({mesh:pole,baseZ:z});
-          const bulb=new THREE.Mesh(new THREE.SphereGeometry(.08,5,4),new THREE.MeshBasicMaterial({color:0xffffc0}));bulb.position.set(s*2.5,1.55,z);this.scene.add(bulb);self.scrollObjects.push({mesh:bulb,baseZ:z});
+          const bulb=new THREE.Object3D();bulb.position.set(s*2.5,1.55,z);self.scrollObjects.push({mesh:bulb,baseZ:z});
           const fl=new THREE.PointLight(0xffffcc,.8,8);fl.position.set(s*2.4,1.6,z);this.scene.add(fl);
-          this.torches.push({mesh:bulb,light:fl,baseY:1.55,baseZ:z});
+          this.torches.push({mesh:bulb,light:fl,baseY:1.55,baseZ:z,plats:this._flammaPlats(0xffffc0),radie:.08});
         }}
       }
       // Concrete curbs framing the road (Temple Run edging)
-      const curbMat=new THREE.MeshStandardMaterial({color:0x9a9a9a,roughness:.85});
-      const curbDark=new THREE.MeshStandardMaterial({color:0x7a7a78,roughness:.9});
+      // Samma roughness pa bada kantstenarna (#346, vag 1 i rekommendationen):
+      // .85 och .9 gav tva materialsignaturer och darmed dubbelt sa manga
+      // segmentmeshar. .88 ligger mitt emellan och ar inte sarskiljbart i bild
+      // — fargskillnaden ar kvar och det ar den man ser.
+      const curbMat=new THREE.MeshStandardMaterial({color:0x9a9a9a,roughness:.88});
+      const curbDark=new THREE.MeshStandardMaterial({color:0x7a7a78,roughness:.88});
       for(let z=startZ;z>startZ-this.CHUNK;z-=3){
         for(let s=-1;s<=1;s+=2){
           const curb=new THREE.Mesh(new THREE.BoxGeometry(.35,.22,2.6),Math.random()>.3?curbMat:curbDark);
@@ -2562,10 +2701,14 @@ class JungleEngine{
       }
     }else if(this.worldId==='arctic'){
       // Ice spikes + snow mounds + penguins
+      // Ett material for alla spetsar, inte ett per spets (#346): 60 identiska
+      // material blev 60 egna draw calls, och varje eget material ar dessutom
+      // en egen shader att kompilera vid start.
+      const spikeMat=new THREE.MeshStandardMaterial({color:0xaaddff,roughness:.2,metalness:.3,transparent:true,opacity:.85});
       for(let z=startZ;z>startZ-this.CHUNK;z-=6){
         for(let s=-1;s<=1;s+=2){
           const h=1+Math.random()*3;
-          const spike=new THREE.Mesh(new THREE.ConeGeometry(.12,.06+h,5),new THREE.MeshStandardMaterial({color:0xaaddff,roughness:.2,metalness:.3,transparent:true,opacity:.85}));
+          const spike=new THREE.Mesh(new THREE.ConeGeometry(.12,.06+h,5),spikeMat);
           spike.position.set(s*(3+Math.random()*2),h/2,z+Math.random()*5);this.scene.add(spike);this.scrollObjects.push({mesh:spike,baseZ:spike.position.z});
         }
         // Snowflake particles (small white dots on ground)
@@ -2741,9 +2884,8 @@ class JungleEngine{
       for(let s=-1;s<=1;s+=2){
         const lightColor={jungle:0xff6620,underwater:0x00aaff,city:0xffffcc,snakepit:0xff3300,arctic:0x88ccff,ocean:0x0055ff,dragon:0xff3300}[this.worldId]||0xff6620;
         const fl=new THREE.PointLight(lightColor,.5,10);fl.position.set(s*2.2,2,z2);this.scene.add(fl);
-        const fm=new THREE.Mesh(new THREE.SphereGeometry(.08,5,5),new THREE.MeshBasicMaterial({color:lightColor}));
-        fm.position.copy(fl.position);this.scene.add(fm);
-        this.torches.push({mesh:fm,light:fl,baseY:2,baseZ:z2});
+        const fm=new THREE.Object3D();fm.position.copy(fl.position);
+        this.torches.push({mesh:fm,light:fl,baseY:2,baseZ:z2,plats:this._flammaPlats(lightColor),radie:.08});
         this.scrollObjects.push({mesh:fm,baseZ:z2});
       }
     }
@@ -4310,6 +4452,7 @@ class JungleEngine{
       tc.mesh.position.y=tc.baseY+Math.sin(t*8+tc.baseY)*.04;
       tc.mesh.scale.setScalar(.7+Math.random()*.5);
     }
+    this._skrivFlammor();
 
     // Player locomotion — swimming / skiing / snowboard / running
     const isWater=this.worldId==='underwater'||this.worldId==='ocean';

@@ -1,11 +1,11 @@
 # Quiz Rush — teknisk rapport
 
-Skriven av `quizcli.js` 2026-09-16 22:42:29.
+Skriven av `quizcli.js` 2026-09-17 00:26:43.
 **0 fel · 1 varningar** över 47 kontroller.
 
 ## Statisk hälsokoll — index.html, api och sidhuvudet
 
-- ✓ **index.html läst** — 427.9 kB, 6682 rader
+- ✓ **index.html läst** — 439.2 kB, 7004 rader
 - ✓ **JavaScript-syntax** — 1 inline-block, alla parsar
 - ✓ **Unika id:n** — 102 element
 - ✓ **CDN versionslåsta** — 3 externa resurser
@@ -20,7 +20,7 @@ Skriven av `quizcli.js` 2026-09-16 22:42:29.
 - ✓ **manifest**
 - ✓ **pixelRatio taklagd**
 - ✓ **Inga TODO/FIXME**
-- ✓ **api/generate.js parsar** — 10.4 kB
+- ✓ **api/generate.js parsar** — 11.2 kB
 - ✓ **Nyckeln läses ur miljön**
 - ✓ **Modellkedja** — gemini-flash-latest → gemini-3.5-flash → gemini-2.5-flash → gemini-flash-lite-latest
 - ✓ **.vercelignore skyddar funktionen** — package.json och server.js deployas inte
@@ -42,15 +42,15 @@ Skriven av `quizcli.js` 2026-09-16 22:42:29.
 
 ## Viktbudget — vad tittaren laddar ner
 
-- ✓ **index.html** — 427.9 kB → 112.5 kB gzip
+- ✓ **index.html** — 439.2 kB → 118.7 kB gzip
 - ✓ **js-gltfloader.js** — 94.3 kB → 21.4 kB gzip
-- ✓ **Första laddningen** — 133.9 kB gzip (modellerna hämtas per värld)
+- ✓ **Första laddningen** — 140.1 kB gzip (modellerna hämtas per värld)
 - ✓ **Modeller vid behov** — 10 st, 3608.9 kB totalt
 - ! **Tunga modeller** — models/Cobra.glb 811.1 kB, models/Vulture.glb 1090.3 kB
 
 ## Rökprov — spelet startat på riktigt i headless Chrome
 
-- ✓ **jungle** — start 130 ms · ANGLE (Google, Vulkan 1.3.0  · 844 objekt · 759 draw calls
+- ✓ **jungle** — start 705 ms · ANGLE (Google, Vulkan 1.3.0  · 384 objekt · 317 draw calls
 
 ## Funktionsprov — tangentbord, repetition, paus, tillgänglighet
 
@@ -59,7 +59,7 @@ Skriven av `quizcli.js` 2026-09-16 22:42:29.
 - ✓ **Alternativ nåbart för tangentbord** — tabIndex=0 role=button
 - ✓ **aria-live på frågan** — polite
 - ✓ **Tangentbordet svarar (1 = A)**
-- ✓ **Missad fråga sparas med schema** — 1 post(er), nästa 2026-09-16T20:52
+- ✓ **Missad fråga sparas med schema** — 1 post(er), nästa 2026-09-16T22:36
 - ✓ **Pausar när fliken göms**
 - ✓ **Fortsätter när fliken syns igen**
 - ✓ **Rekordnyckeln finns**

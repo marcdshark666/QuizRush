@@ -6,3 +6,10 @@ server.js
 package.json
 uploads
 .env.local
+
+# Verktyg och rapporter hör inte till spelet som publiceras.
+quizcli.js
+RAPPORT.md
+*.bak-plus
+qr-prov.html
+.deploy-backoff.json

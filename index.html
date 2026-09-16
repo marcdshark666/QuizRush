@@ -1691,7 +1691,9 @@ const DEMO_QUESTIONS=[
 // Big documents are split into a handful of windows spread evenly over the
 // whole text; each window becomes one request, run in parallel, so a 300-page
 // PDF still yields questions from the beginning, middle and end.
-const AI_ENDPOINT='/api/generate';
+// Relativ sökväg: på Vercel ligger sidan i roten, på GitHub Pages under /QuizRush/.
+// En absolut '/api/generate' skulle peka utanför kopian där och alltid ge 404.
+const AI_ENDPOINT='api/generate';
 const AI_CHUNK=24000;    // characters per request (well inside the model's window)
 const AI_MAX_PARTS=6;    // parallel requests at most
 function splitForAI(text,count){
@@ -1712,6 +1714,8 @@ function splitForAI(text,count){
 async function aiGenerate(seg,count,difficulty,lang,part,parts){
   const r=await fetch(AI_ENDPOINT,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({text:seg,count,difficulty,lang,part,parts}),signal:AbortSignal.timeout(70000)});
   const d=await r.json().catch(()=>({}));
+  // 404 utan JSON = statisk kopia utan serverfunktion (GitHub Pages), inte ett trasigt API.
+  if(r.status===404&&!d.error){const e=new Error('no AI server in this copy');e.code='no_server';throw e}
   if(!r.ok){const e=new Error(d.message||('AI '+r.status));e.code=d.error||r.status;throw e}
   return Array.isArray(d.questions)?d.questions:[];
 }
@@ -1803,7 +1807,7 @@ startBtn.addEventListener('click',async()=>{
     try{q=await buildQuiz(text,msg=>setLoading(msg))}
     catch(e){
       console.warn('AI quiz failed',e);
-      aiNote=e.code==='no_key'?'AI is not configured on the server':e.code==='quota'?'AI quota reached for now':e.code==='too_short'?'Too little text for the AI':'AI unavailable right now';
+      aiNote=e.code==='no_server'?'This is the static study copy — no AI server here':e.code==='no_key'?'AI is not configured on the server':e.code==='quota'?'AI quota reached for now':e.code==='too_short'?'Too little text for the AI':'AI unavailable right now';
     }
     if(!q||q.length<1){
       setLoading(aiNote+' — building a basic quiz instead...');

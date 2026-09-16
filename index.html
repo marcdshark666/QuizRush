@@ -2,7 +2,14 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <!-- Zoom är tillåten igen: user-scalable=no stängde ute alla som behöver förstora
+       texten. Spelytan skyddas i stället med touch-action: none, så svep och tapp
+       under spelets gång inte panorerar sidan. -->
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="apple-touch-icon" href="icon-192.png">
   <meta name="description" content="Quiz Rush — turn any text, PDF or webpage into a 3D endless-runner quiz game. Outrun the boulder, answer to survive!">
   <meta name="theme-color" content="#0d1117">
   <meta property="og:title" content="Quiz Rush - Jungle Escape">
@@ -477,6 +484,32 @@ html,body{width:100%;height:100%;overflow:hidden;font-family:'Be Vietnam Pro',sa
   .stat-card .sc-value{font-size:2.6rem}
 }
 @media(min-width:600px){.upload-scroll,.shop-scroll{max-width:480px;margin:0 auto}}
+/* ===== QUIZ RUSH PLUS ===== */
+/* Spelytan tar hand om sina egna gester — sidan ska inte panorera när man svajpar. */
+#game-screen,#game-canvas-container,#q-opts{touch-action:manipulation}
+#game-canvas-container{touch-action:none}
+/* Tangentbordet ska synas: svarsalternativen får en tydlig fokusring. */
+.q-opt:focus-visible{outline:3px solid var(--relic-glow);outline-offset:3px}
+.big-btn:focus-visible,button:focus-visible{outline:3px solid var(--relic-glow);outline-offset:2px}
+/* «Minska rörelse»: ingen skakning, inga fartränder, inga pulserande ramar. */
+.qr-lugn .fever-line,.qr-lugn #fever-lines{display:none!important}
+.qr-lugn *{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.08s!important}
+/* Felrutan — ett fel ska förklaras, inte bli en vit skärm. */
+.qr-fel{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:9999;max-width:min(520px,92vw);
+  background:var(--bg-card);border:1px solid var(--danger);border-left:4px solid var(--danger);border-radius:12px;
+  padding:14px 16px;box-shadow:0 18px 50px rgba(0,0,0,.55);color:var(--text);font-size:14px}
+.qr-fel b{display:block;font-size:15px;margin-bottom:4px;color:var(--danger)}
+.qr-fel p{margin:0 0 10px;color:var(--text-dim);font-size:13px;word-break:break-word}
+.qr-fel-knappar{display:flex;gap:8px}
+.qr-fel-knappar button{flex:1;padding:8px 10px;border-radius:8px;border:1px solid var(--outline);
+  background:var(--surface);color:var(--text);font-weight:700;font-size:13px;cursor:pointer}
+/* Pausrutan när fliken göms. */
+.qr-paus{position:fixed;inset:0;z-index:9998;display:flex;align-items:center;justify-content:center;
+  background:rgba(6,10,16,.82);backdrop-filter:blur(3px);cursor:pointer;text-align:center;color:var(--text)}
+.qr-paus b{display:block;font-size:30px;font-weight:800;letter-spacing:.04em}
+.qr-paus p{margin-top:8px;color:var(--text-dim);font-size:14px}
+#qr-rekord{font-family:inherit;font-size:11px;letter-spacing:.08em;color:var(--relic-glow);opacity:.9}
+#qr-selftest{display:none}
   </style>
 </head>
 <body>
@@ -762,7 +795,7 @@ html,body{width:100%;height:100%;overflow:hidden;font-family:'Be Vietnam Pro',sa
 
   <div class="q-strip hidden" id="q-strip">
     <div class="q-progress"><div class="q-dots" id="q-dots"></div><span class="q-count" id="q-count">0/10</span></div>
-    <div class="q-text" id="q-text"></div>
+    <div class="q-text" id="q-text" role="status" aria-live="polite" aria-atomic="true"></div>
     <div class="q-opts" id="q-opts"></div>
   </div>
 </div>
@@ -792,6 +825,7 @@ html,body{width:100%;height:100%;overflow:hidden;font-family:'Be Vietnam Pro',sa
     <div class="journal-section">
       <h2>📜 QUEST JOURNAL</h2>
       <div id="journal-list"></div>
+      <div id="qr-rekord"></div>
     </div>
     <div class="results-actions">
       <button class="big-btn primary" id="retry-btn">🔄 RUN AGAIN</button>
@@ -1819,7 +1853,10 @@ class JungleEngine{
     this.camera.position.set(0,4.15,9.6);this.camera.lookAt(0,1.05,-18);
     this.renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});
     this.renderer.setSize(window.innerWidth,window.innerHeight);
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio,3)); // native-res on 4K/retina
+    // Taket är 2, inte 3: en 3×-telefon renderade nio gånger så många pixlar som
+    // en 1×-skärm och tappade bildrutor. Kvalitetsvakten i QUIZ RUSH PLUS justerar
+    // sedan upp eller ner efter uppmätt fps.
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
     this.renderer.shadowMap.enabled=true;
     this.renderer.shadowMap.type=THREE.PCFSoftShadowMap; // soft filtered shadow edges
     this.renderer.outputEncoding=THREE.sRGBEncoding;     // correct color space
@@ -1828,6 +1865,7 @@ class JungleEngine{
     this._envMap(wc); // image-based lighting BEFORE materials are created
     this._lights(wc);this._ground(wc);
     this._spawnChunk(0,wc);this._spawnChunk(-this.CHUNK,wc);this._spawnChunk(-this.CHUNK*2,wc);
+    this._mergeStatic(); // #341: en mesh per material och z-segment i stallet for en per trad
     this._player();this._enemy(wc);this._animals();this._particles();this._startMusic();
     // Realism pass: every solid mesh casts soft shadows
     this.scene.traverse(o=>{
@@ -2086,6 +2124,158 @@ class JungleEngine{
       this.scene.add(grp);
       this.groundTiles.push({grp,len:L});
     }
+  }
+  // ---- Sla ihop den statiska geometrin (uppdrag #341) ---------------------
+  // Varje trad, sten, grasstra och blomma var en egen mesh: 782 draw calls pa
+  // 34 000 trianglar i djungeln. Kortet ar inte trott pa trianglarna utan pa
+  // antalet anrop, och varje ny varld lade pa fler.
+  //
+  // Objekten scrollar alla med samma hastighet och wrappar vid samma grans, sa
+  // de kan slas ihop till farre meshar. Men INTE till en enda per material:
+  // da hade hela varlden wrappat samtidigt och poppat mitt i bild. Darfor
+  // delas de i segment om SEG enheter langs z, och ett segment wrappar forst
+  // nar HELA segmentet passerat FAR. Meshens position ar segmentets bakre kant
+  // och geometrin ar flyttad dit, sa wrap-testet i scrollslingan (position.z <
+  // FAR) galler oforandrat.
+  //
+  // SEG=5 ar valt ur marginalen: ett wrappat segment landar med bakre kanten
+  // vid NEAR (z=15) och kameran star vid z=9.6. Ett segment kortare an 5.4
+  // enheter hinner alltsa alltid tillbaka bakom kameran innan det syns.
+  // Tva material som bara skiljer sig i fargen kan bli ETT material med
+  // vertexfarger — och da far lov, gras och stenar ligga i samma mesh. Allt
+  // som barer en textur, ett eget ljus (emissive) eller genomskinlighet maste
+  // behalla sitt eget material; dar ar uuid:t nyckeln.
+  _matNyckel(m){
+    const enkel=m.type==='MeshStandardMaterial'&&!m.map&&!m.bumpMap&&!m.normalMap
+      &&!m.emissiveMap&&!m.alphaMap&&!m.aoMap&&!m.roughnessMap&&!m.metalnessMap
+      &&!m.transparent&&!m.vertexColors&&!m.flatShading&&m.opacity===1
+      &&(!m.emissive||m.emissive.getHex()===0||!m.emissiveIntensity);
+    if(!enkel)return 'u:'+m.uuid;
+    return 'f:'+m.side+':'+(+m.roughness.toFixed(3))+':'+(+m.metalness.toFixed(3));
+  }
+  // Ett delat material per signatur — samma shader for alla segment.
+  _vcolMat(nyckel,mall){
+    const cache=this._vcolMats||(this._vcolMats=new Map());
+    let m=cache.get(nyckel);
+    if(!m){
+      m=mall.clone();m.vertexColors=true;m.color.setHex(0xffffff);
+      m.name='merged '+nyckel;cache.set(nyckel,m);
+    }
+    return m;
+  }
+  _mergeStatic(){
+    if(!this.scrollObjects||!this.scrollObjects.length)return;
+    const SEG=5;
+    const kvar=[],grupper=new Map();
+    const delad=new Set(Object.values(this._geoCache||{}).filter(g=>g&&g.isBufferGeometry));
+    for(const obj of this.scrollObjects){
+      const m=obj.mesh;
+      // Allt som ror sig av sig sjalvt, bar barn eller triggar hopp maste
+      // forbli en egen mesh — sammanslagningen tar bort deras egen position.
+      const statisk=m&&m.isMesh&&!m.children.length&&m.geometry&&m.material
+        &&!Array.isArray(m.material)&&!m.material.transparent
+        &&!obj.isRiver&&!obj.isSnake&&!obj.isBat&&!obj.isBubble&&!obj.dynamic
+        &&!m.geometry.morphAttributes?.position?.length
+        &&Object.values(m.geometry.attributes).every(a=>a&&a.array&&!a.isInterleavedBufferAttribute);
+      if(!statisk){kvar.push(obj);continue}
+      const seg=Math.floor(m.position.z/SEG);
+      const mk=this._matNyckel(m.material);
+      // Attributuppsattningen maste stamma inom gruppen — en geometri utan uv
+      // kan inte sys ihop med en som har uv utan att attributen glider isar.
+      const sign=Object.keys(m.geometry.attributes).sort().join(',');
+      const nyckel=seg+'|'+mk+'|'+sign;
+      const g=grupper.get(nyckel)||{seg,mk,mat:m.material,objekt:[]};
+      g.objekt.push(obj);grupper.set(nyckel,g);
+    }
+    let foreN=0,efterN=0;
+    for(const g of grupper.values()){
+      foreN+=g.objekt.length;
+      // En ensam mesh vinner ingenting pa att bakas om.
+      if(g.objekt.length<2){kvar.push(...g.objekt);efterN+=g.objekt.length;continue}
+      const refZ=(g.seg+1)*SEG;
+      const bitar=[];let skugga=false,tar=false,blandat=false;
+      const forsta=g.objekt[0].mesh.material;
+      for(const o of g.objekt){
+        o.mesh.updateMatrix();
+        bitar.push({geometry:o.mesh.geometry,matrix:o.mesh.matrix.clone(),color:o.mesh.material.color});
+        if(o.mesh.material!==forsta)blandat=true;
+        skugga=skugga||o.mesh.castShadow;tar=tar||o.mesh.receiveShadow;
+      }
+      // Bara nar gruppen faktiskt bar flera material behovs vertexfarger;
+      // en enfargad grupp behaller sitt original och sparar ett attribut.
+      const vcol=blandat&&g.mk.charAt(0)==='f';
+      let geo;
+      try{geo=this._mergeGeos(bitar,vcol)}catch(e){console.warn('merge hoppades over:',e.message);kvar.push(...g.objekt);efterN+=g.objekt.length;continue}
+      geo.translate(0,0,-refZ);
+      const mesh=new THREE.Mesh(geo,vcol?this._vcolMat(g.mk,forsta):forsta);
+      mesh.position.z=refZ;mesh.castShadow=skugga;mesh.receiveShadow=tar;
+      mesh.frustumCulled=true;
+      for(const o of g.objekt){
+        this.scene.remove(o.mesh);
+        // Bara geometrier som inte delas med nagon annan far slappas — GC-cachens
+        // enhetsformer anvands av bade djungeln och de andra varldarna.
+        if(!delad.has(o.mesh.geometry)&&o.mesh.geometry.dispose)o.mesh.geometry.dispose();
+      }
+      this.scene.add(mesh);
+      kvar.push({mesh,baseZ:refZ,merged:true});
+      efterN++;
+    }
+    this.scrollObjects=kvar;
+    this._mergeInfo={fore:foreN,efter:efterN,kvar:kvar.length};
+  }
+  // Slar ihop BufferGeometry-bitar med var sin matris till en enda geometri.
+  // three.js r128 har BufferGeometryUtils bara i examples/ — och sidan ska inte
+  // dra in en fjarde CDN-resurs for femtio rader kod.
+  _mergeGeos(bitar,vcol){
+    const namn=Object.keys(bitar[0].geometry.attributes).sort().filter(n=>n!=='color');
+    let totV=0,totI=0;
+    for(const b of bitar){
+      const g=b.geometry;
+      for(const n of namn)if(!g.attributes[n])throw new Error('attributen skiljer sig');
+      totV+=g.attributes.position.count;
+      totI+=g.index?g.index.count:g.attributes.position.count;
+    }
+    const buf={};
+    for(const n of namn){
+      const a=bitar[0].geometry.attributes[n];
+      buf[n]={arr:new Float32Array(totV*a.itemSize),size:a.itemSize,off:0};
+    }
+    const idx=totV>65535?new Uint32Array(totI):new Uint16Array(totI);
+    // Fargen bakas in per vertex nar gruppen bar flera material. r128 skickar
+    // bade material.color och vertexfargen ratt in i shadern utan nagon
+    // farbrymdskonvertering, sa vit grundfarg x gamla hexvardet ger exakt
+    // samma pixel som forut.
+    const farg=vcol?new Float32Array(totV*3):null;
+    let fOff=0;
+    const nm=new THREE.Matrix3(),v=new THREE.Vector3();
+    let vOff=0,iOff=0;
+    for(const b of bitar){
+      const g=b.geometry,antal=g.attributes.position.count;
+      nm.getNormalMatrix(b.matrix);
+      for(const n of namn){
+        const a=g.attributes[n],d=buf[n];
+        if(n==='position'){
+          for(let i=0;i<antal;i++){v.fromBufferAttribute(a,i).applyMatrix4(b.matrix);d.arr[d.off++]=v.x;d.arr[d.off++]=v.y;d.arr[d.off++]=v.z}
+        }else if(n==='normal'){
+          for(let i=0;i<antal;i++){v.fromBufferAttribute(a,i).applyMatrix3(nm).normalize();d.arr[d.off++]=v.x;d.arr[d.off++]=v.y;d.arr[d.off++]=v.z}
+        }else{
+          for(let i=0;i<antal;i++)for(let k=0;k<a.itemSize;k++)d.arr[d.off++]=a.getComponent?a.getComponent(i,k):a.array[i*a.itemSize+k];
+        }
+      }
+      if(farg){
+        const c=b.color||{r:1,g:1,b:1};
+        for(let i=0;i<antal;i++){farg[fOff++]=c.r;farg[fOff++]=c.g;farg[fOff++]=c.b}
+      }
+      if(g.index){const ia=g.index.array;for(let i=0;i<g.index.count;i++)idx[iOff++]=ia[i]+vOff}
+      else{for(let i=0;i<antal;i++)idx[iOff++]=i+vOff}
+      vOff+=antal;
+    }
+    const out=new THREE.BufferGeometry();
+    for(const n of namn)out.setAttribute(n,new THREE.BufferAttribute(buf[n].arr,buf[n].size));
+    if(farg)out.setAttribute('color',new THREE.BufferAttribute(farg,3));
+    out.setIndex(new THREE.BufferAttribute(idx,1));
+    out.computeBoundingSphere();
+    return out;
   }
   // SPAWN A CHUNK of world objects (trees, vines, rivers, etc.)
   _spawnChunk(startZ,wc){
@@ -4552,7 +4742,15 @@ class QuizGame{
     const L=['A','B','C','D'];
     q.options.forEach((o,i)=>{
       const div=document.createElement('div');div.className='q-opt';
-      div.innerHTML=`<div class="ol">${L[i]}</div><div class="ot">${o.replace(/^[A-D]\)\s*/,'')}</div>`;
+      // Texten kommer ur spelarens eget material eller ur AI:n. Den sätts med
+      // textContent, aldrig innerHTML: ett PDF-utdrag som råkar innehålla
+      // <img onerror=…> ska visas som text, inte köras.
+      const ol=document.createElement('div');ol.className='ol';ol.textContent=L[i];
+      const ot=document.createElement('div');ot.className='ot';ot.textContent=String(o).replace(/^[A-D]\)\s*/,'');
+      div.appendChild(ol);div.appendChild(ot);
+      // Tangentbord och skärmläsare: alternativet är en knapp, inte en ruta.
+      div.tabIndex=0;div.setAttribute('role','button');div.setAttribute('aria-label',`${L[i]}: ${ot.textContent}`);
+      div.addEventListener('keydown',(ev)=>{if(ev.key==='Enter'||ev.key===' '){ev.preventDefault();this._answer(i)}});
       div.addEventListener('click',()=>this._answer(i));opts.appendChild(div);
     });
     document.getElementById('q-strip').classList.remove('hidden');
@@ -4720,7 +4918,20 @@ class QuizGame{
       const jl=document.getElementById('journal-list');jl.innerHTML='';
       this.results.forEach(r=>{
         const d=document.createElement('div');d.className='journal-item';
-        d.innerHTML=`<div class="ji-header"><div class="ji-q">${r.question}</div><div class="ji-badge ${r.isCorrect?'correct':'wrong'}">${r.isCorrect?'✓':'✗'}</div></div><span class="ji-tag ${r.isCorrect?'ok':'bad'}">${r.isCorrect?'Mastered':'Study Required'}</span>${r.explanation?`<div class="ji-detail">${r.isCorrect?'':'Correct: '+r.correct+'<br>'}${r.explanation}</div>`:''}`;
+        // Frågetexten kommer utifrån (uppladdat material eller AI) — den byggs
+        // som noder med textContent, så ingen HTML ur materialet kan köras.
+        const head=document.createElement('div');head.className='ji-header';
+        const qd=document.createElement('div');qd.className='ji-q';qd.textContent=r.question;
+        const bd=document.createElement('div');bd.className='ji-badge '+(r.isCorrect?'correct':'wrong');bd.textContent=r.isCorrect?'✓':'✗';
+        head.appendChild(qd);head.appendChild(bd);d.appendChild(head);
+        const tag=document.createElement('span');tag.className='ji-tag '+(r.isCorrect?'ok':'bad');
+        tag.textContent=r.isCorrect?'Mastered':'Study Required';d.appendChild(tag);
+        if(r.explanation||!r.isCorrect){
+          const det=document.createElement('div');det.className='ji-detail';
+          if(!r.isCorrect){const b=document.createElement('b');b.textContent='Correct: '+r.correct;det.appendChild(b);det.appendChild(document.createElement('br'))}
+          if(r.explanation)det.appendChild(document.createTextNode(r.explanation));
+          d.appendChild(det);
+        }
         jl.appendChild(d);
       });
     },800);
@@ -6287,6 +6498,352 @@ refreshWorldSelector();
     },1500);
   }catch(e){console.warn('demo-param',e)}
 })();
+
+// ========================================================
+// QUIZ RUSH PLUS (2026-09-16)
+// ========================================================
+// Allt som spelet saknade utanför själva springandet: fel som syns i stället
+// för en vit skärm, tangentbord, paus när fliken göms, hänsyn till «minska
+// rörelse», rekord per värld, de missade frågorna som kommer tillbaka, offline,
+// och ett självtest som `quizcli.js` läser av i headless Chrome.
+//
+// Blocket ligger sist och rör inte spelets egen kod — det hakar på den. Går
+// något sönder här fortsätter spelet ändå: varje del står i sin egen try.
+(function(){
+  'use strict';
+  const P=new URLSearchParams(location.search);
+  const LS={
+    get(k,d){try{const v=localStorage.getItem(k);return v==null?d:JSON.parse(v)}catch(e){return d}},
+    set(k,v){try{localStorage.setItem(k,JSON.stringify(v));return true}catch(e){return false}}
+  };
+  const DAG=86400000;
+  const felLogg=[];
+
+  // ---------------------------------------------------------------- 1. fel
+  // En vit skärm säger ingenting. Ett fel ska säga vad som hände och hur man
+  // kommer vidare — och samtidigt hamna i självtestets rapport.
+  function visaFel(txt){
+    felLogg.push(String(txt).slice(0,300));
+    if(P.get('selftest'))return;                       // provet vill ha rå data, inte en ruta
+    let r=document.getElementById('qr-fel');
+    if(!r){
+      r=document.createElement('div');r.id='qr-fel';r.className='qr-fel';
+      r.innerHTML='<b>Something broke</b><p id="qr-fel-text"></p>'
+        +'<div class="qr-fel-knappar"><button type="button" id="qr-fel-stang">Keep playing</button>'
+        +'<button type="button" id="qr-fel-om">Reload</button></div>';
+      document.body.appendChild(r);
+      r.querySelector('#qr-fel-stang').addEventListener('click',()=>r.remove());
+      r.querySelector('#qr-fel-om').addEventListener('click',()=>location.reload());
+    }
+    r.querySelector('#qr-fel-text').textContent=String(txt).slice(0,220);
+  }
+  window.addEventListener('error',(e)=>{
+    // Ett fel i en bild eller ett ljud ska inte skrämma spelaren.
+    if(e.target&&e.target!==window&&e.target.tagName)return;
+    visaFel(`${e.message} (${(e.filename||'').split('/').pop()}:${e.lineno})`);
+  },true);
+  window.addEventListener('unhandledrejection',(e)=>{
+    const r=e.reason;visaFel(`Unhandled: ${(r&&(r.message||r))||'promise rejected'}`);
+  });
+
+  // ---------------------------------------------------------------- 2. rörelse
+  // «Minska rörelse» är inte en smaksak — skakningar och blinkningar gör folk
+  // illamående. CSS-delen ligger i stilmallen; här släcks skakningen i 3D också.
+  let lugnLage=false;
+  try{
+    const mq=matchMedia('(prefers-reduced-motion: reduce)');
+    const sat=()=>{lugnLage=mq.matches;document.body.classList.toggle('qr-lugn',lugnLage)};
+    sat();mq.addEventListener?mq.addEventListener('change',sat):mq.addListener(sat);
+  }catch(e){}
+
+  // ---------------------------------------------------------------- 3. tangentbord
+  // Spelet gick bara att spela med fingret eller musen. Nu: 1–4 eller A–D
+  // svarar, mellanslag hoppar, piltangenter byter körfält, Esc pausar.
+  document.addEventListener('keydown',(e)=>{
+    if(e.target&&/^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName))return;
+    const g=curGame;
+    const spelar=g&&g.engine&&document.getElementById('game-screen').classList.contains('active');
+    const k=e.key;
+    // Svara: 1–4 eller a–d, men bara när frågan står uppe.
+    const nr='1234'.indexOf(k)>=0?'1234'.indexOf(k):'abcd'.indexOf(String(k).toLowerCase());
+    if(spelar&&nr>=0&&g.answering){
+      const alt=document.querySelectorAll('#q-opts .q-opt');
+      if(alt[nr]){e.preventDefault();alt[nr].click()}
+      return;
+    }
+    if(!spelar)return;
+    if(k===' '||k==='ArrowUp'||k==='w'||k==='W'){e.preventDefault();if(g.engine._triggerJump)g.engine._triggerJump()}
+    else if(k==='ArrowLeft'||k==='a'||k==='A'){if(g.engine.moveLane)g.engine.moveLane(-1)}
+    else if(k==='ArrowRight'||k==='d'||k==='D'){if(g.engine.moveLane)g.engine.moveLane(1)}
+    else if(k==='Escape'||k==='p'||k==='P'){vaxlaPaus()}
+  });
+
+  // ---------------------------------------------------------------- 4. paus
+  // Ett spel som fortsätter räkna ner i en dold flik tar hjärtan av spelaren
+  // medan hen läser sin mejl — och renderar 3D på en telefon som ligger i
+  // fickan. Båda sakerna slutar nu när fliken göms.
+  let pausad=false;
+  function pausRuta(pa){
+    let r=document.getElementById('qr-paus');
+    if(pa){
+      if(!r){
+        r=document.createElement('div');r.id='qr-paus';r.className='qr-paus';
+        r.innerHTML='<div><b>Paused</b><p>Tab in the background. Press Esc or come back to continue.</p></div>';
+        document.body.appendChild(r);
+        r.addEventListener('click',()=>vaxlaPaus());
+      }
+    }else if(r)r.remove();
+  }
+  function pausa(){
+    const g=curGame;if(!g||!g.engine||pausad)return;
+    pausad=true;
+    try{clearInterval(g.timer);g.timer=null}catch(e){}
+    g.engine.running=false;
+    try{if(g.engine.audio&&g.engine.audio.suspend)g.engine.audio.suspend()}catch(e){}
+    try{if(g.engine._stopSong)g.engine._stopSong()}catch(e){}
+    pausRuta(true);
+  }
+  function fortsatt(){
+    const g=curGame;if(!g||!g.engine||!pausad)return;
+    pausad=false;pausRuta(false);
+    try{if(g.engine.audio&&g.engine.audio.resume)g.engine.audio.resume()}catch(e){}
+    g.engine.running=true;
+    // Klockan har stått still: nollställ den innan loopen startar, annars kommer
+    // första bildrutan med ett dt på flera sekunder och spelaren teleporteras.
+    try{g.engine.clock.getDelta()}catch(e){}
+    try{g.engine._animate()}catch(e){visaFel('Resume: '+e.message)}
+    if(!g.timer&&g.left>0&&g._startTimer)g._startTimer();
+  }
+  function vaxlaPaus(){pausad?fortsatt():pausa()}
+  document.addEventListener('visibilitychange',()=>{
+    if(document.hidden)pausa();
+    else if(pausad&&!document.getElementById('qr-paus-manuell'))fortsatt();
+  });
+
+  // ---------------------------------------------------------------- 5. bilder/sek
+  // En telefon med 3×-skärm renderar nio gånger så många pixlar som en 1×.
+  // Går det trögt sänks upplösningen — hellre mjukt än skarpt.
+  let fpsRing=[],sista=performance.now(),vakt=null;
+  function startaKvalitetsvakt(){
+    if(vakt)return;
+    const steg=()=>{
+      vakt=requestAnimationFrame(steg);
+      const nu=performance.now(),dt=nu-sista;sista=nu;
+      if(dt>0&&dt<1000){fpsRing.push(1000/dt);if(fpsRing.length>120)fpsRing.shift()}
+      const g=curGame;
+      if(fpsRing.length===120&&g&&g.engine&&g.engine.renderer){
+        const snitt=fpsRing.reduce((a,b)=>a+b,0)/fpsRing.length;
+        const r=g.engine.renderer,pr=r.getPixelRatio();
+        if(snitt<38&&pr>1.1){r.setPixelRatio(Math.max(1,pr-0.5));fpsRing=[]}
+        else if(snitt>58&&pr<Math.min(devicePixelRatio,2)){r.setPixelRatio(Math.min(pr+0.25,devicePixelRatio,2));fpsRing=[]}
+      }
+    };
+    vakt=requestAnimationFrame(steg);
+  }
+  const fpsNu=()=>(fpsRing.length?Math.round(fpsRing.slice(-60).reduce((a,b)=>a+b,0)/Math.min(60,fpsRing.length)):0);
+
+  // ---------------------------------------------------------------- 6. repetition
+  // Det spelet aldrig gjorde: komma ihåg vad spelaren INTE kunde. Varje fråga
+  // får ett eget schema — fel svar ger tio minuter, rätt svar fördubblar
+  // intervallet. «Practice missed» bygger en runda av det som är moget.
+  const BANK='quizrush_bank';
+  const nyckelFor=(q)=>{
+    const s=String(q.question||'').toLowerCase().replace(/\s+/g,' ').trim();
+    let h=5381;for(let i=0;i<s.length;i++)h=((h<<5)+h+s.charCodeAt(i))>>>0;
+    return 'q'+h.toString(36);
+  };
+  function bankLas(){const b=LS.get(BANK,{});return (b&&typeof b==='object')?b:{}}
+  function bankSkriv(b){
+    // Banken får inte växa i all oändlighet: äldst ut när den blir stor.
+    const n=Object.keys(b);
+    if(n.length>400){
+      n.sort((a,c)=>String(b[a].senast||'').localeCompare(String(b[c].senast||'')));
+      for(const k of n.slice(0,n.length-400))delete b[k];
+    }
+    LS.set(BANK,b);
+  }
+  function bankUppdatera(q,ratt){
+    if(!q||!q.question||!Array.isArray(q.options))return;
+    const b=bankLas(),k=nyckelFor(q);
+    const p=b[k]||{q:{question:q.question,options:q.options,correct:q.correct,explanation:q.explanation||''},fel:0,ratt:0,steg:0};
+    if(ratt){p.ratt++;p.steg=Math.min((p.steg||0)+1,5);p.nasta=new Date(Date.now()+[DAG,3*DAG,7*DAG,16*DAG,35*DAG][Math.min(p.steg,4)-1||0]).toISOString()}
+    else{p.fel++;p.steg=0;p.nasta=new Date(Date.now()+10*60000).toISOString()}
+    p.senast=new Date().toISOString();p.varld=(curGame&&curGame.worldId)||null;
+    b[k]=p;bankSkriv(b);
+  }
+  function bankMogna(){
+    const nu=Date.now(),b=bankLas();
+    return Object.values(b).filter((p)=>p&&p.q&&(!p.nasta||Date.parse(p.nasta)<=nu)&&p.fel>0)
+      .sort((a,c)=>(c.fel-c.ratt)-(a.fel-a.ratt)).map((p)=>p.q);
+  }
+  function malaRepetitionsknapp(){
+    const host=document.querySelector('#results-screen .results-actions');
+    if(!host)return;
+    let b=document.getElementById('qr-rep-btn');
+    const mogna=bankMogna();
+    if(!mogna.length){if(b)b.remove();return}
+    if(!b){
+      b=document.createElement('button');b.id='qr-rep-btn';b.className='big-btn secondary';
+      b.addEventListener('click',()=>{
+        const q=bankMogna().slice(0,12);
+        if(!q.length)return;
+        document.getElementById('results-screen').classList.remove('active');
+        launchGame(q);                                  // samma väg som «RUN AGAIN»
+      });
+      host.appendChild(b);
+    }
+    b.textContent=`🎯 PRACTICE MISSED (${mogna.length})`;
+  }
+
+  // ---------------------------------------------------------------- 7. rekord
+  const REKORD='quizrush_rekord';
+  function rekordSkriv(varld,poang,traff){
+    const r=LS.get(REKORD,{}),f=r[varld]||{poang:0};
+    const nytt=poang>(f.poang||0);
+    if(nytt)r[varld]={poang,traff,at:new Date().toISOString()};
+    LS.set(REKORD,r);
+    return {nytt,tidigare:f.poang||0};
+  }
+  const rekordFor=(varld)=>(LS.get(REKORD,{})[varld]||{poang:0}).poang;
+
+  // ---------------------------------------------------------------- 8. dela
+  function malaDelaknapp(g){
+    const host=document.querySelector('#results-screen .results-actions');
+    if(!host)return;
+    let b=document.getElementById('qr-dela-btn');
+    if(!b){
+      b=document.createElement('button');b.id='qr-dela-btn';b.className='big-btn secondary';b.textContent='📤 SHARE';
+      host.appendChild(b);
+    }
+    b.onclick=async()=>{
+      const varld=(WORLDS[g.worldId]||{}).name||g.worldId;
+      const acc=g.cur>0?Math.round(g.correct/g.cur*100):0;
+      const txt=`Quiz Rush — ${varld}: ${g.score.toLocaleString()} points, ${acc}% correct on ${g.difficulty}. ${location.origin}`;
+      try{
+        if(navigator.share)await navigator.share({title:'Quiz Rush',text:txt});
+        else{await navigator.clipboard.writeText(txt);b.textContent='📋 COPIED';setTimeout(()=>{b.textContent='📤 SHARE'},1800)}
+      }catch(e){/* avbruten delning är inget fel */}
+    };
+  }
+
+  // ---------------------------------------------------------------- 9. hakar
+  // Spelets egen kod rörs inte — den hakas på. Går någon av hakarna sönder
+  // fortsätter originalet ändå, för det körs först.
+  try{
+    const _svar=QuizGame.prototype._answer;
+    QuizGame.prototype._answer=function(idx){
+      const svarade=this.answering,q=this.qs[this.cur];
+      const ut=_svar.call(this,idx);
+      if(svarade&&q){try{bankUppdatera(q,idx===q.correct)}catch(e){}}
+      return ut;
+    };
+    const _start=QuizGame.prototype.start;
+    QuizGame.prototype.start=function(){
+      const ut=_start.apply(this,arguments);
+      pausad=false;pausRuta(false);startaKvalitetsvakt();
+      try{
+        const r=rekordFor(this.worldId);
+        const el=document.getElementById('qr-rekord');
+        if(el)el.textContent=r?`BEST ${r.toLocaleString()}`:'';
+      }catch(e){}
+      return ut;
+    };
+    const _slut=QuizGame.prototype._end;
+    QuizGame.prototype._end=function(won){
+      const ut=_slut.apply(this,arguments);
+      const g=this;
+      setTimeout(()=>{
+        try{
+          const acc=g.cur>0?Math.round(g.correct/g.cur*100):0;
+          const {nytt,tidigare}=rekordSkriv(g.worldId,g.score,acc);
+          const rad=document.getElementById('xp-rank');
+          if(rad)rad.textContent+=nytt?`  ·  NEW BEST (was ${tidigare.toLocaleString()})`:`  ·  Best ${Math.max(tidigare,g.score).toLocaleString()}`;
+          malaRepetitionsknapp();malaDelaknapp(g);
+        }catch(e){}
+      },900);
+      return ut;
+    };
+  }catch(e){visaFel('Plus-hakarna: '+e.message)}
+
+  // ---------------------------------------------------------------- 10. offline
+  // Spelet är en fil och sju modeller. Med en servicearbetare ligger allt kvar
+  // i telefonen — bara AI-frågorna behöver nätet, och de faller redan tillbaka
+  // på meningsklipparen när nätet är borta.
+  if('serviceWorker' in navigator&&location.protocol!=='file:'&&!P.get('selftest')){
+    window.addEventListener('load',()=>{
+      navigator.serviceWorker.register('sw.js').catch((e)=>console.warn('sw',e.message));
+    });
+  }
+
+  // ---------------------------------------------------------------- 11. självtest
+  // `quizcli.js smoke` startar spelet i headless Chrome och läser den här rutan.
+  // Allt provet behöver veta ska stå här: startade WebGL, hur fort går det, kom
+  // det några fel, hur tung är scenen.
+  if(P.get('selftest')){
+    const t0=performance.now();
+    const fonster=Math.max(800,Math.min(12000,Number(P.get('fpsms'))||2000));
+    startaKvalitetsvakt();
+    const skriv=()=>{
+      const g=curGame,e=g&&g.engine;
+      let renderare=null,drawCalls=null,trianglar=null,scen=null,webgl=false,material=null,merge=null;
+      try{
+        if(e&&e.renderer){
+          webgl=!!e.renderer.getContext();
+          const gl=e.renderer.getContext();
+          const info=gl.getExtension('WEBGL_debug_renderer_info');
+          renderare=info?gl.getParameter(info.UNMASKED_RENDERER_WEBGL):(gl.getParameter(gl.RENDERER)||null);
+          const i=e.renderer.info;
+          drawCalls=i&&i.render?i.render.calls:null;
+          trianglar=i&&i.render?i.render.triangles:null;
+          scen=0;if(e.scene)e.scene.traverse(()=>{scen++});
+          // Var ligger anropen? En rad per material, tyngst forst — det ar sa
+          // man ser om en sammanslagning lonat sig eller om ett material gatt
+          // sonder i manga sma bitar (#341).
+          if(e.scene){
+            const per=new Map();
+            e.scene.traverse(o=>{
+              if(!o.isMesh||!o.visible)return;
+              const m=Array.isArray(o.material)?o.material[0]:o.material;
+              if(!m)return;
+              const k=(m.name||'')||(m.type+' '+(m.color?'#'+m.color.getHexString():'')+(m.map?' +map':'')+(m.transparent?' +tp':''));
+              per.set(k,(per.get(k)||0)+1);
+            });
+            material=[...per.entries()].sort((a,b)=>b[1]-a[1]).slice(0,14).map(([k,n])=>n+'x '+k);
+          }
+          if(e._mergeInfo)merge=e._mergeInfo;
+        }
+      }catch(err){felLogg.push('selftest: '+err.message)}
+      const rapport={
+        varld:(g&&g.worldId)||null,
+        bootMs:Math.round(t0),
+        fps:fpsNu(),
+        webgl,renderer:renderare,scen,drawCalls,trianglar,material,merge,
+        minne:(performance.memory?Math.round(performance.memory.usedJSHeapSize/1048576):null),
+        fragor:(g&&g.qs&&g.qs.length)||0,
+        pixelRatio:(e&&e.renderer&&+e.renderer.getPixelRatio().toFixed(2))||null,
+        fel:felLogg.slice(0,6),
+        klar:true
+      };
+      let pre=document.getElementById('qr-selftest');
+      if(!pre){pre=document.createElement('pre');pre.id='qr-selftest';pre.hidden=true;document.body.appendChild(pre)}
+      pre.textContent=JSON.stringify(rapport);
+      document.title='SELFTEST '+rapport.fps+'fps '+(rapport.fel.length?'FEL':'ok');
+      // Provet är skrivet: lägg ner allt som ritar eller tickar. En headless
+      // webbläsare utan GPU renderar annars vidare tills den blir dödad, och
+      // --dump-dom lämnar aldrig ifrån sig rapporten som redan ligger här.
+      try{if(vakt)cancelAnimationFrame(vakt);vakt=null}catch(err){}
+      try{if(g){clearInterval(g.timer);g.timer=null;if(e)e.running=false}}catch(err){}
+    };
+    setTimeout(skriv,fonster);
+    // En tidig rapport också, ifall spelet hänger sig innan fönstret gått ut —
+    // då syns åtminstone felen i stället för ingenting.
+    setTimeout(()=>{if(!document.getElementById('qr-selftest'))skriv()},Math.min(2500,fonster-500));
+  }
+
+  // Rekordraden i HUD:en ritas bara om elementet finns (det läggs till i markupen).
+  try{malaRepetitionsknapp()}catch(e){}
+})();
 </script>
+<pre id="qr-selftest" hidden></pre>
 </body>
 </html>

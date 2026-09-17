@@ -15,7 +15,7 @@
  *   node quizcli.js perf [--world jungle] scenens tyngd och starttid
  *   node quizcli.js ai [--fil x.txt]      provkör AI-frågorna mot api/generate.js
  *   node quizcli.js size                  viktbudget: vad tittaren måste ladda ner
- *   node quizcli.js serve [--port 5217]   lokal server (spelet behöver http, inte file://)
+ *   node quizcli.js serve [--port 5217]   lokal server (tar nästa lediga port; --minuter 0 = evig)
  *   node quizcli.js report [--worklist]   allt ovan → RAPPORT.md (+ steg på The Work List)
  *   node quizcli.js las [--slapp|--puls]  projektlåset mellan noderna (delegerar till worklist.js)
  *   node quizcli.js deploy --ja           vercel --prod (aldrig utan --ja; backoff 6 h efter nekat tak)
@@ -235,7 +235,7 @@ function modeller() {
 
 // ------------------------------------------------------------------ server
 /** Liten statisk server. Spelet laddar GLB med fetch — file:// är blockerat. */
-function serva(port = PORT) {
+function serva(port = PORT, forsok = 20) {
   const MIME = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.json': 'application/json', '.glb': 'model/gltf-binary', '.png': 'image/png', '.jpg': 'image/jpeg', '.svg': 'image/svg+xml', '.webmanifest': 'application/manifest+json', '.css': 'text/css; charset=utf-8' };
   const server = http.createServer((req, res) => {
     const rel = decodeURIComponent((req.url || '/').split('?')[0]);
@@ -248,8 +248,32 @@ function serva(port = PORT) {
       res.end(data);
     });
   });
-  return new Promise((klar, fel) => { server.on('error', fel); server.listen(port, '127.0.0.1', () => klar(server)); });
+  // En kvarlämnad server (eller vad som helst annat) på porten ska inte fälla
+  // en körning innan Chrome ens startat: vid EADDRINUSE flyttar vi oss uppåt
+  // till nästa lediga port. Anroparen läser den riktiga porten med bas().
+  const onskad = port;
+  return new Promise((klar, fel) => {
+    let kvar = forsok;
+    let startad = false;
+    server.on('error', (e) => {
+      if (startad) { console.error(rod(`server: ${e.message}`)); return; }
+      if (e && e.code === 'EADDRINUSE' && kvar-- > 0) { server.listen(++port, '127.0.0.1'); return; }
+      fel(e);
+    });
+    server.listen(port, '127.0.0.1', () => {
+      startad = true;
+      if (port !== onskad) console.log(dov(`  Port ${onskad} är upptagen — servern tog ${port}`));
+      klar(server);
+    });
+  });
 }
+
+/** Adressen servern faktiskt lyssnar på (porten kan ha flyttat sig). */
+function bas(server) { return `http://127.0.0.1:${server.address().port}`; }
+
+/** Stäng servern OCH klipp kvarlevande keep-alive-kopplingar — annars kan
+ *  processen hänga kvar och hålla porten långt efter att körningen är klar. */
+function stoppa(server) { try { server.closeAllConnections?.(); } catch {} try { server.close(); } catch {} }
 
 // ------------------------------------------------------------------ chrome
 function chromeVag() {
@@ -311,7 +335,7 @@ async function smoke() {
       // Utan GPU renderar SwiftShader varje bildruta i mjukvara. Fönstret hålls
       // kort och sidan lägger ner sig själv när provet är skrivet — annars blir
       // Chrome aldrig klar och --dump-dom lämnar ingenting ifrån sig.
-      const url = `http://127.0.0.1:${PORT}/index.html?demo=${varld}&dist=600&selftest=1&fpsms=1600`;
+      const url = `${bas(server)}/index.html?demo=${varld}&dist=600&selftest=1&fpsms=1600`;
       let dom = '';
       try { dom = await dumpDom(url, { budget: 9000 }); }
       catch (e) { p.fel(varld, `Chrome: ${e.message}`); continue; }
@@ -326,7 +350,7 @@ async function smoke() {
       else if (!t.webgl) p.fel(varld, 'ingen WebGL-kontext');
       else p.ok(varld, noter);
     }
-  } finally { server.close(); }
+  } finally { stoppa(server); }
   return p;
 }
 
@@ -342,14 +366,14 @@ async function prov() {
   try {
     // Provet väntar på spelets nedräkning och på att frågan byts — det tar
     // tiotals virtuella sekunder, så budgeten är större än rökprovets.
-    const dom = await dumpDom(`http://127.0.0.1:${PORT}/qr-prov.html`, { budget: 60000 });
+    const dom = await dumpDom(`${bas(server)}/qr-prov.html`, { budget: 60000 });
     const m = dom.match(/<pre id="prov"[^>]*>([\s\S]*?)<\/pre>/);
     if (!m) { p.fel('Ingen provrapport', 'sidan hann aldrig skriva sitt svar'); return p; }
     let rapport;
     try { rapport = JSON.parse(m[1].replace(/&quot;/g, '"').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>')); }
     catch (e) { p.fel('Provrapporten gick inte att läsa', e.message); return p; }
     for (const r of rapport.rader || []) (r.ok ? p.ok : p.fel).call(p, r.namn, r.detalj);
-  } finally { server.close(); }
+  } finally { stoppa(server); }
   return p;
 }
 
@@ -360,7 +384,7 @@ async function perf() {
   let server;
   try { server = await serva(PORT); } catch (e) { p.fel('Server', e.message); return p; }
   try {
-    const dom = await dumpDom(`http://127.0.0.1:${PORT}/index.html?demo=${varld}&dist=900&selftest=1&fpsms=4000`, { budget: 14000 });
+    const dom = await dumpDom(`${bas(server)}/index.html?demo=${varld}&dist=900&selftest=1&fpsms=4000`, { budget: 14000 });
     const t = lasSjalvtest(dom);
     if (!t) { p.fel('Ingen rapport', 'självtestet svarade inte'); return p; }
     p.ok('Värld', varld);
@@ -372,7 +396,7 @@ async function perf() {
     if (t.renderer) p.ok('Renderare', t.renderer);
     if (t.drawCalls != null) (t.drawCalls <= 180 ? p.ok : p.varning).call(p, 'Draw calls', String(t.drawCalls));
     if (t.trianglar != null) p.ok('Trianglar', t.trianglar.toLocaleString('sv-SE'));
-  } finally { server.close(); }
+  } finally { stoppa(server); }
   return p;
 }
 
@@ -589,11 +613,26 @@ async function main() {
     case 'deploy': return deploy();
     case 'serve': {
       const s = await serva(PORT);
-      console.log(`Spelet: http://127.0.0.1:${PORT}/index.html   (Ctrl+C avslutar)`);
-      console.log(dov(`  Demo:     http://127.0.0.1:${PORT}/index.html?demo=dragon&dist=600&debug=1`));
-      console.log(dov(`  Självtest: http://127.0.0.1:${PORT}/index.html?demo=jungle&selftest=1`));
-      await new Promise(() => {});                        // servern lever tills Ctrl+C
-      s.close(); return 0;
+      const adr = bas(s);
+      // En glömd serve höll porten i tio timmar och fällde både prov och smoke
+      // nästa morgon. Nu lägger den ner sig själv, och alltid på Ctrl+C.
+      const minuter = flag('--minuter') == null ? 120 : Number(flag('--minuter'));
+      console.log(`Spelet: ${adr}/index.html   (Ctrl+C avslutar · pid ${process.pid})`);
+      console.log(dov(`  Demo:     ${adr}/index.html?demo=dragon&dist=600&debug=1`));
+      console.log(dov(`  Självtest: ${adr}/index.html?demo=jungle&selftest=1`));
+      if (minuter > 0) console.log(dov(`  Stänger av sig själv efter ${minuter} min (--minuter 0 = aldrig)`));
+      await new Promise((klar) => {
+        let stanger = false;
+        const stang = (varfor) => {
+          if (stanger) return; stanger = true;
+          console.log(dov(`\n${varfor} — stänger servern och släpper port ${s.address()?.port ?? PORT}`));
+          stoppa(s);
+          setTimeout(klar, 300).unref();
+        };
+        for (const sig of ['SIGINT', 'SIGTERM', 'SIGHUP', 'SIGBREAK']) { try { process.on(sig, () => stang(sig)); } catch {} }
+        if (minuter > 0) setTimeout(() => stang(`${minuter} minuter gick`), minuter * 60000).unref();
+      });
+      return 0;
     }
     default:
       console.log(las(__filename).split('\n').slice(2, 27).map((l) => l.replace(/^ \* ?/, '').replace(/^\/\*\*?/, '')).join('\n'));

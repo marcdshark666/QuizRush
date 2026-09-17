@@ -2302,6 +2302,147 @@ class JungleEngine{
     grp.clear();
     for(const b of behall)grp.add(b);
   }
+  // ---- Sla ihop det som ALDRIG ror sig inom en figur (uppdrag #403) -------
+  // Isbjornen, algarna, pingvinerna, aporna och poliskonstaplarna byggs av
+  // femtio sma sfarer och cylindrar i var sin THREE.Group. #341/#346 kom
+  // aldrig at dem: de ligger inte i scrollObjects, och figuren flyttas som en
+  // klump. Men INUTI figuren ror sig bara ett fatal leder — benen, huvudet,
+  // kaken, vingarna. Balen, palsen, hatten och ogonen sitter blickstilla i
+  // forhallande till sin led och kan bakas till EN mesh per material.
+  //
+  // Darfor markerar varje figurbyggare ut sina RORLIGA noder och lamnar over
+  // resten hit. Allt statiskt bakas in i narmaste rorliga forfader (eller i
+  // figurens rot); pivoternas egna matriser rors inte, sa animationerna ser
+  // exakt likadana ut efterat.
+  //
+  // En nod som inte gar att baka in i sin helhet — en som bar ett ljus eller
+  // en rorlig led langre ner — star kvar dar den star, men dess egna statiska
+  // barn far anda folja med upp.
+  _mergeFigure(root,rorliga){
+    if(!root)return null;
+    const ror=rorliga instanceof Set?rorliga:new Set((rorliga||[]).filter(Boolean));
+    // ?figurprov=1 raknar figurens alla horn i ROTENS eget rum fore och efter.
+    // Summorna ar oberoende av ordning, sa de far bara stamma om varenda
+    // triangel hamnat pa exakt samma stalle — provet pa att ingenting syns.
+    if(this._figurProv===undefined)this._figurProv=(()=>{try{return new URLSearchParams(location.search).has('figurprov')}catch(e){return false}})();
+    const prov=this._figurProv;
+    const fore_=prov?this._figurSumma(root):null;
+    // Kan HELA grenen under (och med) noden bakas in i forfaderns mesh?
+    const cache=new Map();
+    const bakbar=(o)=>{
+      if(cache.has(o))return cache.get(o);
+      let ok;
+      if(ror.has(o)||o.visible===false)ok=false;
+      else if(o.isMesh)ok=!o.isSkinnedMesh&&!!o.geometry&&!!o.material&&!Array.isArray(o.material)
+        &&!o.geometry.morphAttributes?.position?.length
+        &&Object.values(o.geometry.attributes).every(a=>a&&a.array&&!a.isInterleavedBufferAttribute);
+      // En tom grupp ritar ingenting — den kan alltid losas upp om barnen kan.
+      else ok=(o.type==='Group'||o.type==='Object3D');
+      if(ok)for(const b of o.children)if(!bakbar(b)){ok=false;break}
+      cache.set(o,ok);return ok;
+    };
+    let fore=0,efter=0;
+    const ko=[root];
+    while(ko.length){
+      const pivot=ko.shift();
+      const bitar=[];
+      // Allt i en bakbar gren, med sin matris uttryckt i PIVOTENS rum.
+      const samla=(o,m)=>{
+        if(o.isMesh)bitar.push({mesh:o,matrix:m});
+        for(const b of o.children){if(b.matrixAutoUpdate)b.updateMatrix();samla(b,new THREE.Matrix4().multiplyMatrices(m,b.matrix))}
+      };
+      const plocka=(nod,m)=>{
+        for(const b of nod.children.slice()){
+          if(b.matrixAutoUpdate)b.updateMatrix();
+          const bm=new THREE.Matrix4().multiplyMatrices(m,b.matrix);
+          if(ror.has(b)){ko.push(b);continue}
+          if(bakbar(b)){samla(b,bm);continue}
+          plocka(b,bm);
+        }
+      };
+      plocka(pivot,new THREE.Matrix4());
+      if(!bitar.length)continue;
+      fore+=bitar.length;
+      const grupper=new Map();
+      for(const bit of bitar){
+        const mk=this._matNyckel(bit.mesh.material);
+        // Attributuppsattningen maste stamma inom gruppen, precis som i #341.
+        const nyckel=mk+'|'+Object.keys(bit.mesh.geometry.attributes).sort().join(',');
+        const g=grupper.get(nyckel)||{mk,objekt:[]};
+        g.objekt.push(bit);grupper.set(nyckel,g);
+      }
+      // En bit som blir ensam i sin materialgrupp vinner inget pa att bakas om
+      // — men den maste anda flyttas upp till pivoten, annars slapar den med
+      // sin gamla foralder ut ur scenen. Matrisen skrivs rakt av i stallet for
+      // att plockas isar i position/rotation/skala: det blir exakt samma bild.
+      const flytta=(bit)=>{
+        pivot.add(bit.mesh);
+        bit.mesh.matrixAutoUpdate=false;
+        bit.mesh.matrix.copy(bit.matrix);
+        bit.mesh.matrixWorldNeedsUpdate=true;
+        efter++;
+      };
+      for(const g of grupper.values()){
+        if(g.objekt.length<2){flytta(g.objekt[0]);continue}
+        const forsta=g.objekt[0].mesh.material;
+        let blandat=false,skugga=false,tar=false;
+        const delar=g.objekt.map(o=>{
+          if(o.mesh.material!==forsta)blandat=true;
+          skugga=skugga||o.mesh.castShadow;tar=tar||o.mesh.receiveShadow;
+          return {geometry:o.mesh.geometry,matrix:o.matrix,color:o.mesh.material.color};
+        });
+        const vcol=blandat&&(g.mk.charAt(0)==='f'||g.mk.charAt(0)==='b');
+        let geo;
+        try{geo=this._mergeGeos(delar,vcol)}
+        catch(e){for(const o of g.objekt)flytta(o);continue}
+        for(const o of g.objekt)if(o.mesh.parent)o.mesh.parent.remove(o.mesh);
+        const mesh=new THREE.Mesh(geo,vcol?this._vcolMat(g.mk,forsta):forsta);
+        mesh.castShadow=skugga;mesh.receiveShadow=tar;
+        pivot.add(mesh);efter++;
+      }
+    }
+    const f=this._figurInfo||(this._figurInfo={fore:0,efter:0,figurer:0});
+    f.fore+=fore;f.efter+=efter;f.figurer++;
+    if(prov){
+      const efter_=this._figurSumma(root);
+      f.prov=(f.prov||0)+1;
+      const skiljer=['n','tri','sx','sy','sz','q'].filter(k=>Math.abs(efter_[k]-fore_[k])>.05);
+      if(skiljer.length)(f.avvikelser=f.avvikelser||[]).push((root.name||'figur')+': '+skiljer.map(k=>k+' '+fore_[k]+'→'+efter_[k]).join(', '));
+    }
+    return {fore,efter};
+  }
+  // Ordningsoberoende summa over alla horn i en figur, uttryckt i figurens
+  // eget rum. Anvands bara av ?figurprov=1.
+  _figurSumma(root){
+    root.updateMatrixWorld(true);
+    const inv=new THREE.Matrix4().copy(root.matrixWorld).invert();
+    const m=new THREE.Matrix4(),v=new THREE.Vector3();
+    let n=0,tri=0,sx=0,sy=0,sz=0,q=0;
+    root.traverse(c=>{
+      if(!c.isMesh||!c.geometry||!c.geometry.attributes.position)return;
+      m.multiplyMatrices(inv,c.matrixWorld);
+      const a=c.geometry.attributes.position;
+      tri+=(c.geometry.index?c.geometry.index.count:a.count)/3;
+      for(let i=0;i<a.count;i++){v.fromBufferAttribute(a,i).applyMatrix4(m);sx+=v.x;sy+=v.y;sz+=v.z;q+=v.lengthSq();n++}
+    });
+    return {n,tri:Math.round(tri),sx:+sx.toFixed(3),sy:+sy.toFixed(3),sz:+sz.toFixed(3),q:+q.toFixed(3)};
+  }
+  // Fiendens rorliga delar ar redan utmarkta: allt som nagon animation kan
+  // komma at heter nagot i this.enemyParts (huvud, kakar, fenor, ben, vingar,
+  // bubblor, och for poliskaren varje konstapel med sina fyra leder). Den
+  // listan ar alltsa exakt den pivotlista _mergeFigure behover — en ny led
+  // som laggs till i enemyParts skyddas automatiskt (#403).
+  _enemyLeder(){
+    const ut=[],sedd=new Set();
+    const ga=(v,djup)=>{
+      if(!v||djup>4)return;
+      if(v.isObject3D){if(!sedd.has(v)){sedd.add(v);ut.push(v)}return}
+      if(Array.isArray(v)){for(const x of v)ga(x,djup+1);return}
+      if(typeof v==='object')for(const k in v)ga(v[k],djup+1);
+    };
+    ga(this.enemyParts,0);
+    return ut;
+  }
   _mergeStatic(){
     if(!this.scrollObjects||!this.scrollObjects.length)return;
     const SEG=5;
@@ -2745,11 +2886,16 @@ class JungleEngine{
         const pbelly=new THREE.Mesh(new THREE.SphereGeometry(.13,6,5),new THREE.MeshStandardMaterial({color:0xffffff,roughness:.7}));pbelly.scale.set(.8,.9,.5);pbelly.position.set(0,0,-.12);pg.add(pbelly);
         const phead=new THREE.Mesh(new THREE.SphereGeometry(.1,6,5),new THREE.MeshStandardMaterial({color:0x111122,roughness:.7}));phead.position.y=.3;pg.add(phead);
         const pbeak=new THREE.Mesh(new THREE.ConeGeometry(.03,.07,4),new THREE.MeshStandardMaterial({color:0xff8800}));pbeak.rotation.x=Math.PI/2;pbeak.position.set(0,.3,-.11);pg.add(pbeak);
-        // Wing flippers
-        for(let s=-1;s<=1;s+=2){const wf=new THREE.Mesh(new THREE.BoxGeometry(.06,.16,.04),new THREE.MeshStandardMaterial({color:0x111122,roughness:.7}));wf.position.set(s*.2,.02,-.04);wf.rotation.z=s*.4;pg.add(wf)}
+        // Wing flippers — de ENDA delar av pingvinen som ror sig for sig
+        // sjalva. Forut letades de upp varje bildruta med en traverse som
+        // matchade geometry.parameters.width===.06; nu halls de i handen, sa
+        // kroppen kan bakas ihop utan att vaggandet tappas (#403).
+        const pWings=[];
+        for(let s=-1;s<=1;s+=2){const wf=new THREE.Mesh(new THREE.BoxGeometry(.06,.16,.04),new THREE.MeshStandardMaterial({color:0x111122,roughness:.7}));wf.position.set(s*.2,.02,-.04);wf.rotation.z=s*.4;pg.add(wf);pWings.push(wf)}
         const px=(Math.random()>.5?1:-1)*(2.5+Math.random()*2);
         pg.position.set(px,0,startZ-10-Math.random()*40);
-        this.scene.add(pg);this.animals.push({mesh:pg,type:'penguin',baseY:0,baseX:px,speed:.4+Math.random()*.3,phase:Math.random()*Math.PI*2});
+        this._mergeFigure(pg,pWings); // kropp + mage + huvud blir en mesh
+        this.scene.add(pg);this.animals.push({mesh:pg,type:'penguin',wingL:pWings[0],wingR:pWings[1],baseY:0,baseX:px,speed:.4+Math.random()*.3,phase:Math.random()*Math.PI*2});
       }
       // Moose wandering through the snow
       if(Math.random()>.3){
@@ -2785,6 +2931,10 @@ class JungleEngine{
         const mx=(Math.random()>.5?1:-1)*(3.2+Math.random()*1.5);
         mg.scale.setScalar(.55+Math.random()*.2);
         mg.position.set(mx,0,startZ-15-Math.random()*35);
+        // Algen ror bara HELA kroppen (position + rotation.y) — inte ett enda
+        // horn, ben eller oga ror sig inbordes. Hela figuren bakas alltsa till
+        // tva meshar: palsen med hornen, och de svarta ogonen (#403).
+        this._mergeFigure(mg);
         this.scene.add(mg);this.animals.push({mesh:mg,type:'moose',baseY:0,baseX:mx,speed:.25+Math.random()*.2,phase:Math.random()*Math.PI*2});
       }
       // Snow obstacles (snowballs)
@@ -3376,6 +3526,9 @@ class JungleEngine{
     // 180° flip so snout faces +Z (camera direction)
     inner.rotation.y = Math.PI;
     g.add(inner);
+    // #403: kakarna, fenorna, svansen och bubblorna ror sig — skallen, kinderna,
+    // gälspringorna och de tjugosju tanderna per kake gor det inte.
+    this._mergeFigure(g,this._enemyLeder());
     g.scale.setScalar(1.05);
     return g;
   }
@@ -3461,6 +3614,11 @@ class JungleEngine{
     // Police light flash on top (siren)
     const siren=new THREE.PointLight(0xff0000,1.5,8);siren.position.set(0,3,.3);g.add(siren);
     this.enemyParts.siren=siren;
+    // #403: varje konstapel ar sin egen gren (officers[].group ligger i
+    // enemyParts), sa de tre gubbarna backas aldrig ihop till en klump och kan
+    // animeras var for sig. Inom konstapeln blir uniform, balte, ansikte,
+    // mossa och brickor ett fatal meshar i stallet for tjugotta.
+    this._mergeFigure(g,this._enemyLeder());
     g.scale.setScalar(.85);
     return g;
   }
@@ -3511,6 +3669,7 @@ class JungleEngine{
     headG.position.y=2.2;
     neckG.add(headG);this.enemyParts.snakeHead=headG;
     neckG.position.set(0,.8,0);g.add(neckG);this.enemyParts.snakeNeck=neckG;
+    this._mergeFigure(g,this._enemyLeder()); // #403: fjallen och ringlarna star stilla
     g.scale.setScalar(.78);
     return g;
   }
@@ -3595,6 +3754,11 @@ class JungleEngine{
       g.add(armG);
       if(s===-1)this.enemyParts.lArm=armG;else this.enemyParts.rArm=armG;
     }
+    // #403: bjornens RORLIGA leder ar huvudet, kaken, fyra ben och tva armar
+    // — de rullar i _animate. Allt annat (balen, kullen, tjugo palstussar,
+    // nos, ogon, oron, tander, klor) sitter stilla i sin led och bakas ihop:
+    // ~85 meshar blir ~20, och galoppen ser exakt likadan ut.
+    this._mergeFigure(g,this._enemyLeder());
     g.scale.setScalar(.7);
     return g;
   }
@@ -3657,6 +3821,7 @@ class JungleEngine{
       b.position.set((Math.random()-.5)*2,1.2+Math.random()*.6,2.2+Math.random()*2.5);
       g.add(b);this.enemyParts.bubbles.push(b);
     }
+    this._mergeFigure(g,this._enemyLeder()); // #403: kroppen, tanderna och satteln bakas ihop
     g.scale.setScalar(.68);
     return g;
   }
@@ -3746,6 +3911,8 @@ class JungleEngine{
     // Ominous red under-glow (dragon lair)
     const bl=new THREE.PointLight(0xff3300,2.2,10);bl.position.set(0,.5,.5);g.add(bl);this.enemyParts.fireLight=bl;
     const bl2=new THREE.PointLight(0xff6600,1.2,4);bl2.position.set(0,1.2,.5);g.add(bl2);
+    // #403: vingarna och nabben ror sig; fjadrarna, benen och klorna gor det inte.
+    this._mergeFigure(g,this._enemyLeder());
     g.scale.setScalar(.62);
     return g;
   }
@@ -4028,6 +4195,9 @@ class JungleEngine{
       g.add(new THREE.Mesh(new THREE.TubeGeometry(tc,6,.02,4,false),mMat));
       const x=(Math.random()>.5?1:-1)*(2.5+Math.random()*2);
       g.position.set(x,3+Math.random()*3,-5+Math.random()*-60);
+      // Apan gungar som en klump — armarna och svansen ror sig aldrig for sig
+      // sjalva, sa kropp, huvud, armar och svans blir en enda mesh (#403).
+      this._mergeFigure(g);
       this.scene.add(g);
       this.animals.push({mesh:g,type:'monkey',baseY:g.position.y,baseX:x,speed:.8+Math.random()*.5,phase:Math.random()*Math.PI*2});
     }
@@ -4768,8 +4938,9 @@ class JungleEngine{
         a.mesh.position.x=a.baseX+Math.sin(t*a.speed+a.phase)*.5;
         a.mesh.position.y=a.baseY+Math.abs(Math.sin(t*a.speed*2+a.phase))*.1;
         a.mesh.rotation.z=Math.sin(t*a.speed+a.phase)*.12;
-        // Flipper waddle
-        a.mesh.traverse(c=>{if(c.isMesh&&c.geometry&&c.geometry.parameters&&c.geometry.parameters.width===.06){c.rotation.z=(c.position.x>0?1:-1)*(.4+Math.sin(t*a.speed*3+a.phase)*.3)}});
+        // Flipper waddle — fenorna halls i djurposten (#403) i stallet for att
+        // sokas upp med en traverse pa geometrins bredd varje bildruta.
+        if(a.wingL){const fl=.4+Math.sin(t*a.speed*3+a.phase)*.3;a.wingL.rotation.z=-fl;a.wingR.rotation.z=fl}
       }else if(a.type==='moose'){
         a.mesh.position.x=a.baseX+Math.sin(t*a.speed*.4+a.phase)*.8;
         a.mesh.position.y=a.baseY+Math.abs(Math.sin(t*a.speed*2+a.phase))*.08;
@@ -6939,7 +7110,7 @@ refreshWorldSelector();
     startaKvalitetsvakt();
     const skriv=()=>{
       const g=curGame,e=g&&g.engine;
-      let renderare=null,drawCalls=null,trianglar=null,scen=null,webgl=false,material=null,merge=null;
+      let renderare=null,drawCalls=null,trianglar=null,scen=null,webgl=false,material=null,merge=null,figurer=null;
       try{
         if(e&&e.renderer){
           webgl=!!e.renderer.getContext();
@@ -6965,13 +7136,14 @@ refreshWorldSelector();
             material=[...per.entries()].sort((a,b)=>b[1]-a[1]).slice(0,14).map(([k,n])=>n+'x '+k);
           }
           if(e._mergeInfo)merge=e._mergeInfo;
+          if(e._figurInfo)figurer=e._figurInfo;
         }
       }catch(err){felLogg.push('selftest: '+err.message)}
       const rapport={
         varld:(g&&g.worldId)||null,
         bootMs:Math.round(t0),
         fps:fpsNu(),
-        webgl,renderer:renderare,scen,drawCalls,trianglar,material,merge,
+        webgl,renderer:renderare,scen,drawCalls,trianglar,material,merge,figurer,
         minne:(performance.memory?Math.round(performance.memory.usedJSHeapSize/1048576):null),
         fragor:(g&&g.qs&&g.qs.length)||0,
         pixelRatio:(e&&e.renderer&&+e.renderer.getPixelRatio().toFixed(2))||null,

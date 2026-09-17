@@ -1,11 +1,11 @@
 # Quiz Rush — teknisk rapport
 
-Skriven av `quizcli.js` 2026-09-17 00:26:43.
+Skriven av `quizcli.js` 2026-09-17 09:01:21.
 **0 fel · 1 varningar** över 47 kontroller.
 
 ## Statisk hälsokoll — index.html, api och sidhuvudet
 
-- ✓ **index.html läst** — 439.2 kB, 7004 rader
+- ✓ **index.html läst** — 448.2 kB, 7176 rader
 - ✓ **JavaScript-syntax** — 1 inline-block, alla parsar
 - ✓ **Unika id:n** — 102 element
 - ✓ **CDN versionslåsta** — 3 externa resurser
@@ -42,15 +42,15 @@ Skriven av `quizcli.js` 2026-09-17 00:26:43.
 
 ## Viktbudget — vad tittaren laddar ner
 
-- ✓ **index.html** — 439.2 kB → 118.7 kB gzip
+- ✓ **index.html** — 448.2 kB → 122.0 kB gzip
 - ✓ **js-gltfloader.js** — 94.3 kB → 21.4 kB gzip
-- ✓ **Första laddningen** — 140.1 kB gzip (modellerna hämtas per värld)
+- ✓ **Första laddningen** — 143.5 kB gzip (modellerna hämtas per värld)
 - ✓ **Modeller vid behov** — 10 st, 3608.9 kB totalt
 - ! **Tunga modeller** — models/Cobra.glb 811.1 kB, models/Vulture.glb 1090.3 kB
 
 ## Rökprov — spelet startat på riktigt i headless Chrome
 
-- ✓ **jungle** — start 705 ms · ANGLE (Google, Vulkan 1.3.0  · 384 objekt · 317 draw calls
+- ✓ **jungle** — start 497 ms · ANGLE (Google, Vulkan 1.3.0  · 358 objekt · 287 draw calls
 
 ## Funktionsprov — tangentbord, repetition, paus, tillgänglighet
 
@@ -59,7 +59,7 @@ Skriven av `quizcli.js` 2026-09-17 00:26:43.
 - ✓ **Alternativ nåbart för tangentbord** — tabIndex=0 role=button
 - ✓ **aria-live på frågan** — polite
 - ✓ **Tangentbordet svarar (1 = A)**
-- ✓ **Missad fråga sparas med schema** — 1 post(er), nästa 2026-09-16T22:36
+- ✓ **Missad fråga sparas med schema** — 1 post(er), nästa 2026-09-17T07:11
 - ✓ **Pausar när fliken göms**
 - ✓ **Fortsätter när fliken syns igen**
 - ✓ **Rekordnyckeln finns**

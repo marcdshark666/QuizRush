@@ -384,7 +384,9 @@ async function perf() {
   let server;
   try { server = await serva(PORT); } catch (e) { p.fel('Server', e.message); return p; }
   try {
-    const dom = await dumpDom(`${bas(server)}/index.html?demo=${varld}&dist=900&selftest=1&fpsms=4000`, { budget: 14000 });
+    // figurprov=1: spelet räknar själv om varje djur och fiende har exakt samma
+    // hörn kvar efter att de stilla delarna bakats ihop (#403).
+    const dom = await dumpDom(`${bas(server)}/index.html?demo=${varld}&dist=900&selftest=1&fpsms=4000&figurprov=1`, { budget: 14000 });
     const t = lasSjalvtest(dom);
     if (!t) { p.fel('Ingen rapport', 'självtestet svarade inte'); return p; }
     p.ok('Värld', varld);
@@ -395,6 +397,14 @@ async function perf() {
     if (t.minne) p.ok('JS-heap', `${t.minne} MB`);
     if (t.renderer) p.ok('Renderare', t.renderer);
     if (t.drawCalls != null) (t.drawCalls <= 180 ? p.ok : p.varning).call(p, 'Draw calls', String(t.drawCalls));
+    // Figurerna (#403): hur många egna meshar djuren och fienderna hade innan
+    // de statiska delarna bakades ihop, och hur många de har kvar efteråt.
+    if (t.figurer) p.ok('Figurernas meshar', `${t.figurer.fore} → ${t.figurer.efter} i ${t.figurer.figurer} figurer`);
+    if (t.figurer && t.figurer.prov) {
+      const avv = t.figurer.avvikelser || [];
+      if (avv.length) p.fel('Figurernas geometri flyttade sig', avv.slice(0, 3).join(' | '));
+      else p.ok('Figurernas geometri oförändrad', `${t.figurer.prov} figurer, hörn för hörn`);
+    }
     if (t.trianglar != null) p.ok('Trianglar', t.trianglar.toLocaleString('sv-SE'));
   } finally { stoppa(server); }
   return p;
